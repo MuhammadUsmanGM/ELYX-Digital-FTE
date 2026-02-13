@@ -269,3 +269,60 @@ button, a {
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
+
+/* Premium High-Fidelity Utilities */
+
+/* Noise Texture Overlay */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  content: "";
+  opacity: 0.02;
+  z-index: 40;
+  pointer-events: none;
+  background-image: url("https://grainy-gradients.vercel.app/noise.svg");
+}
+
+/* Futuristic Text Shadows */
+.text-glow {
+  text-shadow: 0 0 10px rgba(6, 182, 212, 0.4);
+}
+
+.text-glow-accent {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+}
+
+/* Gradient Borders */
+.gradient-border {
+  position: relative;
+  background: linear-gradient(var(--background), var(--background)) padding-box,
+              var(--emerald-blue-gradient) border-box;
+  border: 1px solid transparent;
+}
+
+/* Smooth Scrollbar Hide */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Modern Card Effect */
+.premium-card {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.premium-card:hover {
+  border-color: rgba(6, 182, 212, 0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 40px rgba(0, 0, 10, 0.3);
+}
