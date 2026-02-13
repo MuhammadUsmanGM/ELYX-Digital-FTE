@@ -1,0 +1,52 @@
+# Ignore git files
+.git/
+.gitignore
+.github/
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+.Python
+
+# Ignore local configuration
+.env
+.env.local
+.env.production
+.env.development
+*.env*
+
+# Ignore node modules
+node_modules/
+
+# Ignore logs (we'll mount a volume for this)
+logs/
+*.log
+
+# Ignore local vault (we'll mount a volume for this)
+obsidian_vault/
+
+# Ignore temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Ignore system files
+.DS_Store
+*.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
