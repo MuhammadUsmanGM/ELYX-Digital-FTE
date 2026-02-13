@@ -293,14 +293,9 @@ export default function SidebarLayout({
 
         {/* Dynamic Content Viewport */}
         <main className="flex-1 p-10 relative overflow-x-hidden">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: "easeOut" }}
-            className="h-full relative z-10"
-          >
+          <div className="h-full relative z-10">
             {children}
-          </motion.div>
+          </div>
         </main>
 
         {/* Status Bar */}

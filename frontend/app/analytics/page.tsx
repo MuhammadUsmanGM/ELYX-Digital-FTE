@@ -60,32 +60,12 @@ export default function AnalyticsPage() {
     { label: "LinkedIn Direct", value: data?.metrics.communication_stats.linkedin || 0, icon: <Linkedin size={18} />, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
   ], [data]);
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
-  };
-
   return (
     <DashboardLayout>
-      <motion.div 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        className="space-y-10"
-      >
+      <div className="space-y-10">
         
         {/* Header Section */}
-        <motion.div variants={itemVariants} className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 px-2 relative group">
+        <div className="flex flex-col xl:flex-row xl:items-end justify-between gap-8 px-2 relative group">
           <div className="absolute -top-20 -left-20 w-72 h-72 bg-accent/10 blur-[120px] rounded-full pointer-events-none group-hover:bg-accent/15 transition-all duration-1000" />
           <div className="space-y-3 relative z-10">
             <div className="flex items-center gap-3 mb-2">
@@ -138,7 +118,7 @@ export default function AnalyticsPage() {
               <span className="font-outfit text-xs font-black uppercase tracking-[0.2em]">Export Intelligence</span>
             </motion.button>
           </div>
-        </motion.div>
+        </div>
 
         {loading ? (
           <div className="flex flex-col items-center justify-center p-40 gap-8">
@@ -155,7 +135,7 @@ export default function AnalyticsPage() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
             {/* Top Row: Hero Metrics */}
-            <motion.div variants={itemVariants} className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="lg:col-span-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <AnalyticsStatCard 
                 label="Tasks Processed" 
                 value={data.metrics.tasks_processed.toLocaleString()}
@@ -190,15 +170,15 @@ export default function AnalyticsPage() {
                 isUp={true}
                 icon={<Users size={22} />}
                 subtext="Engagement Index"
-                color="purple"
+                color="emerald"
               />
-            </motion.div>
+            </div>
 
             {/* Middle Row: Charts & Breakdowns */}
             <div className="lg:col-span-8 space-y-10">
               
               {/* Main Performance Chart */}
-              <motion.div variants={itemVariants} className="glass-panel rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden group">
+              <div className="glass-panel rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-br from-accent/[0.02] via-transparent to-primary/[0.02] pointer-events-none" />
                 <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
                   <BarChart3 size={80} className="text-accent" />
@@ -252,10 +232,10 @@ export default function AnalyticsPage() {
                   <span>18:00</span>
                   <span>23:59</span>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Task Category Distribution */}
-              <motion.div variants={itemVariants} className="glass-panel rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden">
+              <div className="glass-panel rounded-[3rem] p-12 border border-white/5 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
                 
                 <div className="flex items-center justify-between mb-12 relative z-10">
@@ -307,17 +287,17 @@ export default function AnalyticsPage() {
                     <CategoryProgress label="Communication (Email/WA)" value={45} color="bg-primary" />
                     <CategoryProgress label="Operational Sync" value={25} color="bg-emerald-500" />
                     <CategoryProgress label="CRM & Intelligence" value={18} color="bg-blue-500" />
-                    <CategoryProgress label="Custom Paradigms" value={12} color="bg-purple-500" />
+                    <CategoryProgress label="Custom Paradigms" value={12} color="bg-accent" />
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
             {/* Right Column: Mini Stats & Reports */}
             <div className="lg:col-span-4 space-y-10">
               
               {/* Communication Breakdown */}
-              <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
+              <div className="glass-panel p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
                 <div className="flex items-center gap-3 mb-10">
                   <div className="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-xl shadow-primary/5">
                     <MessageSquare size={20} />
@@ -357,10 +337,10 @@ export default function AnalyticsPage() {
                     ))}
                   </AnimatePresence>
                 </div>
-              </motion.div>
+              </div>
 
               {/* Performance Reports List */}
-              <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
+              <div className="glass-panel p-10 rounded-[2.5rem] border border-white/5 shadow-2xl">
                 <div className="flex items-center gap-3 mb-10">
                   <div className="w-11 h-11 rounded-2xl bg-accent/10 border border-accent/20 flex items-center justify-center text-accent shadow-xl shadow-accent/5">
                     <Activity size={20} />
@@ -380,10 +360,10 @@ export default function AnalyticsPage() {
                   Compile Full Dossier
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </motion.button>
-              </motion.div>
+              </div>
 
               {/* Efficiency Metric */}
-              <motion.div variants={itemVariants} className="glass-panel p-10 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/[0.05] to-transparent border border-emerald-500/20 shadow-2xl relative overflow-hidden group">
+              <div className="glass-panel p-10 rounded-[2.5rem] bg-gradient-to-br from-emerald-500/[0.05] to-transparent border border-emerald-500/20 shadow-2xl relative overflow-hidden group">
                 <div className="absolute -top-10 -right-10 w-40 h-40 bg-emerald-500/10 blur-[60px] rounded-full pointer-events-none group-hover:bg-emerald-500/15 transition-all duration-700" />
                 <div className="flex items-center justify-between mb-8 relative z-10">
                   <div className="flex items-center gap-3">
@@ -397,11 +377,11 @@ export default function AnalyticsPage() {
                 <p className="text-xs text-slate-500 font-medium leading-relaxed relative z-10">
                   Neural logic efficiency has improved by <span className="text-emerald-500 font-bold">14.2%</span> compared to the previous cycle through autonomous self-reflection and temporal prophecy correction algorithms.
                 </p>
-              </motion.div>
+              </div>
             </div>
           </div>
         )}
-      </motion.div>
+      </div>
     </DashboardLayout>
   );
 }
@@ -411,14 +391,14 @@ function AnalyticsStatCard({ label, value, trend, isUp, icon, color, subtext }: 
     primary: "from-primary/20 via-primary/5 to-transparent text-primary border-primary/20",
     emerald: "from-emerald-500/20 via-emerald-500/5 to-transparent text-emerald-500 border-emerald-500/20",
     blue: "from-blue-500/20 via-blue-500/5 to-transparent text-blue-500 border-blue-500/20",
-    purple: "from-purple-500/20 via-purple-500/5 to-transparent text-purple-500 border-purple-500/20",
+    accent: "from-accent/20 via-accent/5 to-transparent text-accent border-accent/20",
   };
 
   const glows: any = {
     primary: "shadow-primary/10 group-hover:shadow-primary/20",
     emerald: "shadow-emerald-500/10 group-hover:shadow-emerald-500/20",
     blue: "shadow-blue-500/10 group-hover:shadow-blue-500/20",
-    purple: "shadow-purple-500/10 group-hover:shadow-purple-500/20",
+    accent: "shadow-accent/10 group-hover:shadow-accent/20",
   };
 
   return (
