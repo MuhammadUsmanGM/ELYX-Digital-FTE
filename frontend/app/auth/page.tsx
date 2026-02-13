@@ -25,6 +25,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { toast } from "react-hot-toast";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -330,10 +331,20 @@ export default function AuthPage() {
               <button 
                 type="submit"
                 disabled={loading}
-                className="w-full btn-premium-primary !py-5 !rounded-2xl shadow-xl shadow-primary/10 flex items-center justify-center gap-4 group mt-4"
+                className="w-full btn-premium-primary !py-5 !rounded-2xl shadow-xl shadow-primary/10 flex items-center justify-center gap-4 group mt-4 h-[64px]"
               >
                 {loading ? (
-                  <Loader2 className="animate-spin" size={20} />
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-4"
+                  >
+                    <Loader2 className="animate-spin text-white" size={20} />
+                    <span className="tracking-[.3em] font-outfit text-[10px] font-black uppercase flex items-center">
+                      {isLogin ? "Synchronizing Neural Keys" : "Provisioning Identity"}
+                      <LoadingDots />
+                    </span>
+                  </motion.div>
                 ) : (
                   <>
                     <span className="tracking-[.3em] font-outfit text-xs font-black uppercase">{isLogin ? "Synchronize" : "Create Node"}</span>

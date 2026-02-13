@@ -19,6 +19,7 @@ import {
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchDashboardData, fetchConsciousnessHistory } from "@/lib/api";
 import { ConsciousnessState, ConsciousnessHistory } from "@/lib/types";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function ConsciousnessPage() {
   const [state, setState] = useState<ConsciousnessState | null>(null);
@@ -84,7 +85,7 @@ export default function ConsciousnessPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center p-40 gap-4">
             <Loader2 size={48} className="text-primary animate-spin" />
-            <p className="text-slate-500 font-bold">Synchronizing cognitive state...</p>
+            <p className="text-slate-500 font-bold flex items-center">Synchronizing cognitive state<LoadingDots /></p>
           </div>
         ) : (
           <>

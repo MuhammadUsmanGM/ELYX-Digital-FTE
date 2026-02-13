@@ -21,6 +21,7 @@ import {
 import { fetchCommunications } from "@/lib/api";
 import { Communication, Message } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function CommunicationsPage() {
   const [comms, setComms] = useState<Communication[]>([]);
@@ -194,8 +195,9 @@ export default function CommunicationsPage() {
                     </button>
                   </div>
                   <div className="mt-3 flex items-center justify-between px-2">
-                     <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter">
-                       ELYX is drafting a suggested response in the background...
+                     <p className="text-[10px] text-slate-600 font-bold uppercase tracking-tighter flex items-center">
+                       ELYX is drafting a suggested response in the background
+                       <LoadingDots />
                      </p>
                      <div className="flex items-center gap-1">
                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchTeamMembers, deleteTeamMember } from "@/lib/api";
+import LoadingDots from "@/components/LoadingDots";
 
 interface TeamMember {
   id: string;
@@ -113,7 +114,7 @@ export default function UsersPage() {
                 <div className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse" />
                 <BrainCircuit size={64} className="text-primary animate-pulse relative" />
               </div>
-              <p className="text-slate-500 font-black tracking-[0.3em] uppercase animate-pulse">Syncing Team Metadata...</p>
+              <p className="text-slate-500 font-black tracking-[0.3em] uppercase flex items-center">Syncing Team Metadata<LoadingDots /></p>
             </div>
           ) : (
             <>

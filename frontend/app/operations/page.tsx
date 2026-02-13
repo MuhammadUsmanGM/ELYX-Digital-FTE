@@ -22,6 +22,7 @@ import {
 import { fetchTasks, fetchApprovals } from "@/lib/api";
 import { Task, ApprovalRequest } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function OperationsPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -144,7 +145,7 @@ export default function OperationsPage() {
             {loading ? (
               <div className="glass-panel rounded-3xl p-20 flex flex-col items-center justify-center gap-4">
                 <Loader2 size={40} className="text-primary animate-spin" />
-                <p className="text-slate-500 font-bold">Synchronizing metadata...</p>
+                <p className="text-slate-500 font-bold flex items-center">Synchronizing metadata<LoadingDots /></p>
               </div>
             ) : (
               <div className="space-y-4">

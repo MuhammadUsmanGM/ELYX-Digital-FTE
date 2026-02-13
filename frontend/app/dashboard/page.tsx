@@ -23,6 +23,7 @@ import { fetchDashboardData, fetchTasks, fetchApprovals } from "@/lib/api";
 import { DashboardData, Task, ApprovalRequest } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "react-hot-toast";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -85,10 +86,22 @@ export default function DashboardPage() {
              <button 
                onClick={() => loadDashboard(true)}
                disabled={refreshing}
-               className="btn-premium-primary !px-6 !py-4 shadow-[0_0_30px_rgba(6,182,212,0.2)] hover:shadow-[0_0_50px_rgba(6,182,212,0.4)] transition-all group"
+               className="btn-premium-primary !px-6 !py-4 shadow-[0_0_30px_rgba(6,182,212,0.2)] hover:shadow-[0_0_50px_rgba(6,182,212,0.4)] transition-all group min-w-[200px]"
              >
-               {refreshing ? <RefreshCw size={18} className="animate-spin" /> : <Zap size={18} className="group-hover:fill-current" />}
-               Sync Neural Core
+               {refreshing ? (
+                 <div className="flex items-center gap-1">
+                   <RefreshCw size={16} className="animate-spin text-white mr-2" />
+                   <span className="text-[10px] font-black uppercase tracking-[0.2em] font-outfit flex items-center">
+                     Handshake
+                     <LoadingDots />
+                   </span>
+                 </div>
+               ) : (
+                 <>
+                   <Zap size={18} className="group-hover:fill-current transition-colors" />
+                   <span className="font-outfit text-xs font-black uppercase tracking-widest">Sync Neural Core</span>
+                 </>
+               )}
              </button>
           </div>
         </div>
@@ -152,7 +165,7 @@ export default function DashboardPage() {
                {loading ? (
                  <div className="flex flex-col items-center justify-center h-48 gap-4">
                    <Loader2 size={32} className="text-primary animate-spin" />
-                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Mapping Neural Topography</p>
+                   <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em] flex items-center">Mapping Neural Topography<LoadingDots /></p>
                  </div>
                ) : (
                  <div className="relative h-32 flex items-end gap-1.5 px-2 mb-6">
@@ -203,7 +216,7 @@ export default function DashboardPage() {
                  {loading ? (
                     <div className="flex flex-col items-center justify-center py-10 opacity-30">
                        <Loader2 size={32} className="animate-spin mb-2" />
-                       <span className="text-[10px] font-black tracking-widest uppercase">Fetching Logs</span>
+                       <span className="text-[10px] font-black tracking-widest uppercase flex items-center">Fetching Logs<LoadingDots /></span>
                     </div>
                  ) : (
                     <>

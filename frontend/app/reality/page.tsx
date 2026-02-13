@@ -23,6 +23,7 @@ import {
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchRealityStatus, fetchRealityScenarios } from "@/lib/api";
 import { RealityStatus, RealityScenario } from "@/lib/types";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function RealityPage() {
   const [status, setStatus] = useState<RealityStatus | null>(null);
@@ -97,7 +98,7 @@ export default function RealityPage() {
              >
                <span className="relative z-10 flex items-center gap-2">
                  {simulating ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-                 {simulating ? "Projecting Timelines..." : "Initiate Causal Projection"}
+                  {simulating ? <span className="flex items-center">Projecting Timelines<LoadingDots /></span> : "Initiate Causal Projection"}
                </span>
                <div className="absolute inset-0 bg-accent/10 opacity-0 group-hover:opacity-100 transition-opacity" />
              </button>
@@ -111,8 +112,8 @@ export default function RealityPage() {
               <Atom size={40} className="text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" />
             </div>
             <div className="text-center space-y-2">
-              <p className="text-slate-200 font-black uppercase tracking-[0.4em] text-sm animate-pulse">Synchronizing Reality Anchors</p>
-              <p className="text-slate-500 text-xs font-mono">Collapsing probability waves...</p>
+               <p className="text-slate-200 font-black uppercase tracking-[0.4em] text-sm flex items-center">Synchronizing Reality Anchors<LoadingDots /></p>
+               <p className="text-slate-500 text-xs font-mono flex items-center">Collapsing probability waves<LoadingDots /></p>
             </div>
           </div>
         ) : (

@@ -23,6 +23,7 @@ import {
   Radio
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import LoadingDots from "@/components/LoadingDots";
 
 interface SecurityLog {
   id: string;
@@ -132,7 +133,7 @@ export default function SecurityPage() {
             </div>
             <div className="text-center space-y-2">
               <p className="text-slate-200 font-black uppercase tracking-[0.3em] text-sm">Initializing Defensive Layers</p>
-              <p className="text-slate-500 text-xs font-mono">Quantum Key Exchange in progress...</p>
+              <p className="text-slate-500 text-xs font-mono flex items-center">Quantum Key Exchange in progress<LoadingDots /></p>
             </div>
           </div>
         ) : (

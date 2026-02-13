@@ -20,6 +20,7 @@ import {
   Loader2
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import LoadingDots from "@/components/LoadingDots";
 
 interface Endpoint {
   id: string;
@@ -351,7 +352,7 @@ print(response.json())`;
                           <code>{testResult}</code>
                        </pre>
                      ) : (
-                       <p className="text-slate-700 italic">No request executed yet. System idle...</p>
+                        <p className="text-slate-700 italic flex items-center">No request executed yet. System idle<LoadingDots /></p>
                      )}
                   </div>
                </div>

@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchAnalytics } from "@/lib/api";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
@@ -85,7 +86,7 @@ export default function AnalyticsPage() {
             <button 
               onClick={loadAnalytics}
               disabled={refreshing}
-              className="p-4 bg-slate-900 border border-card-border rounded-2xl text-slate-400 hover:text-primary transition-all active:scale-95"
+              className="p-4 bg-slate-900 border border-card-border rounded-2xl text-slate-400 hover:text-primary transition-all active:scale-95 flex items-center justify-center min-w-[50px]"
             >
               {refreshing ? <Loader2 size={18} className="animate-spin" /> : <RefreshCw size={18} />}
             </button>
@@ -102,7 +103,7 @@ export default function AnalyticsPage() {
               <div className="absolute inset-0 bg-primary/20 blur-3xl animate-pulse" />
               <Activity size={64} className="text-primary animate-pulse relative" />
             </div>
-            <p className="text-slate-500 font-black tracking-[0.3em] uppercase animate-pulse">Synthesizing Data Streams...</p>
+            <p className="text-slate-500 font-black tracking-[0.3em] uppercase flex items-center">Synthesizing Data Streams<LoadingDots /></p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">

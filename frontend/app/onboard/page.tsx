@@ -18,13 +18,15 @@ import {
   Globe2,
   Database,
   Terminal,
-  Unplug
+  Unplug,
+  Loader2
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { saveOnboardingData } from "@/lib/api";
 import { toast } from "react-hot-toast";
+import LoadingDots from "@/components/LoadingDots";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -268,7 +270,14 @@ export default function OnboardingPage() {
            </button>
            <div className="flex items-center gap-4">
              {loading ? (
-                <div className="flex items-center gap-3 text-xs font-black uppercase text-primary tracking-widest"><Unplug className="animate-pulse" size={18} /> Syncing...</div>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="flex items-center gap-4 text-xs font-black uppercase text-primary tracking-[0.25em] font-outfit"
+                >
+                  <Loader2 className="animate-spin" size={20} />
+                  <span className="flex items-center">Calibrating Neural Pathways<LoadingDots /></span>
+                </motion.div>
              ) : (
                 <button onClick={handleNext} className="btn-premium-primary !px-10 !py-4 shadow-[0_20px_40px_rgba(6,182,212,0.15)] group">
                   <span className="tracking-[0.25em] text-xs font-black uppercase">{currentStep === 4 ? "ESTABLISH LINK" : "CONTINUE"}</span>

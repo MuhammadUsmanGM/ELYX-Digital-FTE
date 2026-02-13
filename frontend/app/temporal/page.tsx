@@ -19,6 +19,7 @@ import {
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchTemporalTasks } from "@/lib/api";
 import { TemporalTask } from "@/lib/types";
+import LoadingDots from "@/components/LoadingDots";
 
 export default function TemporalPage() {
   const [tasks, setTasks] = useState<TemporalTask[]>([]);
@@ -80,7 +81,7 @@ export default function TemporalPage() {
         {loading ? (
           <div className="flex flex-col items-center justify-center p-40 gap-4">
             <Loader2 size={48} className="text-primary animate-spin" />
-            <p className="text-slate-500 font-bold">Synchronizing clocks...</p>
+            <p className="text-slate-500 font-bold flex items-center">Synchronizing clocks<LoadingDots /></p>
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
