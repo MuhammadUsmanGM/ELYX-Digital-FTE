@@ -1,6 +1,5 @@
 <div align="center">
   <img src="frontend/public/logo.png" alt="ELYX Logo" width="120" />
-  <h1>ELYX NEURAL</h1>
   <p><strong>The Autonomous AI Employee Workforce for Strategic Sovereignty.</strong></p>
 
   [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
