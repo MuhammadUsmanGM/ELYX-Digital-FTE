@@ -24,6 +24,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -68,17 +69,23 @@ export default function AuthPage() {
     if (!isLogin) {
       const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).{8,}$/;
       if (!passwordRegex.test(password)) {
-        setError("Security key must be 8+ characters with uppercase, lowercase, numbers, and symbols.");
+        const msg = "Security key must be 8+ characters with uppercase, lowercase, numbers, and symbols.";
+        setError(msg);
+        toast.error(msg);
         setLoading(false);
         return;
       }
       if (password !== confirmPassword) {
-        setError("Neural keys do not match. Please verify your security sequence.");
+        const msg = "Neural keys do not match. Please verify your security sequence.";
+        setError(msg);
+        toast.error(msg);
         setLoading(false);
         return;
       }
       if (!agreed) {
-        setError("You must accept the Sovereign Intelligence Directives.");
+        const msg = "You must accept the Sovereign Intelligence Directives.";
+        setError(msg);
+        toast.error(msg);
         setLoading(false);
         return;
       }
@@ -88,6 +95,7 @@ export default function AuthPage() {
       if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        toast.success("Authentication sequence successful. Welcome back.");
       } else {
         const { error } = await supabase.auth.signUp({ 
           email, 
@@ -99,11 +107,15 @@ export default function AuthPage() {
           }
         });
         if (error) throw error;
-        alert("Verification sequence initiated. Please check your inbox.");
+        toast.success("Verification sequence initiated. Please check your inbox.", {
+          duration: 6000
+        });
       }
       router.push("/dashboard");
     } catch (err: any) {
-      setError(err.message || "Neural authentication failed. Access denied.");
+      const msg = err.message || "Neural authentication failed. Access denied.";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -114,7 +126,7 @@ export default function AuthPage() {
       const { error } = await supabase.auth.signInWithOAuth({ provider });
       if (error) throw error;
     } catch (err: any) {
-      setError(`OAuth relay failed: ${err.message}`);
+      toast.error(`OAuth relay failed: ${err.message}`);
     }
   };
 

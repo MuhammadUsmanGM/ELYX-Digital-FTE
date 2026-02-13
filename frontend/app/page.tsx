@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "react-hot-toast";
 import {
   ShieldCheck, 
   ArrowRight, 
@@ -149,7 +150,18 @@ export default function LandingPage() {
                 Access Dashboard
                 <ArrowRight size={18} />
               </Link>
-              <button className="btn-premium-secondary w-full sm:w-auto !px-8 !py-5 !text-[13px] uppercase tracking-widest font-outfit">
+              <button 
+                onClick={() => toast.success("Neural sequence initiated. Environment loading in background.", {
+                  icon: "🚀",
+                  style: {
+                    borderRadius: '1rem',
+                    background: '#020617',
+                    color: '#fff',
+                    border: '1px solid rgba(6, 182, 212, 0.2)'
+                  }
+                })}
+                className="btn-premium-secondary w-full sm:w-auto !px-8 !py-5 !text-[13px] uppercase tracking-widest font-outfit"
+              >
                 System Demo
               </button>
             </div>

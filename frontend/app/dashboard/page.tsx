@@ -22,6 +22,7 @@ import {
 import { fetchDashboardData, fetchTasks, fetchApprovals } from "@/lib/api";
 import { DashboardData, Task, ApprovalRequest } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
+import { toast } from "react-hot-toast";
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
@@ -41,8 +42,15 @@ export default function DashboardPage() {
       setData(dashData);
       setTasks(taskList);
       setApprovals(approvalList);
+      if (isRefresh) {
+        toast.success("Neural Core Synchronized", {
+          id: 'sync-success',
+          icon: '⚡',
+        });
+      }
     } catch (error) {
       console.error("Dashboard error:", error);
+      toast.error("Handshake Failed: Neural Core unreachable");
     } finally {
       setLoading(false);
       setRefreshing(false);

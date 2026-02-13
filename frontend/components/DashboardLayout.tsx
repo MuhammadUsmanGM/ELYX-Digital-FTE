@@ -30,6 +30,7 @@ import { fetchDashboardData, fetchOnboardingStatus } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
 export default function SidebarLayout({
   children,
@@ -91,6 +92,7 @@ export default function SidebarLayout({
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    toast.success("Neural Session Terminated. Returning to Baseline.");
     router.push("/auth");
   };
 

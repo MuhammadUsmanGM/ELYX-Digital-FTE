@@ -24,6 +24,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import Image from "next/image";
 import { saveOnboardingData } from "@/lib/api";
+import { toast } from "react-hot-toast";
 
 type Step = 1 | 2 | 3 | 4;
 
@@ -52,7 +53,29 @@ export default function OnboardingPage() {
   }, [router]);
 
   const handleNext = () => {
-    if (currentStep < 4) setCurrentStep((prev) => (prev + 1) as Step);
+    if (currentStep === 2 && !anthropicKey) {
+      toast.error("Please provide a valid Anthropic API Security Token.");
+      return;
+    }
+    if (currentStep === 3 && selectedChannels.length === 0) {
+      toast.error("At least one communication vector must be synchronized.");
+      return;
+    }
+
+    if (currentStep < 4) {
+      setCurrentStep((prev) => (prev + 1) as Step);
+      toast.success(`Module ${currentStep} Calibrated`, {
+        icon: '⚙️',
+        style: {
+          background: '#020617',
+          color: '#fff',
+          border: '1px solid rgba(6, 182, 212, 0.2)',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          textTransform: 'uppercase'
+        }
+      });
+    }
     else finishOnboarding();
   };
 
@@ -61,9 +84,17 @@ export default function OnboardingPage() {
   };
 
   const toggleChannel = (id: string) => {
+    const isSelecting = !selectedChannels.includes(id);
     setSelectedChannels(prev => 
       prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
     );
+    
+    if (isSelecting) {
+      toast.success(`Channel Enabled: ${id}`, {
+        duration: 2000,
+        position: 'bottom-center'
+      });
+    }
   };
 
   const finishOnboarding = async () => {
@@ -78,12 +109,17 @@ export default function OnboardingPage() {
         });
       }
       
+      toast.success("Intelligence Link Established. Welcome to the Network.", {
+        duration: 4000
+      });
+
       setTimeout(() => {
         setLoading(false);
         router.push("/dashboard");
       }, 2500);
     } catch (error) {
        console.error("Onboarding failed", error);
+       toast.error("Handshake Failed: Persistence relay error.");
        setLoading(false);
     }
   };
