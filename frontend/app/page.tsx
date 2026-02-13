@@ -124,50 +124,58 @@ export default function LandingPage() {
       </nav>
 
       {/* 1. HERO SECTION */}
-      <section className="relative pt-24 pb-24 md:pt-24 md:pb-24 px-6">
-        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+      <section className="relative pt-40 pb-32 md:pt-48 md:pb-40 px-6">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
           <div className="text-left">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-primary/20 text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-10 animate-fade-in">
-              <Sparkles size={14} className="text-emerald-400 animate-pulse" />
-              The Future of Automated Communication
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[9px] font-bold uppercase tracking-[0.4em] text-primary mb-8">
+              <Sparkles size={12} className="text-emerald-400 animate-pulse" />
+              Sovereign Intelligence Engine
             </div>
             
-            <h1 className="text-6xl md:text-8xl font-black tracking-tight mb-8 leading-[0.9] text-white">
-              Meet Your <br />
-              <span className="emerald-blue-text">AI Employee.</span>
+            <h1 className="text-7xl md:text-[6.5rem] font-black tracking-tight mb-8 leading-[0.85] text-white font-outfit">
+              Scale With <br />
+              <span className="emerald-blue-text italic text-[1.125em]">Autonomy.</span>
             </h1>
             
             <p className="text-xl text-slate-400 max-w-xl mb-12 font-medium leading-relaxed">
-              ELYX is a high-fidelity digital entity that handles your most complex business interactions across LinkedIn, WhatsApp, and Email—autonomously.
+              ELYX is a high-fidelity digital employee workforce designed to handle your business communications with absolute strategic sovereignty.
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center gap-5">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
               <Link 
                  href="/dashboard" 
-                 className="btn-premium-primary w-full sm:w-auto !px-10 !py-5 !text-base"
+                 className="btn-premium-primary w-full sm:w-auto !px-10 !py-5 !text-[13px] uppercase tracking-widest font-outfit"
               >
-                View Dashboard
-                <ArrowRight size={20} />
+                Access Dashboard
+                <ArrowRight size={18} />
               </Link>
-              <button className="btn-premium-secondary w-full sm:w-auto !px-8 !py-5 !text-base">
-                Start Free Trial
-              </button>
-              <button className="text-slate-500 hover:text-white transition-colors text-[11px] font-black uppercase tracking-widest hidden lg:block">
-                Learn More
+              <button className="btn-premium-secondary w-full sm:w-auto !px-8 !py-5 !text-[13px] uppercase tracking-widest font-outfit">
+                System Demo
               </button>
             </div>
           </div>
 
           <div className="relative">
-            <div className="absolute -inset-10 bg-primary/10 blur-[120px] rounded-full animate-pulse-slow" />
-            <div className="relative rounded-[3rem] p-2 bg-gradient-to-br from-card-border/50 to-transparent border border-card-border shadow-2xl overflow-hidden">
-               <Image 
-                 src="/ai_employee_hero.png" 
-                 alt="Professional AI Interface" 
-                 width={1200} 
-                 height={800} 
-                 className="rounded-[2.5rem] object-cover"
-               />
+            <div className="absolute -inset-20 bg-primary/20 blur-[130px] rounded-full pulse-soft" />
+            <div className="relative rounded-[3rem] p-3 bg-gradient-to-br from-white/10 to-transparent border border-white/5 shadow-2xl overflow-hidden float">
+               <div className="relative aspect-[4/3] w-full rounded-[2.5rem] overflow-hidden grayscale-[0.2] hover:grayscale-0 transition-all duration-700">
+                  <Image 
+                    src="/ai_employee_hero.png" 
+                    alt="Professional AI Interface" 
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent" />
+               </div>
+               
+               {/* Floating Stats Label */}
+               <div className="absolute top-10 -right-4 glass-panel p-4 rounded-2xl border-white/10 float" style={{ animationDelay: '-2s' }}>
+                  <div className="flex items-center gap-3">
+                     <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                     <span className="text-[10px] font-bold uppercase tracking-widest font-outfit">Neural Stability: 99.8%</span>
+                  </div>
+               </div>
             </div>
           </div>
         </div>
