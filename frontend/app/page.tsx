@@ -224,63 +224,59 @@ export default function LandingPage() {
       </section>
 
       {/* 3. HOW IT WORKS SECTION */}
-      <section id="how-it-works" className="py-32 px-6 bg-[#020617]/50 relative">
+      <section id="how-it-works" className="py-32 px-6 bg-white/[0.02] relative border-y border-white/5">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-20 items-center">
+          <div className="grid lg:grid-cols-2 gap-24 items-center">
             <div>
-              <h2 className="text-4xl md:text-6xl font-black mb-8 tracking-tighter">Simple 4-Step <br /><span className="emerald-blue-text">Neural Integration</span></h2>
+              <h2 className="text-4xl md:text-6xl font-black mb-10 tracking-tight font-outfit">Sovereign <br /><span className="emerald-blue-text italic text-5xl md:text-7xl">Neural Routing</span></h2>
               <div className="space-y-12">
                 {[
-                  { step: "A", title: "Channel Ingestion", desc: "User sends a request via LinkedIn, WhatsApp, or Email to your system." },
-                  { step: "B", title: "Neural Analysis", desc: "ELYX processes intent, identifies priority, and retrieves relevant context." },
-                  { step: "C", title: "Autonomous Synthesis", desc: "AI generates a professional, brand-aligned response based on your logic." },
-                  { step: "D", title: "Instant Execution", desc: "Verified response is sent back instantly through the origin channel." }
+                  { step: "01", title: "Omni-Channel Ingestion", desc: "Sensory Watchers monitor all active communication vectors simultaneously." },
+                  { step: "02", title: "High-Fidelity Reasoning", desc: "Advanced logic engines analyze intent and prioritize tactical execution." },
+                  { step: "03", title: "Synthetic Synthesis", desc: "ELYX generates brand-coherent responses aligned with your corporate handbook." },
+                  { step: "04", title: "Autonomous Execution", desc: "Verified protocols are instantly executed across original communication channels." }
                 ].map((item, i) => (
                   <div key={i} className="flex gap-8 group">
-                    <div className="flex-shrink-0 w-12 h-12 rounded-2xl bg-slate-900 border border-card-border flex items-center justify-center font-black text-primary group-hover:emerald-blue-glow transition-all">
+                    <div className="flex-shrink-0 w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center font-black text-primary group-hover:emerald-blue-glow transition-all duration-500 font-outfit text-sm">
                       {item.step}
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold mb-2">{item.title}</h4>
-                      <p className="text-slate-500 text-sm leading-relaxed">{item.desc}</p>
+                      <h4 className="text-xl font-bold mb-2 font-outfit transition-colors group-hover:text-primary">{item.title}</h4>
+                      <p className="text-slate-500 text-sm leading-relaxed max-w-md font-medium">{item.desc}</p>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             <div className="relative">
-              <div className="absolute -inset-10 bg-emerald-500/5 blur-[80px] rounded-full" />
-              <div className="glass-panel rounded-[3rem] p-10 relative border-primary/20">
-                <div className="flex items-center gap-2 mb-8">
-                   <div className="flex gap-1.5">
-                      <div className="w-3 h-3 rounded-full bg-red-500/20" />
-                      <div className="w-3 h-3 rounded-full bg-amber-500/20" />
-                      <div className="w-3 h-3 rounded-full bg-emerald-500/20" />
-                   </div>
-                   <div className="ml-4 px-3 py-1 bg-slate-950 rounded-lg text-[10px] font-mono text-slate-500">ELYX_PROCESS_DASHBOARD</div>
+              <div className="absolute -inset-10 bg-primary/10 blur-[100px] rounded-full pulse-soft" />
+              <div className="glass-panel rounded-[3rem] p-10 relative border-white/10 overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4">
+                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
                 </div>
-                <div className="space-y-6">
-                   <div className="p-4 rounded-2xl bg-slate-950 border border-emerald-500/10 flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                        <MessageSquare className="text-emerald-400" size={20} />
-                        <span className="text-xs font-bold">New WA msg from John D.</span>
-                     </div>
-                     <span className="text-[10px] font-black text-emerald-500">INGRESS</span>
+                <div className="flex items-center gap-2 mb-10 pb-6 border-b border-white/5">
+                   <div className="flex gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
                    </div>
-                   <div className="p-4 rounded-2xl bg-slate-950 border border-primary/10 flex items-center justify-between">
-                     <div className="flex items-center gap-4">
-                        <Cpu className="text-primary" size={20} />
-                        <span className="text-xs font-bold">Neural Mapping Path #42</span>
+                   <div className="ml-4 px-4 py-1 bg-white/5 rounded-full text-[9px] font-bold tracking-[0.2em] text-slate-400">NEURAL_CORE_V4</div>
+                </div>
+                <div className="space-y-5">
+                   {[
+                     { icon: <MessageSquare size={16} />, text: "Incoming WhatsApp: John Smith", tag: "INGRESS", color: "emerald-500" },
+                     { icon: <Cpu size={16} />, text: "Reasoning Layer: Intent Mapping", tag: "THOUGHT", color: "primary" },
+                     { icon: <Sparkles size={16} />, text: "Synthetic Response Synthesis", tag: "ACTIVE", color: "primary", pulse: true },
+                     { icon: <CheckCircle2 size={16} />, text: "Protocol Authenticated", tag: "DONE", color: "emerald-500" }
+                   ].map((log, i) => (
+                     <div key={i} className={`p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between group-hover:translate-x-1 transition-transform duration-500 ${log.pulse ? 'animate-pulse bg-primary/5 border-primary/20' : ''}`}>
+                       <div className="flex items-center gap-4">
+                          <div className={`text-${log.color}`}>{log.icon}</div>
+                          <span className={`text-[11px] font-bold ${log.pulse ? 'text-primary' : 'text-slate-300'}`}>{log.text}</span>
+                       </div>
+                       <span className={`text-[9px] font-black text-${log.color} tracking-widest opacity-60`}>{log.tag}</span>
                      </div>
-                     <span className="text-[10px] font-black text-primary">ANALYSIS</span>
-                   </div>
-                   <div className="p-4 rounded-2xl bg-primary/5 border border-primary/20 flex items-center justify-between animate-pulse">
-                     <div className="flex items-center gap-4">
-                        <Sparkles className="text-primary" size={20} />
-                        <span className="text-xs font-bold">Generating Response...</span>
-                     </div>
-                     <span className="text-[10px] font-black text-primary">SYNTHESIS</span>
-                   </div>
+                   ))}
                 </div>
               </div>
             </div>
