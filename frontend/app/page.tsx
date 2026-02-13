@@ -182,34 +182,42 @@ export default function LandingPage() {
       </section>
 
       {/* 2. KEY FEATURES SECTION */}
-      <section id="features" className="py-32 px-6 border-t border-card-border/30">
+      <section id="features" className="py-32 px-6 border-t border-white/5 relative overflow-hidden">
+        {/* Subtle background glow for depth */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 blur-[150px] rounded-full pointer-events-none" />
+        
         <div className="max-w-7xl mx-auto text-center mb-24">
-          <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tighter">Core Capabilities</h2>
+          <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight font-outfit">Core <span className="emerald-blue-text italic">Capabilities</span></h2>
           <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto tracking-tight">Harness the power of high-fidelity neural processing to scale your business operations instantly.</p>
         </div>
 
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
           {[
             {
-              icon: <div className="p-4 bg-emerald-500/10 rounded-2xl border border-emerald-500/20 text-emerald-400"><Activity size={32} /></div>,
-              title: "Multi-Channel Sync",
-              desc: "Handles WhatsApp, LinkedIn, and Email simultaneously with absolute contextual coherence and zero downtime."
+              icon: <Activity size={32} />,
+              title: "Unified Intelligence Sync",
+              desc: "Elyx manages WhatsApp, LinkedIn, and Email simultaneously with absolute contextual coherence and zero tactical downtime.",
+              color: "emerald-400"
             },
             {
-              icon: <div className="p-4 bg-primary/10 rounded-2xl border border-primary/20 text-primary"><BrainCircuit size={32} /></div>,
-              title: "Intelligent Processing",
-              desc: "Understands and responds to complex semantic requests, analyzing sentiment and urgency in real-time."
+              icon: <BrainCircuit size={32} />,
+              title: "Semantic Reasoning",
+              desc: "Advanced logic engines that analyze intent, sentiment, and urgency in real-time, delivering human-level decision accuracy.",
+              color: "primary"
             },
             {
-              icon: <div className="p-4 bg-cyan-500/10 rounded-2xl border border-cyan-500/20 text-cyan-400"><Clock size={32} /></div>,
-              title: "24/7 Availability",
-              desc: "An always-on digital employee that ensures every lead and client is engaged within milliseconds, 365 days a year."
+              icon: <Clock size={32} />,
+              title: "Perpetual Operation",
+              desc: "An always-on digital workforce that ensures every lead and client is engaged within milliseconds, 365 days a year without fatigue.",
+              color: "cyan-400"
             }
           ].map((feature, i) => (
-            <div key={i} className="glass-panel p-10 rounded-[2.5rem] group hover:border-primary/50 transition-all duration-500">
-              <div className="mb-8">{feature.icon}</div>
-              <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
-              <p className="text-slate-400 font-medium leading-relaxed">{feature.desc}</p>
+            <div key={i} className="glass-panel p-12 rounded-[3rem] group hover:border-primary/30 transition-all duration-700 hover:translate-y-[-8px]">
+              <div className={`mb-10 w-16 h-16 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-center text-${feature.color} group-hover:scale-110 transition-all duration-500 group-hover:emerald-blue-glow`}>
+                {feature.icon}
+              </div>
+              <h3 className="text-2xl font-bold mb-5 font-outfit group-hover:text-primary transition-colors">{feature.title}</h3>
+              <p className="text-slate-500 font-medium leading-[1.8] text-sm">{feature.desc}</p>
             </div>
           ))}
         </div>
