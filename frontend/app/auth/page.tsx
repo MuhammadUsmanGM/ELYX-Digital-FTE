@@ -42,25 +42,15 @@ export default function AuthPage() {
   const router = useRouter();
 
   useEffect(() => {
-    let isMounted = true;
-
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && isMounted) {
-        router.push("/dashboard");
-      }
-    };
-    checkUser();
-    
+    // Only show scan animation, don't check session here to avoid conflicts
     const timer = setTimeout(() => {
-      if (isMounted) setScanVisible(true);
+      setScanVisible(true);
     }, 1000);
 
     return () => {
-      isMounted = false;
       clearTimeout(timer);
     };
-  }, [router]);
+  }, []);
 
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,12 +83,17 @@ export default function AuthPage() {
     }
 
     try {
+      let session = null;
+      let userId = null;
+
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        session = data.session;
+        userId = data.user?.id;
         toast.success("Authentication sequence successful. Welcome back.");
       } else {
-        const { error } = await supabase.auth.signUp({ 
+        const { data, error } = await supabase.auth.signUp({ 
           email, 
           password,
           options: {
@@ -108,11 +103,21 @@ export default function AuthPage() {
           }
         });
         if (error) throw error;
-        toast.success("Verification sequence initiated. Please check your inbox.", {
-          duration: 6000
-        });
+        session = data.session;
+        userId = data.user?.id;
+        if (!session) {
+          toast.success("Verification sequence initiated. Please check your inbox.", {
+            duration: 6000
+          });
+        }
       }
-      router.push("/dashboard");
+      
+      if (session) {
+        // Give the storage adapter time to persist the session to cookies
+        await new Promise(resolve => setTimeout(resolve, 100));
+        // Force a full page reload to ensure middleware picks up the session
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
       const msg = err.message || "Neural authentication failed. Access denied.";
       setError(msg);
