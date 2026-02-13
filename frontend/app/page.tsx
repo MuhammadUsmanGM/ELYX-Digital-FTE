@@ -81,32 +81,43 @@ export default function LandingPage() {
       </div>
 
       {/* Navigation */}
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        scrolled ? "bg-[#020617]/80 backdrop-blur-xl border-b border-card-border py-2" : "py-3"
+      <nav className={`fixed top-0 w-full z-50 transition-all duration-700 ${
+        scrolled ? "bg-[#020617]/40 backdrop-blur-2xl border-b border-white/5 py-4" : "py-8"
       }`}>
         <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
-             <div className="relative w-10 h-10 transition-transform group-hover:scale-110">
+             <div className="relative w-8 h-8 transition-transform group-hover:scale-110 duration-500">
                <Image src="/icon.png" alt="ELYX Icon" fill className="object-contain" />
              </div>
-             <Image src="/text.png" alt="ELYX Logo" width={80} height={20} className="object-contain" />
+             <span className="text-2xl font-black tracking-tighter font-outfit">ELYX<span className="text-primary italic">.</span></span>
           </Link>
           
-          <div className="hidden lg:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-            <Link href="#features" className="hover:text-primary transition-colors">Capabilities</Link>
-            <Link href="#how-it-works" className="hover:text-primary transition-colors">Process</Link>
-            <Link href="#benefits" className="hover:text-primary transition-colors">Benefits</Link>
-            <Link href="#pricing" className="hover:text-primary transition-colors">Pricing</Link>
-            <Link href="#faq" className="hover:text-primary transition-colors">FAQ</Link>
+          <div className="hidden lg:flex items-center gap-10 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">
+            <Link href="#features" className="hover:text-primary transition-all duration-300 relative group">
+              Capabilities
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Link href="#how-it-works" className="hover:text-primary transition-all duration-300 relative group">
+              Process
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Link href="#benefits" className="hover:text-primary transition-all duration-300 relative group">
+              Benefits
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
+            </Link>
+            <Link href="#pricing" className="hover:text-primary transition-all duration-300 relative group">
+              Pricing
+              <span className="absolute -bottom-1 left-0 w-0 h-[1px] bg-primary transition-all group-hover:w-full"></span>
+            </Link>
           </div>
 
-          <div className="flex items-center gap-6">
-             <Link href="/dashboard" className="text-xs font-black uppercase tracking-widest hover:text-primary transition-colors hidden sm:block">Log In</Link>
+          <div className="flex items-center gap-8">
+             <Link href="/dashboard" className="text-[10px] font-bold uppercase tracking-[0.2em] hover:text-primary transition-colors hidden sm:block">Log In</Link>
              <Link 
                href="/dashboard" 
-               className="btn-premium-primary !px-8 !py-3 !text-[10px] !font-black uppercase tracking-[0.15em]"
+               className="btn-premium-primary !px-6 !py-2.5 !text-[9px] !font-bold uppercase tracking-[0.2em] shadow-lg shadow-primary/20"
              >
-               Launch Dashboard
+               Launch Platform
              </Link>
           </div>
         </div>
