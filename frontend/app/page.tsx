@@ -285,48 +285,42 @@ export default function LandingPage() {
       </section>
 
       {/* 4. BENEFITS SECTION */}
-      <section id="benefits" className="py-32 px-6 relative border-b border-card-border/30">
+      <section id="benefits" className="py-32 px-6 relative border-b border-white/5">
          <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-20 items-center">
              <div className="flex-1 space-y-12">
-                <h2 className="text-4xl md:text-5xl font-black tracking-tight">Exponential Business <br /><span className="emerald-blue-text">Benefits</span></h2>
-               <div className="grid gap-10">
-                  {[
-                    { title: "Velocity Scaling", desc: "Reduces response time from hours to minutes, ensuring 100% lead capture rate." },
-                    { title: "Infinite Concurrency", desc: "Handles multiple conversations simultaneously without any degradation in quality." },
-                    { title: "Brand Reliability", desc: "Maintains a consistent, professional brand voice across all digital environments." },
-                    { title: "Omnipresent Force", desc: "Operates around the clock, allowing your business to scale across time zones." }
-                  ].map((b, i) => (
-                    <div key={i} className="flex gap-6 items-start">
-                       <div className="p-3 bg-primary/10 rounded-xl text-primary"><CheckCircle2 size={24} /></div>
-                       <div>
-                          <h4 className="text-lg font-bold mb-2">{b.title}</h4>
-                          <p className="text-slate-500 text-sm leading-relaxed">{b.desc}</p>
-                       </div>
-                    </div>
-                  ))}
-               </div>
-            </div>
-            <div className="flex-1 flex justify-center">
-               <div className="grid grid-cols-2 gap-6 w-full max-w-md">
-                  <div className="p-8 rounded-3xl glass-panel text-center hover:border-primary/50 transition-colors">
-                     <div className="text-4xl font-black text-primary mb-2">98%</div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Eff. Gain</p>
-                  </div>
-                  <div className="p-8 rounded-3xl glass-panel text-center hover:border-emerald-500/50 transition-colors">
-                     <div className="text-4xl font-black text-emerald-400 mb-2">0ms</div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Latency</p>
-                  </div>
-                  <div className="p-8 rounded-3xl glass-panel text-center hover:border-cyan-500/50 transition-colors">
-                     <div className="text-4xl font-black text-cyan-400 mb-2">24/7</div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Uptime</p>
-                  </div>
-                  <div className="p-8 rounded-3xl glass-panel text-center hover:border-white/50 transition-colors">
-                     <div className="text-4xl font-black text-white mb-2">∞</div>
-                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Scale</p>
-                  </div>
-               </div>
-            </div>
-         </div>
+                 <h2 className="text-4xl md:text-6xl font-black tracking-tight font-outfit">Exponential Business <br /><span className="emerald-blue-text italic text-5xl md:text-7xl">Benefits</span></h2>
+                <div className="grid gap-10">
+                   {[
+                     { title: "Velocity Scaling", desc: "Reduces response time from hours to seconds, ensuring 100% lead capture rate across all active channels." },
+                     { title: "Infinite Concurrency", desc: "Handles thousands of complex conversations simultaneously without any degradation in reasoning quality." },
+                     { title: "Sovereign Reliability", desc: "Maintains a consistent, high-fidelity brand voice across all digital environments and localized contexts." }
+                   ].map((b, i) => (
+                     <div key={i} className="flex gap-6 items-start group">
+                        <div className="p-3 bg-primary/5 rounded-xl text-primary group-hover:scale-110 transition-all duration-500 shadow-sm border border-primary/10"><CheckCircle2 size={24} /></div>
+                        <div>
+                           <h4 className="text-xl font-bold mb-2 font-outfit group-hover:text-primary transition-colors">{b.title}</h4>
+                           <p className="text-slate-500 text-sm leading-relaxed max-w-md font-medium">{b.desc}</p>
+                        </div>
+                     </div>
+                   ))}
+                </div>
+             </div>
+             <div className="flex-1 flex justify-center">
+                <div className="grid grid-cols-2 gap-6 w-full max-w-md">
+                   {[
+                     { val: "98%", label: "Eff. Gain", color: "text-primary", border: "hover:border-primary/40" },
+                     { val: "0.4s", label: "Latency", color: "text-emerald-400", border: "hover:border-emerald-500/40" },
+                     { val: "24/7", label: "Uptime", color: "text-cyan-400", border: "hover:border-cyan-500/40" },
+                     { val: "∞", label: "Scale", color: "text-white", border: "hover:border-white/20" }
+                   ].map((stat, i) => (
+                     <div key={i} className={`p-8 rounded-[2.5rem] glass-panel text-center ${stat.border} transition-all duration-700 group hover:translate-y-[-5px]`}>
+                        <div className={`text-4xl font-black mb-3 font-outfit group-hover:scale-110 transition-transform duration-500 ${stat.color}`}>{stat.val}</div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{stat.label}</p>
+                     </div>
+                   ))}
+                </div>
+             </div>
+          </div>
       </section>
 
       {/* 5. SOCIAL PROOF SECTION */}
