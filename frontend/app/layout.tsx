@@ -19,8 +19,9 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "ELYX | Digital AI Employee",
-  description: "Advanced Neural-tier AI reasoning and autonomous task management.",
+  title: "ELYX | Autonomous Business Intelligence Core",
+  description: "The baseline for autonomous business sovereignty. Advanced Neural-tier AI reasoning and coordination for modern entities.",
+  keywords: ["AI Employee", "Autonomous Business", "Neural Intelligence", "ELYX", "Business Automation"],
   icons: {
     icon: "/icon.png",
   },
