@@ -1,12 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { ArrowLeft, FileText } from "lucide-react";
 
 export default function TermsAndConditions() {
+  const router = useRouter();
+  
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-300 py-20 px-6 selection:bg-primary selection:text-slate-950 relative overflow-hidden">
+    <div className="min-h-screen bg-[#020617] text-slate-300 py-20 px-6 selection:bg-primary selection:text-slate-950 relative overflow-hidden font-sans">
       {/* Premium Watermark */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden z-0 opacity-[0.03]">
         <Image 
@@ -19,16 +21,19 @@ export default function TermsAndConditions() {
       </div>
 
       <div className="max-w-3xl mx-auto relative z-10">
-        <Link href="/" className="inline-flex items-center gap-2 text-primary font-bold mb-12 hover:gap-3 transition-all">
-          <ArrowLeft size={20} />
-          Back to Reality
-        </Link>
+        <button 
+          onClick={() => router.back()} 
+          className="inline-flex items-center gap-3 text-primary font-bold mb-12 hover:gap-4 transition-all uppercase tracking-widest text-[10px] font-outfit"
+        >
+          <ArrowLeft size={16} />
+          Baseline Return
+        </button>
         
-        <div className="flex items-center gap-4 mb-8">
-           <div className="p-3 rounded-2xl bg-primary/10 text-primary border border-primary/20">
+        <div className="flex items-center gap-6 mb-12">
+           <div className="p-4 rounded-2xl bg-primary/5 text-primary border border-primary/10 shadow-lg shadow-primary/5">
               <FileText size={32} />
            </div>
-           <h1 className="text-5xl font-black text-slate-50 tracking-tight">Terms of Service</h1>
+           <h1 className="text-5xl md:text-6xl font-black text-slate-50 tracking-tighter font-outfit">Terms of <span className="emerald-blue-text italic text-4xl md:text-5xl">Service</span></h1>
         </div>
 
         <div className="space-y-8 leading-relaxed font-medium">

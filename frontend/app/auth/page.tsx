@@ -297,7 +297,7 @@ export default function AuthPage() {
                          {agreed ? <CheckSquare size={20} /> : <Square size={20} />}
                       </div>
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-left leading-relaxed font-outfit">
-                        I accept the <span className="text-slate-300 hover:text-primary transition-colors cursor-help italic">Neural Access Protocol</span> and <span className="text-slate-300 hover:text-primary transition-colors cursor-help italic">Privacy Directives</span>
+                        I accept the <Link href="/terms" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Neural Access Protocol</Link> and <Link href="/privacy" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Privacy Directives</Link>
                       </span>
                     </button>
                   </motion.div>
