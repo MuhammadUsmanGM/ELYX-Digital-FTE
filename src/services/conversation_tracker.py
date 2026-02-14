@@ -13,6 +13,7 @@ class ResponseType(Enum):
     ACTION_REQUEST = "ACTION_REQUEST"
     STATUS_UPDATE = "STATUS_UPDATE"
     CONFIRMATION = "CONFIRMATION"
+    FEED_POST = "FEED_POST"
 
 
 class Priority(Enum):

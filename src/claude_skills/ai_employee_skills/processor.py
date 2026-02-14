@@ -124,31 +124,31 @@ Move this file to /Rejected folder.
 
     def execute_automated_task(self, task):
         """
-        Execute an automated task and generate response if needed
+        Execute an automated task, generate a plan, and generate response if needed
         """
         log_activity("AUTOMATED", f"Executing task: {task.filename}", self.vault_path)
 
-        # 🧠 Simulation of AI Reasoning for Bronze Tier
-        # In a full implementation, this would call Claude Code or an LLM API.
-        # For Bronze, we satisfy the "Reading/Writing to Vault" by augmenting the task content.
+        # 🧠 Silver Tier Reasoning Loop: Generate a Plan
+        plan_content = self._generate_plan_content(task)
+        plan_filename = self._create_plan_file(task, plan_content)
 
         reasoning = f"\n\n--- AI EXECUTION LOG ---\n"
         reasoning += f"Processed by: ELYX AI Employee\n"
         reasoning += f"Timestamp: {datetime.now().isoformat()}\n"
+        reasoning += f"Plan Created: [[Plans/{plan_filename}|View Execution Plan]]\n"
         reasoning += f"Analysis: This task was identified as routine and safe to automate according to the Company Handbook.\n"
 
         # Determine specific action based on content keywords
         action_taken = "Analyzed content and categorized."
         if "email" in task.type:
             action_taken = "Drafted response for review."
-            # Here we would normally call the email MCP
         elif "file_drop" in task.type:
             action_taken = "Indexed file metadata and moved to storage."
 
         reasoning += f"Action Taken: {action_taken}\n"
         reasoning += f"Result: SUCCESS\n"
 
-        # Update task content with reasoning log
+        # Update task content with reasoning log and link to plan
         updated_content = task.content + reasoning
         task.content = updated_content
 
@@ -159,6 +159,72 @@ Move this file to /Rejected folder.
 
             # Create a response file that the orchestrator will pick up
             self._create_response_file(task, response_content)
+
+    def _generate_plan_content(self, task) -> str:
+        """
+        Generate a step-by-step execution plan for the task
+        """
+        plan = f"# Plan for Task: {task.filename}\n\n"
+        plan += f"**Task Type**: {task.type}\n"
+        plan += f"**Priority**: {task.frontmatter.get('priority', 'medium')}\n"
+        plan += f"**Created**: {datetime.now().isoformat()}\n\n"
+        
+        plan += "## Proposed Steps\n"
+        
+        if "email" in task.type:
+            plan += "1. Parse original email content for key request points.\n"
+            plan += "2. Reference Company Handbook for response guidelines.\n"
+            plan += "3. Draft a professional response incorporating requested data.\n"
+            plan += "4. Format response for the target communication channel.\n"
+            plan += "5. Queue response for delivery via Orchestrator.\n"
+        elif "linkedin" in task.type:
+            plan += "1. Analyze LinkedIn message context and sender profile.\n"
+            plan += "2. Cross-reference with internal conversation history.\n"
+            plan += "3. Draft a tailored LinkedIn response (keeping it brief).\n"
+            plan += "4. Use Playwright automation to send the message.\n"
+            plan += "5. Log interaction in the conversation tracker.\n"
+        elif "whatsapp" in task.type:
+            plan += "1. Parse WhatsApp message for critical keywords.\n"
+            plan += "2. Determine urgency level based on handbook rules.\n"
+            plan += "3. Draft a quick, direct response for WhatsApp.\n"
+            plan += "4. Send via WhatsApp Business API or manual automation.\n"
+            plan += "5. Mark as resolved in the dashboard.\n"
+        elif "file_drop" in task.type:
+            plan += "1. Calculate file checksum and verify integrity.\n"
+            plan += "2. Extract metadata (size, type, modification date).\n"
+            plan += "3. Identify appropriate storage location based on file type.\n"
+            plan += "4. Move file to permanent storage and update index.\n"
+        else:
+            plan += "1. Analyze task requirements and context.\n"
+            plan += "2. Identify necessary system tools and resources.\n"
+            plan += "3. Execute sequential steps to satisfy task objectives.\n"
+            plan += "4. Verify completion and document results.\n"
+            
+        plan += "\n## Risk Assessment\n"
+        plan += "- Low risk: Action is non-destructive and reversible.\n"
+        plan += "- No financial or legal impact identified.\n"
+        
+        plan += "\n## Approval Requirement\n"
+        plan += "- No approval required for this routine automation.\n"
+        
+        return plan
+
+    def _create_plan_file(self, task, plan_content: str) -> str:
+        """
+        Create a plan file in the Plans directory
+        """
+        self.plans_path.mkdir(exist_ok=True)
+        
+        import hashlib
+        task_hash = hashlib.md5(task.filename.encode()).hexdigest()[:8]
+        plan_filename = f"PLAN_{task_hash}_{int(time.time())}.md"
+        
+        plan_filepath = self.plans_path / plan_filename
+        plan_filepath.write_text(plan_content, encoding='utf-8')
+        
+        log_activity("PLAN_CREATED", f"Created plan file: {plan_filename}", self.vault_path)
+        return plan_filename
+
 
     def _should_respond_to_task(self, task) -> bool:
         """

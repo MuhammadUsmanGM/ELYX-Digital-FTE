@@ -177,6 +177,40 @@ class LinkedInResponseHandler(BaseResponseHandler):
         except Exception as error:
             return await self.handle_error(error, recipient_identifier, content)
 
+    async def post_to_feed(self, content: str) -> Dict[str, Any]:
+        """
+        Post an update to the LinkedIn feed
+        """
+        try:
+            await self._ensure_browser()
+            
+            if not self.logged_in:
+                return await self.handle_error(Exception("Not logged in to LinkedIn"), "feed", content)
+                
+            await self.page.goto('https://www.linkedin.com/feed/')
+            
+            # Click the start a post button
+            await self.page.click('button.share-mb__trigger')
+            
+            # Wait for the post modal and fill content
+            await self.page.wait_for_selector('.ql-editor', timeout=5000)
+            await self.page.fill('.ql-editor', content)
+            
+            # Click post button
+            await self.page.click('button.share-actions__primary-action')
+            
+            # Log success
+            self.log_response_attempt("feed", content, ResponseStatus.SENT)
+            
+            return {
+                "status": ResponseStatus.SENT.value,
+                "recipient": "feed",
+                "timestamp": time.time(),
+                "provider_message_id": f"linkedin_post_{int(time.time())}"
+            }
+        except Exception as e:
+            return await self.handle_error(e, "feed", content)
+
     async def _send_linkedin_message(self, recipient_identifier: str, content: str) -> bool:
         """
         Actually send the LinkedIn message using Playwright

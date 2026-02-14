@@ -204,7 +204,10 @@ class ResponseCoordinator:
                     recipient, content, subject=subject or "Response from AI Employee"
                 )
             elif channel == CommunicationChannel.LINKEDIN:
-                result = await self.linkedin_handler.send_response(recipient, content)
+                if response_message.get("response_type") == ResponseType.FEED_POST:
+                    result = await self.linkedin_handler.post_to_feed(content)
+                else:
+                    result = await self.linkedin_handler.send_response(recipient, content)
             elif channel == CommunicationChannel.WHATSAPP:
                 result = await self.whatsapp_handler.send_response(recipient, content)
             else:

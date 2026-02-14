@@ -48,10 +48,10 @@ class TaskTriggerHandler(FileSystemEventHandler):
         """Initialize Silver Tier services"""
         try:
             # Initialize database
-            init_db(self.config["database"]["url"])
+            session_factory, _ = init_db(self.config["database"]["url"])
 
             # Create session for services
-            db_session = SessionLocal()
+            db_session = session_factory()
 
             if self.config["silver_tier_features"]["enable_learning"]:
                 self.learning_service = AdaptiveLearningService(db_session)
@@ -127,10 +127,10 @@ class Orchestrator:
         """Initialize Silver Tier services"""
         try:
             # Initialize database
-            init_db(self.config["database"]["url"])
+            session_factory, _ = init_db(self.config["database"]["url"])
 
             # Create session for services
-            db_session = SessionLocal()
+            db_session = session_factory()
 
             if self.config["silver_tier_features"]["enable_learning"]:
                 self.learning_service = AdaptiveLearningService(db_session)

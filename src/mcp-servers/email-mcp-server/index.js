@@ -1,24 +1,57 @@
-// Basic Email MCP Server for AI Employee
 const express = require('express');
 const nodemailer = require('nodemailer');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
 app.use(express.json());
 
-// Configure email transport
-let transporter = nodemailer.createTransporter({
-  // Use environment-specific configuration
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+// In Silver Tier, we use a more robust transport configuration
+let transporter;
+
+function initTransporter() {
+  const credentialsPath = process.env.GMAIL_CREDENTIALS_PATH || 'gmail_credentials.json';
+  
+  // For Silver Tier automation, we check if credentials exist
+  if (fs.existsSync(credentialsPath)) {
+    const creds = JSON.parse(fs.readFileSync(credentialsPath));
+    
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        type: 'OAuth2',
+        user: process.env.EMAIL_USER,
+        clientId: creds.client_id,
+        clientSecret: creds.client_secret,
+        refreshToken: creds.refresh_token
+      }
+    });
+    console.log('Transporter initialized with OAuth2');
+  } else if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+    // Fallback to basic auth for testing
+    transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+    console.log('Transporter initialized with basic auth');
+  } else {
+    console.warn('Transporter not initialized: missing credentials');
   }
-});
+}
+
+initTransporter();
 
 // MCP endpoints
-app.post('/send_email', (req, res) => {
+app.post('/send_email', async (req, res) => {
   const { to, subject, body, attachments } = req.body;
+
+  if (!transporter) {
+    return res.status(500).json({ error: 'Email service not configured' });
+  }
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -28,40 +61,29 @@ app.post('/send_email', (req, res) => {
     attachments: attachments || []
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.error('Email error:', error);
-      res.status(500).json({ error: error.message });
-    } else {
-      console.log('Email sent: ' + info.response);
-      res.json({ success: true, messageId: info.messageId });
-    }
-  });
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Email sent: ' + info.response);
+    res.json({ success: true, messageId: info.messageId });
+  } catch (error) {
+    console.error('Email error:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
-app.post('/draft_email', (req, res) => {
-  const { to, subject, body } = req.body;
-
-  // Store draft email (in a real implementation, this would save to a drafts folder)
-  const draft = {
-    to,
-    subject,
-    body,
-    timestamp: new Date().toISOString()
-  };
-
-  res.json({ success: true, draftId: `draft_${Date.now()}`, draft });
+// For Silver Tier LinkedIn/Social automation, we add social posting placeholders
+app.post('/post_linkedin', async (req, res) => {
+    const { content } = req.body;
+    console.log('Drafting LinkedIn Post:', content);
+    // In a full Silver implementation, this would use a LinkedIn API or Playwright
+    res.json({ success: true, message: 'LinkedIn post queued as draft', content });
 });
 
-app.post('/search_emails', (req, res) => {
-  const { query } = req.body;
-
-  // In a real implementation, this would connect to the email provider's API
-  // For now, return empty results
-  res.json({ success: true, emails: [], query });
+app.post('/status', (req, res) => {
+  res.json({ status: transporter ? 'ready' : 'not_configured', user: process.env.EMAIL_USER });
 });
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
-  console.log(`Email MCP Server running on port ${PORT}`);
+  console.log(`Email & Communication MCP Server running on port ${PORT}`);
 });
