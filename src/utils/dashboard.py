@@ -64,7 +64,7 @@ Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
     dashboard_content += f"\n\n---\n*Last Update: {datetime.now().isoformat()}*"
 
     # Write to dashboard file
-    dashboard_path.write_text(dashboard_content)
+    dashboard_path.write_text(dashboard_content, encoding='utf-8')
     return dashboard_path
 
 def risk_summary_text(risk):

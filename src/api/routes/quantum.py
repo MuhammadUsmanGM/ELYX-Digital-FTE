@@ -31,24 +31,17 @@ async def get_quantum_keys(
     try:
         # Initialize quantum key manager
         key_manager = QuantumKeyManager()
+        storage_path = key_manager.storage_path
+        
+        keys = []
+        if os.path.exists(storage_path):
+            for filename in os.listdir(storage_path):
+                if filename.endswith("_meta.json"):
+                    with open(os.path.join(storage_path, filename), 'r') as f:
+                        meta = json.load(f)
+                        keys.append(meta)
 
-        # For now, return mock data since we don't have a database table for keys yet
-        # In a real implementation, this would query the database
-        mock_keys = [
-            {
-                "id": "qm-key-001",
-                "key_type": "symmetric",
-                "algorithm": "lattice-based-post-quantum",
-                "security_level": "quantum_safe",
-                "generation_date": datetime.utcnow().isoformat() + "Z",
-                "expiration_date": (datetime.utcnow() + timedelta(days=365)).isoformat() + "Z",
-                "rotation_interval_hours": 24,
-                "status": "active",
-                "next_rotation_date": (datetime.utcnow() + timedelta(hours=24)).isoformat() + "Z"
-            }
-        ]
-
-        return [QuantumKeyResponse(**key) for key in mock_keys]
+        return [QuantumKeyResponse(**key) for key in keys]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving quantum keys: {str(e)}")
 
@@ -174,14 +167,23 @@ async def get_quantum_security_status():
     Get quantum security system status
     """
     try:
+        from ...utils.quantum_security import QuantumKeyManager
+        import os
+        key_manager = QuantumKeyManager()
+        storage_path = key_manager.storage_path
+        
+        active_keys = 0
+        if os.path.exists(storage_path):
+            active_keys = len([f for f in os.listdir(storage_path) if f.endswith("_meta.json")])
+
         return {
             "status": "active",
             "quantum_encryption_enabled": True,
             "key_rotation_enabled": True,
             "secure_communication_enabled": True,
             "last_security_check": datetime.utcnow().isoformat() + "Z",
-            "active_keys_count": 15,
-            "pending_rotations": 2
+            "active_keys_count": active_keys,
+            "pending_rotations": 0
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error getting security status: {str(e)}")

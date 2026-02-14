@@ -57,40 +57,46 @@ def initialize_complete_system():
     except ImportError as e:
         print(f"[WARN] Orchestrator (Bronze Tier) not available: {e}")
 
+    # Initialize database session for Silver Tier components
+    db_session = None
+    try:
+        from src.services.database import get_db
+        db_gen = get_db()
+        db_session = next(db_gen)
+        print("[OK] Database session initialized")
+    except Exception as e:
+        print(f"[WARN] Database initialization failed: {e}")
+
     # Try to import Silver Tier components
     try:
-        from src.services.analytics_service import AnalyticsService
-        components['analytics_service'] = AnalyticsService()
+        from src.services.predictive_analytics_service import PredictiveAnalyticsService
+        components['analytics_service'] = PredictiveAnalyticsService(db_session=db_session)
         print("[OK] Analytics Service (Silver Tier) initialized")
     except ImportError as e:
         print(f"[WARN] Analytics Service (Silver Tier) not available: {e}")
 
     try:
-        from src.services.learning_service import LearningService
-        components['learning_service'] = LearningService()
+        from src.services.adaptive_learning_service import AdaptiveLearningService
+        components['learning_service'] = AdaptiveLearningService(db_session=None)
         print("[OK] Learning Service (Silver Tier) initialized")
     except ImportError as e:
         print(f"[WARN] Learning Service (Silver Tier) not available: {e}")
 
     # Try to import Gold Tier components
+    # Enterprise and Risk services are currently integrated into AI Service or pending separate implementation
+    """
     try:
         from src.services.enterprise_service import EnterpriseService
         components['enterprise_service'] = EnterpriseService()
         print("[OK] Enterprise Service (Gold Tier) initialized")
     except ImportError as e:
-        print(f"[WARN] Enterprise Service (Gold Tier) not available: {e}")
-
-    try:
-        from src.services.risk_management_service import RiskManagementService
-        components['risk_service'] = RiskManagementService()
-        print("[OK] Risk Management Service (Gold Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Risk Management Service (Gold Tier) not available: {e}")
+        print("[INFO] Enterprise Service handled by AI Service")
+    """
 
     # Try to import Platinum Tier components
     try:
-        from src.services.quantum_security_service import QuantumSecurityService
-        components['quantum_service'] = QuantumSecurityService()
+        from src.services.quantum_auth_service import QuantumSafeAuthService
+        components['quantum_service'] = QuantumSafeAuthService()
         print("[OK] Quantum Security Service (Platinum Tier) initialized")
     except ImportError as e:
         print(f"[WARN] Quantum Security Service (Platinum Tier) not available: {e}")
@@ -139,8 +145,8 @@ def initialize_complete_system():
         print(f"[WARN] Meta Programming Engine (Diamond Tier) not available: {e}")
 
     try:
-        from src.services.reality_service import RealityConsistencyService
-        components['reality_service'] = RealityConsistencyService()
+        from src.services.reality_service import RealityStabilityMonitor
+        components['reality_service'] = RealityStabilityMonitor()
         print("[OK] Reality Consistency Service (Diamond Tier) initialized")
     except ImportError as e:
         print(f"[WARN] Reality Consistency Service (Diamond Tier) not available: {e}")

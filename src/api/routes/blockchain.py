@@ -23,35 +23,39 @@ async def get_blockchain_events(
     limit: int = 100
 ):
     """
-    Retrieve blockchain events
+    Retrieve blockchain events from the accountability service
     """
     try:
-        # For now, return mock data since we don't have a blockchain integration implemented yet
-        # In a real implementation, this would connect to a blockchain node
-        mock_events = [
-            {
-                "id": "evt-001",
-                "event_type": "smart_contract_execution",
-                "blockchain_network": "ethereum",
-                "transaction_hash": "0xabc123...",
-                "block_number": 12345678,
-                "contract_address": "0xdef456...",
-                "event_data": {"method": "transfer", "params": {"to": "0x789", "value": 100}},
-                "participants": ["0x123", "0x456"],
-                "gas_consumed": 50000,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-                "verification_status": "verified",
+        from ...services.blockchain_service import BlockchainService
+        service = BlockchainService()
+        audit_trail = service.get_audit_trail()
+        
+        # Take the most recent events up to limit
+        events = []
+        for block in audit_trail[-limit:]:
+            data = block.get("data", {})
+            events.append({
+                "id": data.get("transaction_id", f"blk-{block['index']}"),
+                "event_type": data.get("action_type", "system_event"),
+                "blockchain_network": "ELYX-Private-Mainnet",
+                "transaction_hash": block.get("hash"),
+                "block_number": block.get("index"),
+                "contract_address": "0x0",
+                "event_data": data.get("details", {}),
+                "participants": ["system"],
+                "gas_consumed": 0,
+                "timestamp": block.get("timestamp"),
+                "verification_status": "verified" if service.verify_integrity() else "pending",
                 "oracle_verifications": {},
-                "compliance_tags": ["finance"],
-                "quantum_signature_verified": True,
-                "linked_tasks": ["task-001"],
-                "created_at": datetime.utcnow().isoformat() + "Z",
-                "updated_at": datetime.utcnow().isoformat() + "Z",
-                "ai_analysis": {"risk_score": 0.1, "compliance_status": "passed"}
-            }
-        ]
+                "compliance_tags": ["audit"],
+                "quantum_signature_verified": data.get("quantum_signature") is not None,
+                "linked_tasks": [],
+                "created_at": block.get("timestamp"),
+                "updated_at": block.get("timestamp"),
+                "ai_analysis": {"validity": "verified"}
+            })
 
-        return [BlockchainEventResponse(**event) for event in mock_events]
+        return [BlockchainEventResponse(**event) for event in events]
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving blockchain events: {str(e)}")
 
@@ -65,16 +69,27 @@ async def create_blockchain_transaction(
     Create a blockchain transaction
     """
     try:
-        # In a real implementation, this would submit a transaction to a blockchain
-        # For now, return mock data
-        mock_response = {
-            "transaction_id": f"tx_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{transaction.sender_id[:8]}",
-            "transaction_hash": f"0x{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}abcdef",
-            "status": "pending",
-            "estimated_gas": 21000 if transaction.transaction_type == "payment" else 100000
-        }
+        from ...services.blockchain_service import BlockchainService
+        service = BlockchainService()
+        
+        tx_id = service.record_action(
+            action_type=transaction.transaction_type,
+            details={
+                "sender": transaction.sender_id,
+                "receiver": transaction.receiver_id,
+                "amount": transaction.amount,
+                "currency": transaction.currency
+            }
+        )
+        
+        status_info = service.get_stats()
 
-        return QuantumTransactionResponse(**mock_response)
+        return QuantumTransactionResponse(
+            transaction_id=tx_id,
+            transaction_hash=status_info["last_block_hash"],
+            status="completed",
+            estimated_gas=0
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating blockchain transaction: {str(e)}")
 
@@ -107,12 +122,16 @@ async def get_blockchain_status():
     Get blockchain integration status
     """
     try:
+        from ...services.blockchain_service import BlockchainService
+        service = BlockchainService()
+        stats = service.get_stats()
+        
         return {
-            "status": "connected",
-            "network": "ethereum",
-            "latest_block": 12345678,
+            "status": "connected" if stats["integrity_verified"] else "degraded",
+            "network": stats["network"],
+            "latest_block": stats["total_blocks"],
             "sync_status": "synced",
-            "connected_nodes": 5,
+            "connected_nodes": 1,
             "last_transaction": datetime.utcnow().isoformat() + "Z"
         }
     except Exception as e:
