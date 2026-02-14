@@ -16,7 +16,7 @@ class TaskProcessor:
     """
     Main processor that reads files from /Inbox/ and processes them according to Company_Handbook rules
     """
-    def __init__(self, vault_path="vault", handbook_path=None):
+    def __init__(self, vault_path="vault", handbook_path=None, ai_service=None):
         self.vault_path = Path(vault_path)
         self.handbook_parser = HandbookParser(handbook_path or self.vault_path / "Company_Handbook.md")
         self.inbox_path = self.vault_path / "Inbox"
@@ -24,6 +24,7 @@ class TaskProcessor:
         self.pending_approval_path = self.vault_path / "Pending_Approval"
         self.done_path = self.vault_path / "Done"
         self.plans_path = self.vault_path / "Plans"
+        self.ai_service = ai_service
 
     def process_pending_tasks(self):
         """
@@ -136,7 +137,31 @@ Move this file to /Rejected folder.
         reasoning += f"Processed by: ELYX AI Employee\n"
         reasoning += f"Timestamp: {datetime.now().isoformat()}\n"
         reasoning += f"Plan Created: [[Plans/{plan_filename}|View Execution Plan]]\n"
-        reasoning += f"Analysis: This task was identified as routine and safe to automate according to the Company Handbook.\n"
+
+        # ✨ Gold Tier: Advanced AI Analysis
+        if self.ai_service:
+            try:
+                # Perform deep analysis
+                ai_data = {
+                    "title": task.filename,
+                    "description": task.content,
+                    "category": task.type,
+                    "metadata": task.frontmatter
+                }
+                analysis_result = self.ai_service.process_task_request(ai_data)
+                
+                reasoning += f"AI Confidence Score: {analysis_result.get('confidence_score', 0.95):.2f}\n"
+                
+                # Add strategic insights
+                insights = self.ai_service.generate_strategic_insights()
+                if insights:
+                    reasoning += f"Strategic Insight: {insights[0].get('insight', 'Continuous optimization recommended.')}\n"
+                    
+                reasoning += f"Predicted Duration: {analysis_result.get('predictions', {}).get('duration', 15)} minutes\n"
+            except Exception as ai_err:
+                reasoning += f"AI Analysis Status: LIMITED (Error: {str(ai_err)})\n"
+        else:
+            reasoning += f"Analysis: This task was identified as routine and safe to automate according to the Company Handbook.\n"
 
         # Determine specific action based on content keywords
         action_taken = "Analyzed content and categorized."

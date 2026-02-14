@@ -102,6 +102,10 @@ class Orchestrator:
         self.learning_service = None
         self.silver_services_initialized = False
 
+        # Initialize Gold Tier features
+        self.gold_services_initialized = False
+        self.ai_service = None
+
         # Initialize Response Coordinator for bidirectional communication
         self.response_coordinator = ResponseCoordinator(vault_path=vault_path)
 
@@ -119,6 +123,9 @@ class Orchestrator:
 
         if self.config.get("silver_tier_features", {}).get("enable_learning", False):
             self._initialize_silver_services()
+
+        if self.config.get("gold_tier_features", {}).get("enable_advanced_ai", False):
+            self._initialize_gold_services()
 
         if self.config.get("platinum_tier_features", {}).get("enable_global_operations", False):
             self._initialize_platinum_services()
@@ -150,6 +157,27 @@ class Orchestrator:
             self.logger.error(f"Error initializing Silver Tier services: {e}")
             log_activity("SILVER_SERVICES_INIT_ERROR",
                         f"Error initializing Silver Tier services: {str(e)}",
+                        str(self.vault_path))
+
+    def _initialize_gold_services(self):
+        """Initialize Gold Tier services"""
+        try:
+            from src.services.ai_service import AIService
+            
+            # AIService manages its own internal components (NLP, Prediction, etc.)
+            self.ai_service = AIService()
+            self.processor.ai_service = self.ai_service
+            
+            self.gold_services_initialized = True
+            log_activity("GOLD_SERVICES_INITIALIZED",
+                        "Gold Tier AI services initialized successfully",
+                        str(self.vault_path))
+            self.logger.info("Gold Tier AI services initialized")
+            
+        except Exception as e:
+            self.logger.error(f"Error initializing Gold Tier services: {e}")
+            log_activity("GOLD_SERVICES_INIT_ERROR",
+                        f"Error initializing Gold Tier services: {str(e)}",
                         str(self.vault_path))
 
     def _initialize_platinum_services(self):
@@ -356,6 +384,10 @@ class Orchestrator:
             if self.silver_services_initialized:
                 self._apply_silver_tier_features(processed_count)
 
+            # Apply Gold Tier features if enabled
+            if self.gold_services_initialized:
+                self._apply_gold_tier_features(processed_count)
+
             # Apply Platinum Tier features if enabled
             if self.platinum_services_initialized:
                 self._apply_platinum_tier_features(processed_count)
@@ -511,6 +543,50 @@ class Orchestrator:
             self.logger.error(f"Error applying Silver Tier features: {e}")
             log_activity("SILVER_FEATURE_ERROR",
                         f"Error applying Silver Tier features: {str(e)}",
+                        str(self.vault_path))
+
+    def _apply_gold_tier_features(self, processed_count: int):
+        """
+        Apply Gold Tier strategic features after task processing
+        """
+        try:
+            if not self.gold_services_initialized or not self.ai_service:
+                return
+
+            self.logger.info("Applying Gold Tier strategic analysis...")
+
+            # 1. Generate Strategic Insights
+            strategic_insights = self.ai_service.generate_strategic_insights(user_id="default_user")
+            
+            # 2. Perform Decision Support Analysis
+            decision_data = {
+                "tasks_processed": processed_count,
+                "system_status": "active",
+                "timestamp": datetime.now().isoformat()
+            }
+            decision_support = self.ai_service.assist_with_decision_making(decision_data, "default_user")
+
+            # 3. Update Strategic Dashboard with BI metrics
+            from src.utils.dashboard import update_dashboard, get_dashboard_summary
+            
+            summary = get_dashboard_summary(self.vault_path)
+            
+            # Merge Gold Tier data into summary
+            summary['strategic_insights'] = strategic_insights
+            summary['risk_assessment'] = decision_support.get('risk_assessment', {})
+            summary['recent_activities'].append(f"Gold Tier: Performed strategic analysis and updated BI metrics.")
+
+            # Update the dashboard file in the vault
+            update_dashboard(self.vault_path, summary)
+            
+            log_activity("GOLD_STRATEGIC_ANALYSIS", 
+                        "Strategic insights and BI reporting updated", 
+                        str(self.vault_path))
+
+        except Exception as e:
+            self.logger.error(f"Error applying Gold Tier features: {e}")
+            log_activity("GOLD_FEATURE_ERROR",
+                        f"Error applying Gold Tier features: {str(e)}",
                         str(self.vault_path))
 
     def _apply_platinum_tier_features(self, processed_count: int):

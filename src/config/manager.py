@@ -70,6 +70,12 @@ class ConfigManager:
                 "enable_predictive_features": os.getenv("ENABLE_PREDICTIVE_FEATURES", "true").lower() == "true",
                 "enable_calendar_integration": os.getenv("ENABLE_CALENDAR_INTEGRATION", "false").lower() == "true"
             },
+            "gold_tier_features": {
+                "enable_advanced_ai": os.getenv("ENABLE_ADVANCED_AI", "true").lower() == "true",
+                "enable_strategic_insights": os.getenv("ENABLE_STRATEGIC_INSIGHTS", "true").lower() == "true",
+                "enable_collaboration_engine": os.getenv("ENABLE_COLLABORATION_ENGINE", "true").lower() == "true",
+                "enable_bi_reporting": os.getenv("ENABLE_BI_REPORTING", "true").lower() == "true"
+            },
             "api": {
                 "host": os.getenv("API_HOST", "localhost"),
                 "port": int(os.getenv("API_PORT", "8000")),
