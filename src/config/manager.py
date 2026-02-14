@@ -76,6 +76,13 @@ class ConfigManager:
                 "enable_collaboration_engine": os.getenv("ENABLE_COLLABORATION_ENGINE", "true").lower() == "true",
                 "enable_bi_reporting": os.getenv("ENABLE_BI_REPORTING", "true").lower() == "true"
             },
+            "platinum_tier_features": {
+                "enable_quantum_security": os.getenv("ENABLE_QUANTUM_SECURITY", "true").lower() == "true",
+                "enable_global_operations": os.getenv("ENABLE_GLOBAL_OPERATIONS", "true").lower() == "true",
+                "enable_federated_learning": os.getenv("ENABLE_FEDERATED_LEARNING", "true").lower() == "true",
+                "enable_blockchain_accountability": os.getenv("ENABLE_BLOCKCHAIN_ACCOUNTABILITY", "true").lower() == "true",
+                "enable_arvr_interface": os.getenv("ENABLE_ARVR_INTERFACE", "true").lower() == "true"
+            },
             "api": {
                 "host": os.getenv("API_HOST", "localhost"),
                 "port": int(os.getenv("API_PORT", "8000")),

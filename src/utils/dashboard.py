@@ -37,6 +37,21 @@ Updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
         risk = summary_data['risk_assessment']
         dashboard_content += risk_summary_text(risk)
 
+    # ✨ Platinum Tier: Global & Quantum Stats
+    if 'platinum_metrics' in summary_data:
+        dashboard_content += "\n## 🌐 Platinum Operations\n"
+        platinum = summary_data['platinum_metrics']
+        dashboard_content += f"- **Quantum Integrity**: {platinum.get('quantum_integrity', 'Verified')}\n"
+        dashboard_content += f"- **Global Nodes**: {platinum.get('global_nodes', 1)} Active\n"
+        
+        blockchain = platinum.get('blockchain_stats', {})
+        if blockchain:
+            dashboard_content += f"- **Blockchain**: {blockchain.get('total_blocks', 0)} blocks (Verified: {blockchain.get('integrity_verified', 'Yes')})\n"
+            
+        fed_learning = platinum.get('federated_learning', {})
+        if fed_learning:
+            dashboard_content += f"- **AI Model Version**: {fed_learning.get('model_version', '1.0.0')}\n"
+
     dashboard_content += "\n## 🕒 Recent Activities\n"
     for activity in summary_data.get('recent_activities', []):
         dashboard_content += f"- {activity}\n"
