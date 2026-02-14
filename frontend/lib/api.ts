@@ -140,7 +140,7 @@ export async function fetchTasks(): Promise<Task[]> {
     return data.recent_tasks.map((t: any) => ({
       id: t.id,
       type: t.category,
-      from: t.metadata?.source || "System",
+      from: t.task_metadata?.source || "System",
       priority: t.priority === "high" ? "high" : "medium",
       status: t.status,
       created: t.created_at,
@@ -165,12 +165,12 @@ export async function fetchApprovals(): Promise<ApprovalRequest[]> {
       id: a.id,
       type: "approval_request",
       action: a.title,
-      recipient: a.metadata?.recipient || "N/A",
+      recipient: a.task_metadata?.recipient || "N/A",
       reason: a.description,
       created: a.created_at,
       expires: new Date(Date.now() + 86400000).toISOString(),
       status: "pending",
-      details: a.metadata?.details || "No details provided."
+      details: a.task_metadata?.details || "No details provided."
     }));
   } catch (error) {
     return [] as ApprovalRequest[];

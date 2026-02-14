@@ -248,6 +248,15 @@ def main():
     api_thread.start()
     print("[OK] API server started")
 
+    # Start Orchestrator in a separate thread
+    if 'orchestrator' in system_components:
+        orchestrator_thread = threading.Thread(
+            target=system_components['orchestrator'].run,
+            daemon=True
+        )
+        orchestrator_thread.start()
+        print("[OK] Orchestrator started (Task monitoring active)")
+
     # Start Diamond Tier engines if available
     if 'consciousness_engine' in system_components:
         consciousness_thread = threading.Thread(
