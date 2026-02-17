@@ -22,6 +22,7 @@ from src.services.adaptive_learning_service import AdaptiveLearningService
 from src.services.database import init_db, SessionLocal
 from src.config.manager import ConfigManager
 from src.services.response_coordinator import ResponseCoordinator
+from src.agents.ralph_loop import RalphLoop
 
 class TaskTriggerHandler(FileSystemEventHandler):
     """
@@ -393,10 +394,26 @@ class Orchestrator:
         Trigger Claude Code to process new tasks
         """
         self.logger.info("Triggering Claude Code to process new tasks...")
+        
+        # 🥈 Check if we should use the Autonomous Claude CLI Loop (Hackathon Mode)
+        if self.config.get("integrations", {}).get("use_claude_cli", False):
+            self.logger.info("Using Claude Code CLI (Autonomous Loop Mode)")
+            try:
+                # Initialize and start the Ralph Loop
+                loop = RalphLoop(vault_path=str(self.vault_path))
+                loop.start()
+                
+                # Update dashboard to reflect CLI processing
+                self.processor.update_dashboard()
+                return
+            except Exception as e:
+                self.logger.error(f"Error in Claude CLI Loop: {e}")
+                self.logger.info("Falling back to API TaskProcessor...")
+
         try:
-            # Process tasks immediately
+            # Fallback or standard: Process tasks via API immediately
             processed_count = self.processor.process_pending_tasks()
-            self.logger.info(f"Claude Code processed {processed_count} tasks")
+            self.logger.info(f"Claude Code (API) processed {processed_count} tasks")
 
             # Also process any approval requests
             self.processor.process_approval_requests()

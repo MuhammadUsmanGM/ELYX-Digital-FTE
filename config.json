@@ -83,6 +83,8 @@
   "integrations": {
     "calendar_enabled": false,
     "crm_enabled": false,
-    "project_management_enabled": false
+    "project_management_enabled": false,
+    "use_claude_cli": true,
+    "ralph_loop_enabled": true
   }
 }
