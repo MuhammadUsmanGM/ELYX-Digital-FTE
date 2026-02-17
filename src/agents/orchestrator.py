@@ -327,6 +327,45 @@ class Orchestrator:
                 except Exception as e:
                     self.logger.error(f"Error starting LinkedIn watcher: {e}")
 
+            # Start Facebook watcher if configured
+            if self.config.get("integrations", {}).get("facebook_enabled", True):
+                try:
+                    from src.agents.facebook_watcher import FacebookWatcher
+                    fb_session = os.getenv('FACEBOOK_SESSION_PATH')
+                    fb_watcher = FacebookWatcher(str(self.vault_path), session_path=fb_session)
+                    fb_thread = threading.Thread(target=self._run_watcher, args=("Facebook", fb_watcher), daemon=True)
+                    fb_thread.start()
+                    self.running_watchers.append(fb_thread)
+                    self.logger.info("Facebook watcher started")
+                except Exception as e:
+                    self.logger.error(f"Error starting Facebook watcher: {e}")
+
+            # Start Twitter watcher if configured
+            if self.config.get("integrations", {}).get("twitter_enabled", True):
+                try:
+                    from src.agents.twitter_watcher import TwitterWatcher
+                    tw_session = os.getenv('TWITTER_SESSION_PATH')
+                    tw_watcher = TwitterWatcher(str(self.vault_path), session_path=tw_session)
+                    tw_thread = threading.Thread(target=self._run_watcher, args=("Twitter", tw_watcher), daemon=True)
+                    tw_thread.start()
+                    self.running_watchers.append(tw_thread)
+                    self.logger.info("Twitter watcher started")
+                except Exception as e:
+                    self.logger.error(f"Error starting Twitter watcher: {e}")
+
+            # Start Instagram watcher if configured
+            if self.config.get("integrations", {}).get("instagram_enabled", True):
+                try:
+                    from src.agents.instagram_watcher import InstagramWatcher
+                    ig_session = os.getenv('INSTAGRAM_SESSION_PATH')
+                    ig_watcher = InstagramWatcher(str(self.vault_path), session_path=ig_session)
+                    ig_thread = threading.Thread(target=self._run_watcher, args=("Instagram", ig_watcher), daemon=True)
+                    ig_thread.start()
+                    self.running_watchers.append(ig_thread)
+                    self.logger.info("Instagram watcher started")
+                except Exception as e:
+                    self.logger.error(f"Error starting Instagram watcher: {e}")
+
         except Exception as e:
             self.logger.error(f"Error starting communication watchers: {e}")
 
@@ -343,9 +382,9 @@ class Orchestrator:
                 except Exception as e:
                     self.logger.error(f"Error in {name} watcher: {e}")
 
-                # 🕵️ Stealth Mode: Add jitter for LinkedIn and WhatsApp to look human
+                # 🕵️ Stealth Mode: Add jitter for social platforms to look human
                 sleep_time = watcher.check_interval
-                if name in ["LinkedIn", "WhatsApp"]:
+                if name in ["LinkedIn", "WhatsApp", "Facebook", "Twitter", "Instagram"]:
                     import random
                     # Add +/- 20% random jitter to the interval
                     jitter = random.uniform(-0.2, 0.2) * sleep_time

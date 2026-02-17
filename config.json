@@ -6,7 +6,10 @@
     "filesystem": 10,
     "calendar": 300,
     "orchestrator": 60,
-    "linkedin": 3600
+    "linkedin": 3600,
+    "facebook": 7200,
+    "twitter": 7200,
+    "instagram": 7200
   },
   "watchdog": {
     "check_interval": 60,
@@ -85,6 +88,9 @@
     "crm_enabled": false,
     "project_management_enabled": false,
     "use_claude_cli": true,
-    "ralph_loop_enabled": true
+    "ralph_loop_enabled": true,
+    "facebook_enabled": true,
+    "twitter_enabled": true,
+    "instagram_enabled": true
   }
 }

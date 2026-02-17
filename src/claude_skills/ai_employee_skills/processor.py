@@ -220,6 +220,24 @@ Move this file to /Rejected folder.
             plan += "2. Extract metadata (size, type, modification date).\n"
             plan += "3. Identify appropriate storage location based on file type.\n"
             plan += "4. Move file to permanent storage and update index.\n"
+        elif "facebook" in task.type:
+            plan += "1. Parse Facebook message/notification for context.\n"
+            plan += "2. Check sender against Trusted_Contacts and Company Handbook.\n"
+            plan += "3. Draft a professional response or engagement plan.\n"
+            plan += "4. Format for Facebook Messenger or Page interaction.\n"
+            plan += "5. Queue for automated or approved delivery.\n"
+        elif "twitter" in task.type:
+            plan += "1. Analyze tweet or DM for intent and sentiment.\n"
+            plan += "2. Check for mentions of brand or critical keywords.\n"
+            plan += "3. Draft a concise, high-impact reply (within character limit).\n"
+            plan += "4. Update social engagement tracker in the dashboard.\n"
+            plan += "5. Schedule or post the interaction.\n"
+        elif "instagram" in task.type:
+            plan += "1. Review Instagram DM or activity notification.\n"
+            plan += "2. Verify business relevance according to handbook rules.\n"
+            plan += "3. Draft an appropriate response or social action.\n"
+            plan += "4. Coordinate with visual assets if required.\n"
+            plan += "5. Mark as processed in the social inbox.\n"
         else:
             plan += "1. Analyze task requirements and context.\n"
             plan += "2. Identify necessary system tools and resources.\n"
