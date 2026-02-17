@@ -22,6 +22,9 @@ MANIFEST
 
 # Environment variables
 .env
+credentials.json
+gmail_credentials.json
+token.json
 
 # Virtual environments
 venv/
