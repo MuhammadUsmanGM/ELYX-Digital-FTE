@@ -300,7 +300,8 @@ class Orchestrator:
             if self.config.get("integrations", {}).get("whatsapp_enabled", True):
                 try:
                     from src.agents.whatsapp_watcher import WhatsAppWatcher
-                    whatsapp_watcher = WhatsAppWatcher(str(self.vault_path))
+                    wa_session = os.getenv('WHATSAPP_SESSION_PATH')
+                    whatsapp_watcher = WhatsAppWatcher(str(self.vault_path), session_path=wa_session)
                     whatsapp_thread = threading.Thread(target=self._run_watcher, args=("WhatsApp", whatsapp_watcher), daemon=True)
                     whatsapp_thread.start()
                     self.running_watchers.append(whatsapp_thread)
@@ -314,7 +315,8 @@ class Orchestrator:
             if self.config.get("integrations", {}).get("linkedin_enabled", True):
                 try:
                     from src.agents.linkedin_watcher import LinkedInWatcher
-                    linkedin_watcher = LinkedInWatcher(str(self.vault_path))
+                    li_session = os.getenv('LINKEDIN_SESSION_PATH')
+                    linkedin_watcher = LinkedInWatcher(str(self.vault_path), session_path=li_session)
                     linkedin_thread = threading.Thread(target=self._run_watcher, args=("LinkedIn", linkedin_watcher), daemon=True)
                     linkedin_thread.start()
                     self.running_watchers.append(linkedin_thread)
@@ -340,14 +342,14 @@ class Orchestrator:
                 except Exception as e:
                     self.logger.error(f"Error in {name} watcher: {e}")
 
-                # 🕵️ Stealth Mode: Add jitter for LinkedIn to look human
+                # 🕵️ Stealth Mode: Add jitter for LinkedIn and WhatsApp to look human
                 sleep_time = watcher.check_interval
-                if name == "LinkedIn":
+                if name in ["LinkedIn", "WhatsApp"]:
                     import random
                     # Add +/- 20% random jitter to the interval
                     jitter = random.uniform(-0.2, 0.2) * sleep_time
                     sleep_time = max(60, sleep_time + jitter) # Don't go below 60s
-                    self.logger.info(f"LinkedIn stealth wait: {sleep_time/60:.1f} minutes")
+                    self.logger.info(f"{name} stealth wait: {sleep_time/60:.1f} minutes")
                 
                 time.sleep(sleep_time)
         except Exception as e:

@@ -2,7 +2,7 @@
   "vault_path": "obsidian_vault",
   "check_interval": {
     "gmail": 120,
-    "whatsapp": 30,
+    "whatsapp": 3600,
     "filesystem": 10,
     "calendar": 300,
     "orchestrator": 60,
