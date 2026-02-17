@@ -5,7 +5,8 @@
     "whatsapp": 30,
     "filesystem": 10,
     "calendar": 300,
-    "orchestrator": 60
+    "orchestrator": 60,
+    "linkedin": 3600
   },
   "watchdog": {
     "check_interval": 60,

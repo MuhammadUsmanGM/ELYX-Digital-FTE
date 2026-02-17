@@ -166,11 +166,20 @@ class HandbookParser:
         default_actions = re.findall(r'-\s*(.+)', content)
         return [action.strip().lower() for action in default_actions]
 
-    def should_flag_for_approval(self, content, content_type="email"):
+    def should_flag_for_approval(self, content, content_type="email", sender="unknown"):
         """
         Determine if content should be flagged for human approval
         """
         content_lower = content.lower()
+        sender_lower = sender.lower()
+
+        # 🛡️ TRUSTED CONTACTS CHECK (Whitelisting)
+        # Load trusted contacts from the vault
+        is_trusted = self._is_sender_whitelisted(sender_lower)
+        
+        # If sender is not trusted, all tasks must be flagged for approval
+        if not is_trusted:
+            return True, f"Unknown sender ({sender}): All requests from non-whitelisted contacts require manual review."
 
         # Check financial terms
         if content_type == "email":
@@ -186,6 +195,30 @@ class HandbookParser:
                 return True, f"Matches approval requirement: {requirement}"
 
         return False, "No approval required"
+
+    def _is_sender_whitelisted(self, sender_lower):
+        """
+        Check if a sender is in the Trusted_Contacts whitelist
+        """
+        try:
+            # Look for the trusted contacts file in the same vault as the handbook
+            vault_root = Path(self.handbook_path).parent
+            trusted_file = vault_root / "Trusted_Contacts.md"
+            
+            if not trusted_file.exists():
+                # If the file doesn't exist, we fallback to restricted mode (no one is trusted)
+                return False
+                
+            trusted_content = trusted_file.read_text(encoding='utf-8').lower()
+            
+            # Simple check: Does the email/name/link appear in the markdown file?
+            # We check for exact matches in the text to be safe
+            if sender_lower in trusted_content:
+                return True
+                
+            return False
+        except Exception:
+            return False
 
     def get_default_action(self, content):
         """

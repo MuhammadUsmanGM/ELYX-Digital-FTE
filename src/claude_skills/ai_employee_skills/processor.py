@@ -54,8 +54,9 @@ class TaskProcessor:
         log_activity("PROCESS", f"Processing task: {task.filename}", self.vault_path)
 
         # Determine if task needs approval
+        sender = task.frontmatter.get('from', 'unknown')
         needs_approval, reason = self.handbook_parser.should_flag_for_approval(
-            task.content, task.type
+            task.content, task.type, sender=sender
         )
 
         if needs_approval:

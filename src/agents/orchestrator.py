@@ -340,7 +340,16 @@ class Orchestrator:
                 except Exception as e:
                     self.logger.error(f"Error in {name} watcher: {e}")
 
-                time.sleep(watcher.check_interval)
+                # 🕵️ Stealth Mode: Add jitter for LinkedIn to look human
+                sleep_time = watcher.check_interval
+                if name == "LinkedIn":
+                    import random
+                    # Add +/- 20% random jitter to the interval
+                    jitter = random.uniform(-0.2, 0.2) * sleep_time
+                    sleep_time = max(60, sleep_time + jitter) # Don't go below 60s
+                    self.logger.info(f"LinkedIn stealth wait: {sleep_time/60:.1f} minutes")
+                
+                time.sleep(sleep_time)
         except Exception as e:
             self.logger.error(f"Fatal error in {name} watcher: {e}")
 
