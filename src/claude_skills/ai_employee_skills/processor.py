@@ -238,6 +238,12 @@ Move this file to /Rejected folder.
             plan += "3. Draft an appropriate response or social action.\n"
             plan += "4. Coordinate with visual assets if required.\n"
             plan += "5. Mark as processed in the social inbox.\n"
+        elif "accounting" in task.type:
+            plan += "1. Connect to Odoo Accounting API.\n"
+            plan += "2. Validate invoice or transaction data against vault records.\n"
+            plan += "3. Check for specific accounting rules in Company Handbook.\n"
+            plan += "4. Update transaction status in Odoo if applicable.\n"
+            plan += "5. Generate a record of the action for the Weekly Briefing.\n"
         else:
             plan += "1. Analyze task requirements and context.\n"
             plan += "2. Identify necessary system tools and resources.\n"

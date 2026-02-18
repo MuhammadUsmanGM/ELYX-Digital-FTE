@@ -110,6 +110,9 @@ class Orchestrator:
         # Initialize Response Coordinator for bidirectional communication
         self.response_coordinator = ResponseCoordinator(vault_path=vault_path)
 
+        # Initialize Odoo Accounting Service
+        self.odoo_service = None
+
         # Initialize Platinum Tier features
         self.platinum_services_initialized = False
         self.quantum_auth_service = None
@@ -219,6 +222,19 @@ class Orchestrator:
             # Initialize Federated Learning
             from src.services.federated_learning_service import FederatedLearningService
             self.federated_learning_service = FederatedLearningService()
+
+            # Initialize Odoo Service
+            from src.services.odoo_service import OdooService
+            self.odoo_service = OdooService()
+            if self.odoo_service.authenticate():
+                self.logger.info("Odoo Accounting service initialized successfully")
+            else:
+                self.logger.warning("Odoo Accounting service initialization failed (check credentials)")
+
+            # Initialize Briefing Service
+            from src.services.briefing_service import BriefingService
+            self.briefing_service = BriefingService(str(self.vault_path))
+            self.last_briefing_date = None
 
             self.platinum_services_initialized = True
             log_activity("PLATINUM_SERVICES_INITIALIZED",
@@ -365,6 +381,18 @@ class Orchestrator:
                     self.logger.info("Instagram watcher started")
                 except Exception as e:
                     self.logger.error(f"Error starting Instagram watcher: {e}")
+
+            # Start Odoo watcher if configured
+            if self.config.get("integrations", {}).get("odoo_enabled", True):
+                try:
+                    from src.agents.odoo_watcher import OdooWatcher
+                    odoo_watcher = OdooWatcher(str(self.vault_path))
+                    odoo_thread = threading.Thread(target=self._run_watcher, args=("Odoo", odoo_watcher), daemon=True)
+                    odoo_thread.start()
+                    self.running_watchers.append(odoo_thread)
+                    self.logger.info("Odoo watcher started")
+                except Exception as e:
+                    self.logger.error(f"Error starting Odoo watcher: {e}")
 
         except Exception as e:
             self.logger.error(f"Error starting communication watchers: {e}")
@@ -748,11 +776,27 @@ class Orchestrator:
         try:
             # Keep orchestrator running
             while True:
+                self.check_for_scheduled_tasks()
                 time.sleep(1)
         except KeyboardInterrupt:
             self.logger.info("Orchestrator shutting down...")
             log_activity("SYSTEM", "Orchestrator stopped", str(self.vault_path))
             self.cleanup()
+
+    def check_for_scheduled_tasks(self):
+        """Check for and run scheduled system tasks like weekly briefings"""
+        now = datetime.now()
+        current_date = now.strftime('%Y-%m-%d')
+        
+        # Weekly Briefing - Every Friday at 5 PM
+        if now.weekday() == 4 and now.hour >= 17:
+            if self.last_briefing_date != current_date:
+                try:
+                    self.logger.info("Scheduled task: Generating Weekly CEO Briefing")
+                    self.briefing_service.generate_weekly_briefing()
+                    self.last_briefing_date = current_date
+                except Exception as e:
+                    self.logger.error(f"Error generating scheduled briefing: {e}")
 
     def cleanup(self):
         """

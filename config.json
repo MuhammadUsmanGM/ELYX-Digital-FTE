@@ -9,7 +9,8 @@
     "linkedin": 3600,
     "facebook": 7200,
     "twitter": 7200,
-    "instagram": 7200
+    "instagram": 7200,
+    "odoo": 3600
   },
   "watchdog": {
     "check_interval": 60,
@@ -91,6 +92,7 @@
     "ralph_loop_enabled": true,
     "facebook_enabled": true,
     "twitter_enabled": true,
-    "instagram_enabled": true
+    "instagram_enabled": true,
+    "odoo_enabled": true
   }
 }
