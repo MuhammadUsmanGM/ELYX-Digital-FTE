@@ -11,7 +11,8 @@ class WhatsAppWatcher(BaseWatcher):
     Monitors WhatsApp for urgent messages using Playwright
     """
     def __init__(self, vault_path: str, session_path: str = None):
-        super().__init__(vault_path, check_interval=30)  # 30 seconds
+        interval = int(os.getenv('WHATSAPP_CHECK_INTERVAL', 3600))
+        super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path.home() / ".whatsapp_session"
         self.keywords = ['urgent', 'asap', 'invoice', 'payment', 'help', 'emergency', 'critical', 'important']
         self.processed_messages = set()
@@ -27,7 +28,7 @@ class WhatsAppWatcher(BaseWatcher):
                 # Launch browser with saved session
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=True,
+                    headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
                     viewport={'width': 1280, 'height': 800}
                 )
 

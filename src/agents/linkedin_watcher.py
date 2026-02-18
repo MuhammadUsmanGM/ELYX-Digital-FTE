@@ -12,7 +12,8 @@ class LinkedInWatcher(BaseWatcher):
     Monitors LinkedIn for urgent messages using Playwright
     """
     def __init__(self, vault_path: str, session_path: str = None):
-        super().__init__(vault_path, check_interval=300)  # 5 minutes to avoid rate limiting
+        interval = int(os.getenv('LINKEDIN_CHECK_INTERVAL', 3600))
+        super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path.home() / ".linkedin_session"
         self.keywords = ['urgent', 'asap', 'meeting', 'proposal', 'opportunity', 'help', 'important', 'follow', 'contact']
         self.processed_messages = set()
@@ -28,7 +29,7 @@ class LinkedInWatcher(BaseWatcher):
                 # Launch browser with saved session
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=True,
+                    headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
                     viewport={'width': 1280, 'height': 800},
                     locale='en-US'
                 )
