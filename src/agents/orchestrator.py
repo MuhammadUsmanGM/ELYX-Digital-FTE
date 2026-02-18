@@ -240,6 +240,10 @@ class Orchestrator:
             from src.utils.quantum_resistant_hash import QuantumResistantHasher
             self.quantum_hasher = QuantumResistantHasher()
 
+            # Initialize Global Redundancy Service
+            from src.services.global_redundancy_service import GlobalRedundancyService
+            self.redundancy_service = GlobalRedundancyService(self.global_regions, str(self.vault_path))
+
             self.platinum_services_initialized = True
             log_activity("PLATINUM_SERVICES_INITIALIZED",
                         f"Platinum Tier services initialized successfully with regions: {self.global_regions}",
@@ -733,11 +737,32 @@ class Orchestrator:
 
                 log_activity("QUANTUM_VERIFICATION", f"Verified {processed_count} tasks with post-quantum algorithms", str(self.vault_path))
 
-            # 2. Apply global distribution if enabled
+            # 2. Apply global distribution and redundancy if enabled
             if self.config.get("platinum_tier_features", {}).get("enable_global_operations", True):
                 self.logger.info(f"Applying global distribution across {len(self.global_regions)} regions")
+                
+                if hasattr(self, 'redundancy_service'):
+                    # Perform health check and sync critical files
+                    self.redundancy_service.check_nodes_health()
+                    
+                    # Sync processed tasks and blockchain logs for redundancy
+                    files_to_sync = []
+                    for task in processed_tasks:
+                        files_to_sync.append(str(task.filepath))
+                    
+                    # Also sync the blockchain audit trail
+                    blockchain_path = self.config.get("blockchain", {}).get("log_path", "obsidian_vault/Blockchain_Integration/audit_trail.json")
+                    if os.path.exists(blockchain_path):
+                        files_to_sync.append(blockchain_path)
+                        
+                    self.redundancy_service.perform_global_sync(files_to_sync)
+                    
+                    # Check for failover necessity
+                    active_region = self.redundancy_service.initiate_failover()
+                    self.logger.info(f"Currently active operational region: {active_region}")
+
                 if processed_count > 0:
-                    log_activity("GLOBAL_SCALE", f"Synchronized {processed_count} tasks across global nodes", str(self.vault_path))
+                    log_activity("GLOBAL_SCALE", f"Synchronized {processed_count} tasks across global redundant nodes", str(self.vault_path))
 
             # 3. Apply blockchain accountability if enabled (Batch summary)
             if self.config.get("platinum_tier_features", {}).get("enable_blockchain_accountability", True) and self.blockchain_service:

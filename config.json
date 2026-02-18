@@ -94,5 +94,26 @@
     "twitter_enabled": true,
     "instagram_enabled": true,
     "odoo_enabled": true
+  },
+  "platinum_tier_features": {
+    "enable_quantum_security": true,
+    "enable_blockchain_accountability": true,
+    "enable_global_operations": true,
+    "enable_federated_learning": true,
+    "replication_factor": 3
+  },
+  "global_scaling": {
+    "regional_endpoints": [
+      "http://us-east-1.elyx.ai",
+      "http://eu-west-1.elyx.ai",
+      "http://ap-southeast-1.elyx.ai",
+      "http://sa-east-1.elyx.ai",
+      "http://ca-central-1.elyx.ai"
+    ],
+    "failover_priority": ["us-east-1", "eu-west-1", "ap-southeast-1"]
+  },
+  "blockchain": {
+    "log_path": "obsidian_vault/Blockchain_Integration/audit_trail.json",
+    "network": "ELYX-Private-Mainnet"
   }
 }
