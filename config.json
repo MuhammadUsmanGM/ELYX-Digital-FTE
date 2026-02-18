@@ -115,5 +115,12 @@
   "blockchain": {
     "log_path": "obsidian_vault/Blockchain_Integration/audit_trail.json",
     "network": "ELYX-Private-Mainnet"
+  },
+  "consciousness_simulation_features": {
+    "enable_consciousness_emergence": true,
+    "enable_reality_simulation": true,
+    "enable_existential_reasoning": true,
+    "self_awareness_threshold": 0.85,
+    "reality_fidelity_target": 9.5
   }
 }
