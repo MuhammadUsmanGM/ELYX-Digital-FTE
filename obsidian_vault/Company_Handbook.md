@@ -115,6 +115,13 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 > - **CEO Briefing**: Generate the Weekly Business Audit every Friday at 5 PM local time.
 > - **Discrepancies**: Any mathematical discrepancy between ELYX records and Odoo must be flagged as a **High Priority Task**.
 
+## 💎 Quantum Security & Blockchain
+> [!lock] Platinum Accountability
+> - **Quantum Verification**: Every processed task must be hashed using Post-Quantum Cryptography (SHA3-512) to ensure it is tamper-proof.
+> - **Immutable Audit Trail**: These hashes, along with action metadata, are stored in the ELYX Private Blockchain to prevent any history alteration.
+> - **Zero-Trust Validation**: Before a task is marked 'Done', its PQC checksum must be verified against the blockchain record.
+> - **Authorized Disposal**: Critical audit records cannot be purged without a multi-signature approval (simulated).
+
 ## 👤 Trusted Contacts & Whitelisting
 
 - **Primary Owner**: All commands from the registered owner are high priority.

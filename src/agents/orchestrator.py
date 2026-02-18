@@ -236,6 +236,10 @@ class Orchestrator:
             self.briefing_service = BriefingService(str(self.vault_path))
             self.last_briefing_date = None
 
+            # Initialize Quantum Resistant Hasher for security verification
+            from src.utils.quantum_resistant_hash import QuantumResistantHasher
+            self.quantum_hasher = QuantumResistantHasher()
+
             self.platinum_services_initialized = True
             log_activity("PLATINUM_SERVICES_INITIALIZED",
                         f"Platinum Tier services initialized successfully with regions: {self.global_regions}",
@@ -479,7 +483,8 @@ class Orchestrator:
 
         try:
             # Fallback or standard: Process tasks via API immediately
-            processed_count = self.processor.process_pending_tasks()
+            processed_tasks = self.processor.process_pending_tasks()
+            processed_count = len(processed_tasks)
             self.logger.info(f"Claude Code (API) processed {processed_count} tasks")
 
             # Also process any approval requests
@@ -495,7 +500,7 @@ class Orchestrator:
 
             # Apply Platinum Tier features if enabled
             if self.platinum_services_initialized:
-                self._apply_platinum_tier_features(processed_count)
+                self._apply_platinum_tier_features(processed_tasks)
 
             # Handle any responses that need to be sent after task processing
             self._handle_responses_after_processing(processed_count)
@@ -694,7 +699,7 @@ class Orchestrator:
                         f"Error applying Gold Tier features: {str(e)}",
                         str(self.vault_path))
 
-    def _apply_platinum_tier_features(self, processed_count: int):
+    def _apply_platinum_tier_features(self, processed_tasks: list):
         """
         Apply Platinum Tier features after task processing
         """
@@ -702,10 +707,30 @@ class Orchestrator:
             if not self.platinum_services_initialized:
                 return
 
+            processed_count = len(processed_tasks)
+
             # 1. Apply quantum-safe verification if enabled
-            if self.config.get("platinum_tier_features", {}).get("enable_quantum_security", True):
+            if self.config.get("platinum_tier_features", {}).get("enable_quantum_security", True) and hasattr(self, 'quantum_hasher'):
                 self.logger.info("Applying quantum-safe security measures")
-                # In a real system, we'd sign the results with a quantum-safe key
+                
+                for task in processed_tasks:
+                    # Generate individual quantum-safe checksum for accountability
+                    content_to_hash = f"{task.filename}:{task.content}"
+                    checksum = self.quantum_hasher.get_quantum_safe_checksum(content_to_hash)
+                    
+                    # Store checksum in blockchain if enabled
+                    if self.config.get("platinum_tier_features", {}).get("enable_blockchain_accountability", True) and self.blockchain_service:
+                        tx_id = self.blockchain_service.record_action(
+                            "task_verification",
+                            {
+                                "filename": task.filename,
+                                "type": task.type,
+                                "pqc_checksum": checksum,
+                                "audit": "PLATINUM_ACCOUNTABILITY"
+                            }
+                        )
+                        self.logger.info(f"Blockchain record created for {task.filename}: {tx_id}")
+
                 log_activity("QUANTUM_VERIFICATION", f"Verified {processed_count} tasks with post-quantum algorithms", str(self.vault_path))
 
             # 2. Apply global distribution if enabled
@@ -714,7 +739,7 @@ class Orchestrator:
                 if processed_count > 0:
                     log_activity("GLOBAL_SCALE", f"Synchronized {processed_count} tasks across global nodes", str(self.vault_path))
 
-            # 3. Apply blockchain accountability if enabled
+            # 3. Apply blockchain accountability if enabled (Batch summary)
             if self.config.get("platinum_tier_features", {}).get("enable_blockchain_accountability", True) and self.blockchain_service:
                 self.logger.info("Recording critical operations on blockchain")
                 if processed_count > 0:

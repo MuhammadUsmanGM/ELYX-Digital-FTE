@@ -31,12 +31,12 @@ class TaskProcessor:
         Process all pending tasks in the Needs_Action folder
         """
         pending_tasks = get_pending_tasks(self.vault_path)
-        processed_count = 0
+        processed_tasks = []
 
         for task in pending_tasks:
             try:
                 self.process_single_task(task)
-                processed_count += 1
+                processed_tasks.append(task)
             except Exception as e:
                 log_activity("ERROR", f"Failed to process task {task.filename}: {str(e)}", self.vault_path)
                 # Update task status to error
@@ -45,7 +45,7 @@ class TaskProcessor:
         # Update dashboard after processing
         self.update_dashboard()
 
-        return processed_count
+        return processed_tasks
 
     def process_single_task(self, task):
         """

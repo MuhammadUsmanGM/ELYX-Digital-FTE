@@ -5,6 +5,8 @@ Implements immutable logging of critical actions and high-impact tasks
 import hashlib
 import json
 import time
+import os
+from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 import uuid
@@ -13,10 +15,34 @@ class BlockchainService:
     """
     Simulation of a blockchain-based accountability system for AI actions
     """
-    def __init__(self):
+    def __init__(self, storage_path: Optional[str] = None):
+        self.storage_path = storage_path or os.getenv('BLOCKCHAIN_LOG_PATH', 'obsidian_vault/Blockchain_Integration/audit_trail.json')
         self.chain = []
         self.pending_transactions = []
-        self._create_genesis_block()
+        self._load_chain()
+        if not self.chain:
+            self._create_genesis_block()
+
+    def _load_chain(self):
+        """Load the blockchain from storage"""
+        try:
+            path = Path(self.storage_path)
+            if path.exists():
+                with open(path, 'r', encoding='utf-8') as f:
+                    self.chain = json.load(f)
+        except Exception as e:
+            print(f"Error loading blockchain: {e}")
+            self.chain = []
+
+    def _save_chain(self):
+        """Save the blockchain to storage"""
+        try:
+            path = Path(self.storage_path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with open(path, 'w', encoding='utf-8') as f:
+                json.dump(self.chain, f, indent=2)
+        except Exception as e:
+            print(f"Error saving blockchain: {e}")
 
     def _create_genesis_block(self):
         """Create the first block in the chain"""
@@ -40,6 +66,7 @@ class BlockchainService:
         # Simple Proof of Work simulation
         block["hash"] = self._calculate_hash(block)
         self.chain.append(block)
+        self._save_chain()
         return block
 
     def _calculate_hash(self, block: Dict[str, Any]) -> str:
