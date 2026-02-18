@@ -27,13 +27,14 @@ This project was built for the **Personal AI Employee Hackathon 0**, achieving t
 - **⛓️ Blockchain Accountability**: Immutable audit trails for every strategic task via integrated blockchain ledger.
 - **� Multi-Channel Autonomy**: Unified autonomous responders for Email, WhatsApp, LinkedIn, Facebook, and Twitter.
 - **🌐 Global Node Redundancy**: 5-region disaster recovery and automatic failover for 99.9999% availability.
-- **🎭 Reality Simulation**: decision-impact analysis using a localized physics and social consistency engine.
+- **🎭 Reality Simulation**: Decision-impact analysis using a localized physics and social consistency engine.
+- **🔀 Universal Brain Gateway**: Swap between **Claude Code**, **Qwen**, **Gemini CLI**, and **Codex** as the reasoning engine with a single `.env` change.
 
 ## 🛠 Tech Stack
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Logic Core** | Claude Code (Anthropic) | Strategic Reasoning & Execution |
+| **Logic Core** | Claude / Qwen / Gemini / Codex | Swappable Strategic Reasoning Engine |
 | **Persistence** | Obsidian (Local Markdown) | GUI & Long-Term Memory |
 | **ERP/Finance** | Odoo Cloud | Accounting & Business Logic |
 | **Security** | PQC + SHA3-512 | Quantum-Safe Verification |
@@ -74,6 +75,22 @@ ELYX utilizes a **Decentralized Intelligence** model:
 
 3. **Configure Environment**:
    Initialize your `.env` with your Odoo, API, and Security keys.
+
+## 🔀 Brain Selection
+
+ELYX supports multiple AI coding agents as its reasoning core. Switch brains by editing one line in `.env`:
+
+```env
+# Options: claude, qwen, gemini, codex
+ELYX_ACTIVE_BRAIN=claude
+```
+
+| Brain | Best For |
+| :--- | :--- |
+| `claude` | Strategic reasoning, complex multi-step tasks |
+| `qwen` | Fast local coding, lightweight operations |
+| `gemini` | High-volume triage, analysis, speed |
+| `codex` | Code generation and refactoring |
 
 ## 🛡 Security & Sovereignty
 

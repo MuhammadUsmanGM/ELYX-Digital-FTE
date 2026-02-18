@@ -495,15 +495,25 @@ class Orchestrator:
 
     def trigger_claude(self):
         """
-        Trigger Claude Code to process new tasks
+        Trigger the active AI Brain to process new tasks.
+        Supports Claude, Qwen, Gemini, Codex via BrainFactory.
         """
-        self.logger.info("Triggering Claude Code to process new tasks...")
+        # Resolve active brain name for logging
+        try:
+            from src.services.brain_factory import get_brain_factory
+            factory = get_brain_factory()
+            active_brain = factory.get_active_brain()
+            brain_label = active_brain.name.upper()
+        except Exception:
+            brain_label = "CLAUDE (default)"
+
+        self.logger.info(f"Triggering [{brain_label}] to process new tasks...")
         
-        # 🥈 Check if we should use the Autonomous Claude CLI Loop (Hackathon Mode)
+        # Check if we should use the Autonomous CLI Loop (Hackathon Mode)
         if self.config.get("integrations", {}).get("use_claude_cli", False):
-            self.logger.info("Using Claude Code CLI (Autonomous Loop Mode)")
+            self.logger.info(f"Using [{brain_label}] CLI (Autonomous Loop Mode)")
             try:
-                # Initialize and start the Ralph Loop
+                # Initialize and start the Ralph Loop (brain-aware)
                 loop = RalphLoop(vault_path=str(self.vault_path))
                 loop.start()
                 
@@ -511,8 +521,9 @@ class Orchestrator:
                 self.processor.update_dashboard()
                 return
             except Exception as e:
-                self.logger.error(f"Error in Claude CLI Loop: {e}")
+                self.logger.error(f"Error in [{brain_label}] CLI Loop: {e}")
                 self.logger.info("Falling back to API TaskProcessor...")
+
 
         try:
             # Fallback or standard: Process tasks via API immediately

@@ -122,5 +122,30 @@
     "enable_existential_reasoning": true,
     "self_awareness_threshold": 0.85,
     "reality_fidelity_target": 9.5
+  },
+  "brain_selection": {
+    "active_brain": "claude",
+    "brains": {
+      "claude": {
+        "command": "claude",
+        "args": ["-p"],
+        "description": "Anthropic Claude Code - Strategic reasoning and execution"
+      },
+      "qwen": {
+        "command": "qwen",
+        "args": ["-p"],
+        "description": "Alibaba Qwen Coder - Fast local coding tasks"
+      },
+      "gemini": {
+        "command": "gemini",
+        "args": ["-p"],
+        "description": "Google Gemini CLI - High-volume triage and analysis"
+      },
+      "codex": {
+        "command": "codex",
+        "args": ["-p"],
+        "description": "OpenAI Codex CLI - Code generation and refactoring"
+      }
+    }
   }
 }
