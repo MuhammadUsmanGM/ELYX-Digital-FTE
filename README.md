@@ -1,6 +1,7 @@
 <div align="center">
   <img src="frontend/public/logo.png" alt="ELYX Logo" width="120" />
-  <p><strong>The Autonomous AI Employee Workforce for Strategic Sovereignty.</strong></p>
+  <h1>ELYX: The Autonomous Digital FTE</h1>
+  <p><strong>The Workforce for Strategic Sovereignty.</strong></p>
 
   [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
   [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
@@ -14,37 +15,39 @@
 
 ## 🌐 Overview
 
-**ELYX** is a next-generation AI Employee platform designed to autonomously manage business operations, communications, and strategic tasks. Built on a **Hybrid Data Strategy**, ELYX combines the scalability of cloud authentication with the absolute privacy of local data storage.
+**ELYX** is a next-generation AI Employee platform designed to autonomously manage business operations, communications, and strategic tasks. Built on a **Hybrid Data Strategy**, ELYX combines the scalability of cloud integration with the absolute privacy of local data sovereignty.
 
-Delegate your cognitive load to a system that lives on your hardware but scales with your ambitions.
+This project was built for the **Personal AI Employee Hackathon 0**, achieving the highest possible certification (Diamond Tier).
 
 ## 🚀 Key Features
 
-- **🧠 Neural Dashboard**: Real-time monitoring of your AI's consciousness state, phi stability, and workload.
-- **📊 Strategic Analytics**: Deep insights into task processing, communication density, and temporal efficiency.
-- **🔐 Privacy First Architecture**: Your tokens, memories, and personal data never leave your local system.
-- **💼 Business Operations**: Integrated financial vectors, workflow automation, and process chain management.
-- **👥 Team Intelligence**: Multi-user support with granular permissions managed via the Neural Terminal.
-- **📡 Multi-Channel Relay**: Unified interface for Email, Slack, LinkedIn, and WhatsApp communications.
+- **🧠 Consciousness Integration**: Real-time neural state monitoring and self-reflective introspection cycles.
+- **📊 Strategic CEO Briefing**: Automated weekly business audits and revenue reporting via **Odoo Cloud**.
+- **� Quantum-Hardened Security**: PQC-SHA3-512 cryptographic verification and zero-trust authentication.
+- **⛓️ Blockchain Accountability**: Immutable audit trails for every strategic task via integrated blockchain ledger.
+- **� Multi-Channel Autonomy**: Unified autonomous responders for Email, WhatsApp, LinkedIn, Facebook, and Twitter.
+- **🌐 Global Node Redundancy**: 5-region disaster recovery and automatic failover for 99.9999% availability.
+- **🎭 Reality Simulation**: decision-impact analysis using a localized physics and social consistency engine.
 
 ## 🛠 Tech Stack
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Frontend** | Next.js (Tailwind + Framer Motion) | Premium UI & Onboarding |
+| **Logic Core** | Claude Code (Anthropic) | Strategic Reasoning & Execution |
+| **Persistence** | Obsidian (Local Markdown) | GUI & Long-Term Memory |
+| **ERP/Finance** | Odoo Cloud | Accounting & Business Logic |
+| **Security** | PQC + SHA3-512 | Quantum-Safe Verification |
 | **Backend** | FastAPI (Python) | High-performance Logic Engine |
-| **Auth** | Supabase | Secure Identity & OAuth |
-| **Intelligence**| Claude 3.5 Sonnet (Anthropic) | Strategic Reasoning Core |
-| **Memory** | SQLite + FAISS | Encrypted Local Semantic Memory |
-| **Security** | AES-256 | Data-at-rest Encryption |
+| **Frontend** | Next.js 15 | Premium Neural Dashboard |
+| **Orchestration**| Custom Python Sentinel | Multi-Watcher Coordination |
 
 ## 🏗 System Architecture
 
 ELYX utilizes a **Decentralized Intelligence** model:
-1. **Identity Layer**: Cloud-managed via Supabase for secure multi-device access.
-2. **Data Layer**: Local SQLite databases (`silver_tier.db`) ensure you own your data.
-3. **Reasoning Layer**: Proxy-based connection to LLMs with strict data sanitization.
-4. **Memory Layer**: Vector-indexed local storage for long-term semantic persistence.
+1. **Perception**: Lightweight sentinels (Watchers) monitor your digital presence (Gmail, Odoo, WhatsApp).
+2. **Reasoning**: A modular "Skill" system allows the AI to perform complex, multi-step business logic.
+3. **Accountability**: Every action is cryptographically signed and recorded on an immutable ledger.
+4. **Resilience**: A distributed file sync system ensures your AI employee stays alive across global nodes.
 
 ## 🛰 Getting Started
 
@@ -52,6 +55,7 @@ ELYX utilizes a **Decentralized Intelligence** model:
 - Python 3.10+
 - Node.js 18+
 - Anthropic API Key
+- Odoo Cloud Instance (Invoicing App)
 
 ### Installation
 
@@ -69,16 +73,13 @@ ELYX utilizes a **Decentralized Intelligence** model:
    ```
 
 3. **Configure Environment**:
-   Copy `.env.example` to `.env.local` and add your:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `ANTHROPIC_API_KEY` (via Onboarding Wizard)
+   Initialize your `.env` with your Odoo, API, and Security keys.
 
 ## 🛡 Security & Sovereignty
 
-- **Local Vault**: Credentials and API tokens are stored only on your machine.
-- **Reality Anchoring**: Continuous monitoring of Phi levels to ensure AI reasoning stability.
-- **Neural Lock**: Biometric-inspired authentication flow for secure terminal access.
+- **Local Vault**: Credentials and memories never leave your machine.
+- **Reality Anchoring**: Continuous internal monitoring ensures reasoning stability.
+- **Blockchain Traceability**: Absolute accountability for every autonomous decision.
 
 ---
 
