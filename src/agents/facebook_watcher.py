@@ -30,13 +30,76 @@ class FacebookWatcher(BaseWatcher):
                 page = browser.new_page()
                 page.goto('https://www.facebook.com/messages/t/')
 
-                # Wait for login or messages
+                # Check if already logged in
+                logged_in = False
                 try:
-                    page.wait_for_selector('[aria-label="Chats"]', timeout=10000)
+                    page.wait_for_selector('[aria-label="Chats"], [aria-label="Search Messenger"]', timeout=10000)
+                    logged_in = True
+                    self.logger.info("Facebook loaded - already logged in")
                 except:
-                    self.logger.warning("Facebook Messages not loaded, authentication may be required")
-                    browser.close()
-                    return []
+                    self.logger.info("Not logged in to Facebook, attempting login...")
+
+                # If not logged in, try to log in with credentials
+                if not logged_in:
+                    try:
+                        username = os.getenv('FACEBOOK_USERNAME', '')
+                        password = os.getenv('FACEBOOK_PASSWORD', '')
+
+                        if not username or not password:
+                            self.logger.error("Facebook credentials not set in .env (FACEBOOK_USERNAME / FACEBOOK_PASSWORD)")
+                            browser.close()
+                            return []
+
+                        # Navigate to login page
+                        page.goto('https://www.facebook.com/login')
+                        import time
+                        time.sleep(2)
+
+                        # Fill in credentials
+                        email_input = page.wait_for_selector('#email, [name="email"]', timeout=10000)
+                        if email_input:
+                            email_input.fill(username)
+
+                        pass_input = page.wait_for_selector('#pass, [name="pass"]', timeout=5000)
+                        if pass_input:
+                            pass_input.fill(password)
+
+                        # Click login button
+                        login_btn = page.query_selector('[name="login"], [data-testid="royal_login_button"], button[type="submit"]')
+                        if login_btn:
+                            login_btn.click()
+                        else:
+                            page.keyboard.press('Enter')
+
+                        self.logger.info("Login credentials submitted, waiting for response...")
+
+                        # Wait to see what happens after login
+                        time.sleep(5)
+
+                        # Check if we hit a checkpoint/2FA page
+                        current_url = page.url
+                        if 'checkpoint' in current_url or 'two_step_verification' in current_url:
+                            self.logger.warning("=" * 60)
+                            self.logger.warning("Facebook requires 2FA / security checkpoint!")
+                            self.logger.warning("Please complete the verification in the browser window.")
+                            self.logger.warning("Waiting up to 120 seconds...")
+                            self.logger.warning("=" * 60)
+                            try:
+                                page.wait_for_url('**/messages/**', timeout=120000)
+                            except:
+                                self.logger.warning("Timed out waiting for 2FA completion.")
+                                browser.close()
+                                return []
+
+                        # Navigate to messages after login
+                        page.goto('https://www.facebook.com/messages/t/')
+                        page.wait_for_selector('[aria-label="Chats"], [aria-label="Search Messenger"]', timeout=30000)
+                        self.logger.info("Facebook login successful! Inbox loaded.")
+
+                    except Exception as login_err:
+                        self.logger.error(f"Facebook login failed: {login_err}")
+                        browser.close()
+                        return []
 
                 # Find unread/new messages
                 # Note: This is a simplified selector, selectors change frequently
