@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/logo.png" alt="ELYX Logo" width="120" />
+  <img src="frontend/public/animated.gif" alt="ELYX Logo" width="120" />
   <h1>ELYX: The Autonomous Digital FTE</h1>
   <p><strong>The Workforce for Strategic Sovereignty.</strong></p>
 
