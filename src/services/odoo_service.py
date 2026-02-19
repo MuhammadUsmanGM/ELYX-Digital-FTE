@@ -18,8 +18,18 @@ class OdooService:
 
     def authenticate(self):
         """Authenticate with Odoo and get UID"""
+        if not all([self.url, self.db, self.username, self.password]):
+            missing = [k for k, v in {
+                'ODOO_URL': self.url, 
+                'ODOO_DB': self.db, 
+                'ODOO_USERNAME': self.username, 
+                'ODOO_PASSWORD': self.password
+            }.items() if not v]
+            self.logger.error(f"Missing Odoo credentials: {', '.join(missing)}")
+            return False
+
         try:
-            common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common')
+            common = xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/common', allow_none=True)
             self.uid = common.authenticate(self.db, self.username, self.password, {})
             if self.uid:
                 self.logger.info(f"Odoo authenticated successfully (UID: {self.uid})")
@@ -36,7 +46,7 @@ class OdooService:
         if not self.uid:
             if not self.authenticate():
                 return None
-        return xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object')
+        return xmlrpc.client.ServerProxy(f'{self.url}/xmlrpc/2/object', allow_none=True)
 
     def get_recent_invoices(self, limit=10):
         """Fetch recent customer invoices"""
