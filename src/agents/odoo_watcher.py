@@ -1,4 +1,4 @@
-from src.agents.base_watcher import BaseWatcher
+from ..base_watcher import BaseWatcher
 from src.services.odoo_service import OdooService
 from pathlib import Path
 from datetime import datetime

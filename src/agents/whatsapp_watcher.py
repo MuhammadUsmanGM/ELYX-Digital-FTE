@@ -35,13 +35,34 @@ class WhatsAppWatcher(BaseWatcher):
                 page = browser.new_page()
                 page.goto('https://web.whatsapp.com')
 
-                # Wait for WhatsApp to load
+                # Wait for WhatsApp to load (check if already logged in)
                 try:
-                    page.wait_for_selector('[data-testid="chat-list"]', timeout=10000)
+                    page.wait_for_selector('[data-testid="chat-list"]', timeout=15000)
+                    self.logger.info("WhatsApp Web loaded successfully - already logged in")
                 except:
-                    self.logger.warning("WhatsApp Web not loaded, possibly need to scan QR code")
-                    browser.close()
-                    return []
+                    # Not logged in yet - check if QR code is visible
+                    self.logger.info("WhatsApp Web not loaded yet, checking for QR code...")
+                    try:
+                        # Wait for QR code canvas to appear
+                        page.wait_for_selector('canvas, [data-testid="qrcode"]', timeout=15000)
+                        self.logger.info("=" * 60)
+                        self.logger.info("QR CODE DETECTED! Please scan it with your WhatsApp app.")
+                        self.logger.info("Open WhatsApp on your phone -> Linked Devices -> Link a Device")
+                        self.logger.info("Waiting up to 120 seconds for you to scan...")
+                        self.logger.info("=" * 60)
+                        
+                        # Now wait for login to complete after QR scan
+                        try:
+                            page.wait_for_selector('[data-testid="chat-list"]', timeout=120000)
+                            self.logger.info("QR code scanned successfully! WhatsApp is now connected.")
+                        except:
+                            self.logger.warning("Timed out waiting for QR scan. Please try again.")
+                            browser.close()
+                            return []
+                    except:
+                        self.logger.warning("Could not find QR code or chat list. WhatsApp Web may have changed its layout.")
+                        browser.close()
+                        return []
 
                 # Find unread chats
                 unread_chats = page.query_selector_all('[data-icon="muted-unread"]')
