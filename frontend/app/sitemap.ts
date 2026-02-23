@@ -9,9 +9,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     '/operations',
     '/comms',
     '/business',
-    '/consciousness',
-    '/reality',
-    '/temporal',
+    '/system-monitor',
+    '/decision-analysis',
+    '/scheduling',
     '/security',
   ].map((route) => ({
     url: `${baseUrl}${route}`,

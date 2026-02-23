@@ -375,7 +375,7 @@ export default function DashboardPage() {
                   <h3 className="text-xl font-black text-white tracking-tight">Quick Sync</h3>
                </div>
                <div className="grid grid-cols-2 gap-4">
-                  <QuickTool icon={<Globe2 size={20} />} label="Reality Matrix" link="/reality" active color="primary" />
+                  <QuickTool icon={<Globe2 size={20} />} label="Decision Matrix" link="/decision-analysis" active color="primary" />
                   <QuickTool icon={<ShieldCheck size={20} />} label="Security Hub" link="/security" color="red" />
                   <QuickTool icon={<Bell size={20} />} label="Notifications" link="/comms" color="accent" />
                   <QuickTool icon={<BrainCircuit size={20} />} label="Neural Config" link="/settings" color="emerald" />

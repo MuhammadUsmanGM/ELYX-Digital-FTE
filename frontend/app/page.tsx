@@ -558,9 +558,9 @@ export default function LandingPage() {
               <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-100 mb-6">Intelligence</h4>
               <ul className="space-y-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                  <li><Link href="/dashboard" className="hover:text-primary">Dashboard</Link></li>
-                 <li><Link href="/reality" className="hover:text-primary">Reality Hub</Link></li>
+                 <li><Link href="/decision-analysis" className="hover:text-primary">Decision Analysis</Link></li>
                  <li><Link href="/security" className="hover:text-primary">Security Protocols</Link></li>
-                 <li><Link href="#" className="hover:text-primary">Temporal Logic</Link></li>
+                 <li><Link href="/scheduling" className="hover:text-primary">Task Scheduler</Link></li>
               </ul>
            </div>
 

@@ -3,13 +3,13 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { 
-  LayoutDashboard, 
-  BrainCircuit, 
-  Clock, 
-  Globe2, 
-  ShieldCheck, 
-  MessageSquare, 
+import {
+  LayoutDashboard,
+  BrainCircuit,
+  Clock,
+  Globe2,
+  ShieldCheck,
+  MessageSquare,
   CheckCircle2,
   Bell,
   Search,
@@ -24,7 +24,8 @@ import {
   Users,
   LogOut,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Calendar
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardData } from "@/lib/types";
@@ -53,9 +54,9 @@ export default function SidebarLayout({
     { icon: <CheckCircle2 size={18} />, label: "Operations", href: "/operations" },
     { icon: <Activity size={18} />, label: "Business", href: "/business" },
     { icon: <MessageSquare size={18} />, label: "Communications", href: "/comms" },
-    { icon: <BrainCircuit size={18} />, label: "Consciousness", href: "/consciousness" },
-    { icon: <Clock size={18} />, label: "Temporal", href: "/temporal" },
-    { icon: <Globe2 size={18} />, label: "Reality", href: "/reality" },
+    { icon: <Activity size={18} />, label: "System Monitor", href: "/system-monitor" },
+    { icon: <BarChart3 size={18} />, label: "Decision Analysis", href: "/decision-analysis" },
+    { icon: <Calendar size={18} />, label: "Scheduler", href: "/scheduling" },
     { icon: <ShieldCheck size={18} />, label: "Security", href: "/security" },
     { icon: <Settings size={18} />, label: "Settings", href: "/settings" },
   ];
