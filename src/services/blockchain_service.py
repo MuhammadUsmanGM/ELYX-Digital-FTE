@@ -1,6 +1,9 @@
 """
 Blockchain Accountability Service for Platinum Tier
 Implements immutable logging of critical actions and high-impact tasks
+
+Note: This is a single-node append-only log simulation for audit purposes.
+It provides cryptographic integrity verification but is not a distributed blockchain.
 """
 import hashlib
 import json
@@ -13,7 +16,18 @@ import uuid
 
 class BlockchainService:
     """
-    Simulation of a blockchain-based accountability system for AI actions
+    Append-only audit log service with cryptographic integrity verification.
+    Simulates blockchain-style hashing for tamper detection in a single-node setup.
+    
+    This service provides:
+    - SHA-256 hashing of all recorded actions
+    - Chained block structure for integrity verification
+    - Persistent storage in JSON format
+    
+    Limitations:
+    - Single-node (not distributed)
+    - No consensus mechanism
+    - No proof-of-work (simplified hashing)
     """
     def __init__(self, storage_path: Optional[str] = None):
         self.storage_path = storage_path or os.getenv('BLOCKCHAIN_LOG_PATH', 'obsidian_vault/Blockchain_Integration/audit_trail.json')

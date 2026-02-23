@@ -115,14 +115,21 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 > - **CEO Briefing**: Generate the Weekly Business Audit every Friday at 5 PM local time.
 > - **Discrepancies**: Any mathematical discrepancy between ELYX records and Odoo must be flagged as a **High Priority Task**.
 
-## 💎 Quantum Security, Blockchain & Global Redundancy
-> [!lock] Accountability & Resilience
-> - **Quantum Verification**: Every processed task must be hashed using Post-Quantum Cryptography (SHA3-512) to ensure it is tamper-proof.
-> - **Immutable Audit Trail**: These hashes, along with action metadata, are stored in the ELYX Private Blockchain to prevent any history alteration.
-> - **Global Node Redundancy**: All critical data (Vault, Blockchain Logs) is replicated across 5 global regions (us-east-1, eu-west-1, ap-southeast-1, etc.).
-> - **Automatic Failover**: In the event of a regional outage, ELYX will automatically failover to the next healthy node within 60 seconds.
-> - **Zero-Trust Validation**: Before a task is marked 'Done', its PQC checksum must be verified against the blockchain record.
-> - **Authorized Disposal**: Critical audit records cannot be purged without a multi-signature approval (simulated).
+## 🔐 Audit & Accountability
+
+### Action Logging
+- **Cryptographic Signing**: Every processed task is hashed using SHA3-512 to ensure tamper detection
+- **Immutable Audit Trail**: Action metadata and hashes are stored in append-only logs (`audit_trail.json`) to prevent history alteration
+- **Daily Audit Logs**: Detailed execution logs stored in `/Logs/YYYY-MM-DD_Audit.json`
+
+### Data Redundancy
+- **Local Backup**: Vault data should be backed up daily to secure cloud storage
+- **Git Sync**: Recommended to use Git for version control and cross-machine synchronization
+- **Disaster Recovery**: Restore from `/Attachments` folder and Git history if needed
+
+### Validation
+- **Integrity Checks**: Before a task is marked 'Done', its SHA3-512 checksum is verified
+- **Audit Trail**: All critical actions are logged with timestamps and action details for compliance
 
 ## 👤 Trusted Contacts & Whitelisting
 

@@ -1,62 +1,181 @@
 <div align="center">
   <img src="frontend/public/animated.gif" alt="ELYX Logo" width="120" />
-  <h1>ELYX: The Autonomous Digital FTE</h1>
-  <p><strong>The Workforce for Strategic Sovereignty.</strong></p>
+  <h1>ELYX</h1>
+  <p><strong>A Local-First Autonomous AI Employee Framework</strong></p>
 
-  [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![Prototype](https://img.shields.io/badge/Status-Prototype-orange?style=for-the-badge)]()
+  [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
   [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-  [![Supabase](https://img.shields.io/badge/Auth-Supabase-3ECF8E?style=for-the-badge&logo=supabase)](https://supabase.com/)
-  [![SQLite](https://img.shields.io/badge/Database-SQLite-003B57?style=for-the-badge&logo=sqlite)](https://www.sqlite.org/)
-  [![TypeScript](https://img.shields.io/badge/Frontend-TypeScript-3178C6?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-  [![Python](https://img.shields.io/badge/Backend-Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+  [![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+  [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+  [![Hackathon](https://img.shields.io/badge/Built%20for-Personal%20AI%20Employee%20Hackathon%200-purple?style=for-the-badge)]()
 </div>
 
 ---
 
 ## 🌐 Overview
 
-**ELYX** is a next-generation AI Employee platform designed to autonomously manage business operations, communications, and strategic tasks. Built on a **Hybrid Data Strategy**, ELYX combines the scalability of cloud integration with the absolute privacy of local data sovereignty.
+**ELYX** is a modular AI employee framework designed to autonomously manage structured business workflows on a local machine while optionally integrating with cloud services.
 
-This project was built for the **Personal AI Employee Hackathon 0**, achieving the highest possible certification (Diamond Tier).
+The system combines:
 
-## 🚀 Key Features
+- **Local data control** and long-term memory (Obsidian vault)
+- **A swappable multi-model reasoning core** (Claude, Gemini, Qwen, Codex)
+- **Role-based task execution** with human-in-the-loop approvals
+- **Cryptographically verifiable action logs** for audit trails
 
-- **🧠 Consciousness Integration**: Real-time neural state monitoring and self-reflective introspection cycles.
-- **📊 Strategic CEO Briefing**: Automated weekly business audits and revenue reporting via **Odoo Cloud**.
-- **� Quantum-Hardened Security**: PQC-SHA3-512 cryptographic verification and zero-trust authentication.
-- **⛓️ Blockchain Accountability**: Immutable audit trails for every strategic task via integrated blockchain ledger.
-- **� Multi-Channel Autonomy**: Unified autonomous responders for Email, WhatsApp, LinkedIn, Facebook, and Twitter.
-- **🌐 Global Node Redundancy**: 5-region disaster recovery and automatic failover for 99.9999% availability.
-- **🎭 Reality Simulation**: Decision-impact analysis using a localized physics and social consistency engine.
-- **🔀 Universal Brain Gateway**: Swap between **Claude Code**, **Qwen**, **Gemini CLI**, and **Codex** as the reasoning engine with a single `.env` change.
+ELYX is built to explore how autonomous AI agents can safely operate within real-world business environments without compromising data sovereignty.
+
+Developed as part of the **Personal AI Employee Hackathon 0**.
+
+---
+
+## 🚀 Core Capabilities
+
+### 🧠 Modular Reasoning Engine
+
+Supports multiple AI providers (Claude, Gemini, Qwen, Codex) that can be switched via environment configuration. This enables experimentation with different reasoning profiles depending on task complexity.
+
+### 👤 Role-Based Task Assignment
+
+Agents operate under defined roles (e.g., Operations, Finance, Communications), limiting scope and improving predictability of execution.
+
+### 📊 Business Workflow Integration
+
+Integrated with Odoo Cloud for:
+
+- Invoice monitoring
+- Financial summaries
+- Automated reporting
+
+The system can generate structured weekly briefings based on business data.
+
+### 🔐 Local-First Memory & Security
+
+- Long-term memory stored locally (Markdown-based vault)
+- Credentials never leave the host environment
+- All executed actions are cryptographically signed for traceability
+
+### ⏱ Continuous Monitoring Architecture
+
+Lightweight watcher processes monitor connected services (email, ERP, etc.) and trigger reasoning cycles when predefined conditions are met.
+
+### 🛡️ Human-in-the-Loop Safety
+
+Sensitive actions (payments, new contacts, file sharing) require explicit user approval before execution.
+
+---
+
+## 🏗 System Architecture
+
+ELYX follows a modular, event-driven architecture:
+
+### 1. Perception Layer (Watchers)
+Monitors external services and normalizes incoming data:
+- Gmail watcher (OAuth2 authenticated)
+- WhatsApp watcher (Playwright-based)
+- Filesystem watcher (watchdog)
+- Odoo ERP watcher (JSON-RPC)
+
+### 2. Reasoning Layer (Brain Core)
+Executes structured multi-step decision pipelines using the selected model provider:
+- Supports Claude, Gemini, Qwen, Codex via `brain_factory.py`
+- Uses Ralph Wiggum pattern for multi-step task persistence
+- Creates `Plan.md` files for complex multi-step tasks
+
+### 3. Execution Layer (Skills)
+Performs deterministic actions such as:
+- Sending emails
+- Updating ERP entries
+- Generating reports
+- Moving files between workflow states
+
+### 4. Audit Layer
+Logs and cryptographically signs every strategic action for traceability:
+- SHA3-512 hashing via `quantum_resistant_hash.py`
+- Append-only audit trail in `audit_trail.json`
+- Daily logs in `/Logs/YYYY-MM-DD_Audit.json`
+
+---
 
 ## 🛠 Tech Stack
 
 | Component | Technology | Role |
 | :--- | :--- | :--- |
-| **Logic Core** | Claude / Qwen / Gemini / Codex | Swappable Strategic Reasoning Engine |
-| **Persistence** | Obsidian (Local Markdown) | GUI & Long-Term Memory |
-| **ERP/Finance** | Odoo Cloud | Accounting & Business Logic |
-| **Security** | PQC + SHA3-512 | Quantum-Safe Verification |
-| **Backend** | FastAPI (Python) | High-performance Logic Engine |
-| **Frontend** | Next.js 15 | Premium Neural Dashboard |
-| **Orchestration**| Custom Python Sentinel | Multi-Watcher Coordination |
+| **Backend** | FastAPI (Python) | High-performance API server |
+| **Frontend** | Next.js 15 (TypeScript) | Dashboard UI |
+| **Database** | SQLite + Supabase | Hybrid storage |
+| **Memory** | Obsidian (Local Markdown) | Long-term memory & GUI |
+| **ERP Integration** | Odoo Cloud | Accounting & business logic |
+| **Security** | SHA3-512 | Cryptographic action signing |
+| **Model Support** | Claude, Gemini, Qwen, Codex | Swappable reasoning engines |
 
-## 🏗 System Architecture
+---
 
-ELYX utilizes a **Decentralized Intelligence** model:
-1. **Perception**: Lightweight sentinels (Watchers) monitor your digital presence (Gmail, Odoo, WhatsApp).
-2. **Reasoning**: A modular "Skill" system allows the AI to perform complex, multi-step business logic.
-3. **Accountability**: Every action is cryptographically signed and recorded on an immutable ledger.
-4. **Resilience**: A distributed file sync system ensures your AI employee stays alive across global nodes.
+## 🧪 Current Status
+
+**Prototype** – Core agent loop, role assignment, multi-model switching, and ERP integration implemented. Actively expanding automation capabilities and safety constraints.
+
+### ✅ Implemented (Production-Ready)
+
+**Bronze Tier**
+- [x] Obsidian vault structure
+- [x] File-based task orchestration
+- [x] Basic watcher pattern
+- [x] Dashboard.md updates
+
+**Silver Tier**
+- [x] Gmail watcher (OAuth2 authenticated)
+- [x] WhatsApp watcher (Playwright-based)
+- [x] Filesystem watcher (watchdog)
+- [x] Calendar service integration (optional)
+- [x] Predictive analytics service (basic)
+
+**Gold Tier**
+- [x] Odoo Cloud integration (JSON-RPC)
+- [x] Weekly CEO briefing generation
+- [x] Human-in-the-loop approval workflow
+- [x] Multi-brain support (Claude, Qwen, Gemini, Codex)
+
+**Platinum Tier (Basic)**
+- [x] SHA3-512 action signing
+- [x] Blockchain-style immutable audit log (single-node simulation)
+- [x] Ralph Wiggum autonomous loop
+
+### 🚧 In Development (Prototype)
+
+- [ ] LinkedIn watcher (authentication pending)
+- [ ] Facebook/Twitter/Instagram watchers (API integration needed)
+- [ ] Multi-region sync (requires actual cloud infrastructure)
+- [ ] Federated learning (design phase)
+
+### 📋 Planned (Not Yet Implemented)
+
+- [ ] True quantum-resistant cryptography (NIST PQC standards)
+- [ ] Distributed blockchain (currently single-node append-only log)
+- [ ] Global failover (requires multi-region deployment)
+- [ ] AR/VR interfaces (conceptual)
+- [ ] Bio-neural interfaces (research concept only)
+
+### 🧪 Experimental (Use at Your Own Risk)
+
+- Consciousness emergence engine
+- Reality simulation module
+- Existential reasoning engine
+- Temporal reasoning engine
+
+These modules are research prototypes and not recommended for production use.
+
+---
 
 ## 🛰 Getting Started
 
 ### Prerequisites
+
 - Python 3.10+
 - Node.js 18+
-- Anthropic API Key
-- Odoo Cloud Instance (Invoicing App)
+- Anthropic API Key (or other supported AI provider)
+- Odoo Cloud Instance (Invoicing App) - optional
 
 ### Installation
 
@@ -76,6 +195,8 @@ ELYX utilizes a **Decentralized Intelligence** model:
 3. **Configure Environment**:
    Initialize your `.env` with your Odoo, API, and Security keys.
 
+---
+
 ## 🔀 Brain Selection
 
 ELYX supports multiple AI coding agents as its reasoning core. Switch brains by editing one line in `.env`:
@@ -92,15 +213,27 @@ ELYX_ACTIVE_BRAIN=claude
 | `gemini` | High-volume triage, analysis, speed |
 | `codex` | Code generation and refactoring |
 
-## 🛡 Security & Sovereignty
+---
 
-- **Local Vault**: Credentials and memories never leave your machine.
-- **Reality Anchoring**: Continuous internal monitoring ensures reasoning stability.
-- **Blockchain Traceability**: Absolute accountability for every autonomous decision.
+## 🛡 Security & Data Sovereignty
+
+- **Local Vault**: Credentials and memories never leave your machine
+- **Action Signing**: All strategic actions are cryptographically signed (SHA3-512)
+- **Audit Trail**: Immutable append-only log for compliance and debugging
+- **Human-in-the-Loop**: Sensitive actions require explicit approval
+
+---
+
+## 📚 Documentation
+
+- [Architecture Overview](ARCHITECTURE.md)
+- [Implementation Status](IMPLEMENTATION_STATUS.md)
+- [Company Handbook](obsidian_vault/Company_Handbook.md)
+- [Skill Documentation](SKILL.md)
 
 ---
 
 <div align="center">
-  <p>Built for the future of decentralized work.</p>
-  <sub>© 2026 ELYX NEURAL SYSTEMS. All rights reserved.</sub>
+  <p>Built for the Personal AI Employee Hackathon 0</p>
+  <sub>Open Source - MIT License</sub>
 </div>

@@ -1,6 +1,10 @@
 """
 Quantum-Safe Authentication Service for Platinum Tier
-Implements quantum-resistant authentication using post-quantum cryptographic techniques
+Implements cryptographic authentication using SHA3-512 hashing
+
+Note: This service uses SHA3-512 for enhanced cryptographic security.
+While designed with future quantum-resistance in mind, it has not been
+formally verified against NIST PQC standards.
 """
 import jwt
 import secrets
@@ -18,12 +22,12 @@ from ..utils.quantum_resistant_hash import QuantumResistantHasher
 class AuthTokenType(Enum):
     ACCESS = "access"
     REFRESH = "refresh"
-    QUANTUM_SAFE = "quantum_safe"
+    CRYPTOGRAPHIC = "cryptographic"
 
 
 @dataclass
 class AuthToken:
-    """Authentication token with quantum-safe properties"""
+    """Authentication token with cryptographic properties"""
     token: str
     token_type: str
     user_id: str
@@ -36,7 +40,16 @@ class AuthToken:
 
 class QuantumSafeAuthService:
     """
-    Quantum-safe authentication service with quantum-resistant cryptography
+    Cryptographic authentication service with SHA3-512 hashing.
+    
+    This service provides:
+    - User registration with salted SHA3-512 password hashing
+    - JWT token generation with cryptographic signatures
+    - Session tracking and token revocation
+    - Account lockout after failed attempts
+    
+    Note: Uses SHA3-512 for enhanced security but has not been
+    formally verified as quantum-resistant under NIST PQC standards.
     """
 
     def __init__(self, secret_key: Optional[str] = None):
@@ -47,14 +60,14 @@ class QuantumSafeAuthService:
         self.session_store = {}  # Track active sessions
 
     def _generate_quantum_safe_secret(self) -> str:
-        """Generate a quantum-safe secret key using quantum entropy"""
-        # Generate a quantum-safe secret using the quantum random number generator
+        """Generate a cryptographically secure secret key using quantum entropy"""
+        # Generate a cryptographically secure secret using the quantum random number generator
         secret_bytes = self.qrng.get_random_bytes(64)  # 512-bit secret
         return secret_bytes.hex()
 
     def register_user(self, username: str, password: str, email: str) -> Dict[str, Any]:
         """
-        Register a new user with quantum-safe password hashing
+        Register a new user with cryptographic password hashing
 
         Args:
             username: User's username
@@ -67,12 +80,12 @@ class QuantumSafeAuthService:
         user_id = str(uuid.uuid4())
         created_at = datetime.utcnow()
 
-        # Quantum-safe password hashing
+        # Cryptographic password hashing using SHA3-512
         salt = self.qrng.get_random_bytes(32)
         hashed_password = self.hasher.pbkdf2_hash(
             password=password,
             salt=salt,
-            iterations=150000,  # Higher iterations for quantum safety
+            iterations=150000,  # Higher iterations for security
             algorithm=self.hasher.algorithms.__class__.SHA3_512
         )
 
@@ -104,7 +117,7 @@ class QuantumSafeAuthService:
 
     def authenticate_user(self, username: str, password: str) -> Optional[AuthToken]:
         """
-        Authenticate a user using quantum-safe methods
+        Authenticate a user using cryptographic methods
 
         Args:
             username: User's username
@@ -127,7 +140,7 @@ class QuantumSafeAuthService:
         if user.get('account_locked', False):
             return None
 
-        # Verify password using quantum-safe hash
+        # Verify password using cryptographic hash
         salt = user['password_salt'].encode() if isinstance(user['password_salt'], str) else user['password_salt']
         provided_hash = self.hasher.pbkdf2_hash(
             password=password,
@@ -152,7 +165,7 @@ class QuantumSafeAuthService:
 
     def generate_access_token(self, user_id: str, expires_in_minutes: int = 60) -> AuthToken:
         """
-        Generate a quantum-safe access token
+        Generate a cryptographic access token
 
         Args:
             user_id: ID of the user
@@ -173,7 +186,7 @@ class QuantumSafeAuthService:
             "quantum_safe": True
         }
 
-        # Generate quantum-safe signature
+        # Generate cryptographic signature
         quantum_signature = self._generate_quantum_signature(payload)
 
         # Create JWT token
@@ -215,25 +228,25 @@ class QuantumSafeAuthService:
 
     def _generate_quantum_signature(self, payload: Dict[str, Any]) -> str:
         """
-        Generate a quantum-safe signature for the token payload
+        Generate a cryptographic signature for the token payload using SHA3-512
 
         Args:
             payload: Token payload to sign
 
         Returns:
-            Quantum-safe signature string
+            Cryptographic signature string
         """
         # Serialize payload
         payload_str = str(sorted(payload.items()))
 
-        # Generate quantum-safe hash
+        # Generate cryptographic hash
         hash_result = self.hasher.hash_with_salt(
             data=payload_str,
             algorithm=self.hasher.algorithms.__class__.SHA3_512,
             salt=self.qrng.get_random_bytes(32)
         )
 
-        # Additional quantum-safe transformation
+        # Additional cryptographic transformation
         quantum_entropy = self.qrng.get_random_bytes(16)
         final_signature = self.hasher.hash(
             data=hash_result.digest.encode() + quantum_entropy,
@@ -244,7 +257,7 @@ class QuantumSafeAuthService:
 
     def verify_token(self, token: str) -> Optional[Dict[str, Any]]:
         """
-        Verify a quantum-safe authentication token
+        Verify a cryptographic authentication token
 
         Args:
             token: Authentication token to verify
@@ -267,7 +280,7 @@ class QuantumSafeAuthService:
             # Decode JWT token
             payload = jwt.decode(token, self.secret_key, algorithms=['HS256'])
 
-            # Verify quantum signature if present
+            # Verify cryptographic signature if present
             if 'quantum_signature' in payload:
                 # Recreate signature and compare
                 temp_payload = payload.copy()

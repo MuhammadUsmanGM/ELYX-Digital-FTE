@@ -95,33 +95,20 @@
     "instagram_enabled": true,
     "odoo_enabled": true
   },
-  "platinum_tier_features": {
-    "enable_quantum_security": true,
-    "enable_blockchain_accountability": true,
-    "enable_global_operations": true,
-    "enable_federated_learning": true,
-    "replication_factor": 3
+  "audit": {
+    "enable_action_signing": true,
+    "enable_audit_logging": true,
+    "log_path": "obsidian_vault/Blockchain_Integration/audit_trail.json"
   },
-  "global_scaling": {
-    "regional_endpoints": [
-      "http://us-east-1.elyx.ai",
-      "http://eu-west-1.elyx.ai",
-      "http://ap-southeast-1.elyx.ai",
-      "http://sa-east-1.elyx.ai",
-      "http://ca-central-1.elyx.ai"
-    ],
-    "failover_priority": ["us-east-1", "eu-west-1", "ap-southeast-1"]
+  "backup": {
+    "enabled": false,
+    "sync_targets": []
   },
-  "blockchain": {
-    "log_path": "obsidian_vault/Blockchain_Integration/audit_trail.json",
-    "network": "ELYX-Private-Mainnet"
-  },
-  "consciousness_simulation_features": {
-    "enable_consciousness_emergence": true,
-    "enable_reality_simulation": true,
-    "enable_existential_reasoning": true,
-    "self_awareness_threshold": 0.85,
-    "reality_fidelity_target": 9.5
+  "experimental": {
+    "enable_consciousness_emergence": false,
+    "enable_reality_simulation": false,
+    "enable_existential_reasoning": false,
+    "note": "These modules are research prototypes and not recommended for production use"
   },
   "brain_selection": {
     "active_brain": "claude",

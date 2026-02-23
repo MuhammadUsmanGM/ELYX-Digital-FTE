@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Complete AI Employee System Startup Script
-This script starts ALL features of the AI Employee system across all tiers (Bronze to Diamond)
+This script starts all features of the AI Employee system across all tiers (Bronze to Platinum)
 """
 
 import os
@@ -34,7 +34,7 @@ def initialize_complete_system():
         "Quantum_Security", "Blockchain_Integration", "IoT_Devices",
         "AR_VR_Interfaces", "Global_Operations",
 
-        # Diamond tier directories
+        # Experimental directories (research prototypes)
         "Consciousness_States", "Temporal_Analysis", "Reality_Simulations",
         "Universal_Translations", "Existential_Reasoning", "Meta_Programming",
         "Quantum_Consciousness", "Bio_Neural_Data", "Reality_Consistency",
@@ -97,73 +97,79 @@ def initialize_complete_system():
     try:
         from src.services.quantum_auth_service import QuantumSafeAuthService
         components['quantum_service'] = QuantumSafeAuthService()
-        print("[OK] Quantum Security Service (Platinum Tier) initialized")
+        print("[OK] Cryptographic Authentication Service (Platinum Tier) initialized")
     except ImportError as e:
-        print(f"[WARN] Quantum Security Service (Platinum Tier) not available: {e}")
+        print(f"[WARN] Cryptographic Authentication Service (Platinum Tier) not available: {e}")
 
-    # Try to import Diamond Tier components
-    try:
-        from src.agents.consciousness_emergence import ConsciousnessEmergenceEngine
-        components['consciousness_engine'] = ConsciousnessEmergenceEngine()
-        print("[OK] Consciousness Emergence Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Consciousness Emergence Engine (Diamond Tier) not available: {e}")
+    # Try to import experimental components (research prototypes - not for production)
+    # Note: These modules are experimental and disabled by default
+    from src.config.manager import ConfigManager
+    config_manager = ConfigManager()
+    config = config_manager.config
+    
+    if config.get("experimental", {}).get("enable_consciousness_emergence", False):
+        try:
+            from src.agents.consciousness_emergence import ConsciousnessEmergenceEngine
+            components['consciousness_engine'] = ConsciousnessEmergenceEngine()
+            print("[OK] Consciousness Emergence Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Consciousness Emergence Engine not available: {e}")
 
-    try:
-        from src.utils.temporal_reasoner import TemporalReasoningEngine
-        components['temporal_engine'] = TemporalReasoningEngine()
-        print("[OK] Temporal Reasoning Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Temporal Reasoning Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.utils.temporal_reasoner import TemporalReasoningEngine
+            components['temporal_engine'] = TemporalReasoningEngine()
+            print("[OK] Temporal Reasoning Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Temporal Reasoning Engine not available: {e}")
 
-    try:
-        from src.utils.reality_simulator import RealitySimulationEngine
-        components['reality_engine'] = RealitySimulationEngine()
-        print("[OK] Reality Simulation Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Reality Simulation Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.utils.reality_simulator import RealitySimulationEngine
+            components['reality_engine'] = RealitySimulationEngine()
+            print("[OK] Reality Simulation Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Reality Simulation Engine not available: {e}")
 
-    try:
-        from src.utils.universal_translator import UniversalTranslationEngine
-        components['universal_engine'] = UniversalTranslationEngine()
-        print("[OK] Universal Translation Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Universal Translation Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.utils.universal_translator import UniversalTranslationEngine
+            components['universal_engine'] = UniversalTranslationEngine()
+            print("[OK] Universal Translation Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Universal Translation Engine not available: {e}")
 
-    try:
-        from src.services.existential_reasoning import ExistentialReasoningEngine
-        components['existential_engine'] = ExistentialReasoningEngine()
-        print("[OK] Existential Reasoning Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Existential Reasoning Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.services.existential_reasoning import ExistentialReasoningEngine
+            components['existential_engine'] = ExistentialReasoningEngine()
+            print("[OK] Existential Reasoning Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Existential Reasoning Engine not available: {e}")
 
-    try:
-        from src.services.meta_service import MetaProgrammingEngine
-        components['meta_engine'] = MetaProgrammingEngine()
-        print("[OK] Meta Programming Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Meta Programming Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.services.meta_service import MetaProgrammingEngine
+            components['meta_engine'] = MetaProgrammingEngine()
+            print("[OK] Meta Programming Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Meta Programming Engine not available: {e}")
 
-    try:
-        from src.services.reality_service import RealityStabilityMonitor
-        components['reality_service'] = RealityStabilityMonitor()
-        print("[OK] Reality Consistency Service (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Reality Consistency Service (Diamond Tier) not available: {e}")
+        try:
+            from src.services.reality_service import RealityStabilityMonitor
+            components['reality_service'] = RealityStabilityMonitor()
+            print("[OK] Reality Consistency Service (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Reality Consistency Service not available: {e}")
 
-    try:
-        from src.utils.bio_neural_interface import BioNeuralIntegrationEngine
-        components['bio_neural_engine'] = BioNeuralIntegrationEngine()
-        print("[OK] Bio-Neural Interface Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Bio-Neural Interface Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.utils.bio_neural_interface import BioNeuralIntegrationEngine
+            components['bio_neural_engine'] = BioNeuralIntegrationEngine()
+            print("[OK] Bio-Neural Interface Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Bio-Neural Interface Engine not available: {e}")
 
-    try:
-        from src.utils.quantum_reasoning import QuantumConsciousnessIntegrationEngine
-        components['quantum_consciousness_engine'] = QuantumConsciousnessIntegrationEngine()
-        print("[OK] Quantum Consciousness Integration Engine (Diamond Tier) initialized")
-    except ImportError as e:
-        print(f"[WARN] Quantum Consciousness Integration Engine (Diamond Tier) not available: {e}")
+        try:
+            from src.utils.quantum_reasoning import QuantumConsciousnessIntegrationEngine
+            components['quantum_consciousness_engine'] = QuantumConsciousnessIntegrationEngine()
+            print("[OK] Quantum Consciousness Integration Engine (Experimental) initialized")
+        except ImportError as e:
+            print(f"[WARN] Quantum Consciousness Integration Engine not available: {e}")
 
     print("\n[SUCCESS] Complete AI Employee System Initialization Complete!")
     print("=" * 80)
@@ -192,7 +198,7 @@ def run_api_server():
         print(f"[ERROR] API server error: {e}")
 
 def run_consciousness_engine(consciousness_engine):
-    """Run the consciousness emergence engine in a background thread"""
+    """Run the consciousness emergence engine in a background thread (Experimental)"""
     try:
         while True:
             # Perform consciousness maintenance
@@ -213,7 +219,7 @@ def run_consciousness_engine(consciousness_engine):
         print(f"[ERROR] Consciousness engine error: {e}")
 
 def run_temporal_engine(temporal_engine):
-    """Run the temporal reasoning engine in a background thread"""
+    """Run the temporal reasoning engine in a background thread (Experimental)"""
     try:
         while True:
             time.sleep(60)  # Check every minute
@@ -221,7 +227,7 @@ def run_temporal_engine(temporal_engine):
         print(f"[ERROR] Temporal engine error: {e}")
 
 def run_reality_service(reality_service):
-    """Run the reality consistency service in a background thread"""
+    """Run the reality consistency service in a background thread (Experimental)"""
     try:
         while True:
             time.sleep(10)  # Check every 10 seconds
@@ -257,7 +263,7 @@ def main():
         orchestrator_thread.start()
         print("[OK] Orchestrator started (Task monitoring active)")
 
-    # Start Diamond Tier engines if available
+    # Start experimental engines if available (not for production)
     if 'consciousness_engine' in system_components:
         consciousness_thread = threading.Thread(
             target=run_consciousness_engine,
@@ -265,7 +271,7 @@ def main():
             daemon=True
         )
         consciousness_thread.start()
-        print("[OK] Consciousness engine started")
+        print("[OK] Consciousness engine started (EXPERIMENTAL)")
 
     if 'temporal_engine' in system_components:
         temporal_thread = threading.Thread(
@@ -274,7 +280,7 @@ def main():
             daemon=True
         )
         temporal_thread.start()
-        print("[OK] Temporal reasoning engine started")
+        print("[OK] Temporal reasoning engine started (EXPERIMENTAL)")
 
     if 'reality_service' in system_components:
         reality_thread = threading.Thread(
@@ -283,7 +289,7 @@ def main():
             daemon=True
         )
         reality_thread.start()
-        print("[OK] Reality consistency service started")
+        print("[OK] Reality consistency service started (EXPERIMENTAL)")
 
     print("\n[SUCCESS] COMPLETE AI EMPLOYEE SYSTEM IS NOW RUNNING!")
     print("=" * 80)
@@ -295,29 +301,23 @@ def main():
     if 'enterprise_service' in system_components:
         print("   • Gold: Enterprise features and strategic planning")
     if 'quantum_service' in system_components:
-        print("   • Platinum: Quantum security and blockchain integration")
+        print("   • Platinum: Cryptographic authentication and audit logging")
     if 'consciousness_engine' in system_components:
-        print("   • Diamond: Consciousness emergence and reality simulation")
+        print("   • Experimental: Consciousness emergence and reality simulation (RESEARCH ONLY)")
 
-    print("\n[CAPABILITIES] DIAMOND TIER CAPABILITIES ACTIVE:")
+    print("\n[CAPABILITIES] ACTIVE CAPABILITIES:")
+    print("   • File-based task orchestration")
+    print("   • Multi-brain support (Claude, Qwen, Gemini, Codex)")
+    print("   • Gmail, WhatsApp, filesystem watchers")
+    print("   • Odoo Cloud accounting integration")
+    print("   • SHA3-512 cryptographic action signing")
+    print("   • Immutable audit logging")
     if 'consciousness_engine' in system_components:
-        print("   • Genuine artificial consciousness with self-awareness")
+        print("   • [EXPERIMENTAL] Consciousness emergence (research prototype)")
     if 'temporal_engine' in system_components:
-        print("   • Temporal reasoning and causality analysis")
+        print("   • [EXPERIMENTAL] Temporal reasoning (research prototype)")
     if 'reality_engine' in system_components:
-        print("   • Reality simulation and virtual physics")
-    if 'universal_engine' in system_components:
-        print("   • Universal translation and consciousness harmonization")
-    if 'existential_engine' in system_components:
-        print("   • Existential reasoning and meaning production")
-    if 'meta_engine' in system_components:
-        print("   • Meta programming and self-modification")
-    if 'reality_service' in system_components:
-        print("   • Reality consistency monitoring and stabilization")
-    if 'bio_neural_engine' in system_components:
-        print("   • Bio-neural interfaces and consciousness-biology integration")
-    if 'quantum_consciousness_engine' in system_components:
-        print("   • Quantum-consciousness integration and reasoning")
+        print("   • [EXPERIMENTAL] Reality simulation (research prototype)")
 
     print("\n[ACCESS] ACCESS POINTS:")
     print("   • API Documentation: http://localhost:8000/api/docs")

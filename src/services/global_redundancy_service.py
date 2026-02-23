@@ -1,6 +1,9 @@
 """
 Global Node Redundancy Service for Platinum Tier
 Handles health monitoring and automatic failover across global regions
+
+Note: This is a prototype service for testing redundancy patterns.
+Production deployment requires actual multi-region infrastructure.
 """
 import time
 import logging
@@ -13,7 +16,17 @@ from ..utils.logger import log_activity
 
 class GlobalRedundancyService:
     """
-    Service to ensure High Availability (HA) through global node redundancy
+    Prototype service for high availability through global node redundancy.
+    
+    This service provides:
+    - Health monitoring across configured regions
+    - Simulated failover logic
+    - File synchronization coordination
+    
+    Limitations (Prototype):
+    - Simulated health checks (not real network pings)
+    - Requires actual cloud infrastructure for production use
+    - Distributed sync is coordinated but not implemented
     """
     def __init__(self, regions: List[str], vault_path: str):
         self.regions = regions
