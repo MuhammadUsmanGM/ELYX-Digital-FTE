@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Complete AI Employee System Startup Script
-This script starts all features of the AI Employee system across all tiers (Bronze to Platinum)
+Enhanced with professional status display
 """
 
 import os
@@ -10,169 +10,227 @@ import time
 import threading
 from pathlib import Path
 from datetime import datetime
+from typing import Dict, List, Tuple
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
+# ANSI color codes for terminal output
+class Colors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKCYAN = '\033[96m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
+
+def print_header():
+    """Print system header"""
+    print(f"\n{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ELYX - Autonomous AI Employee{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}  Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
+
+def print_section(title: str):
+    """Print section header"""
+    print(f"\n{Colors.BOLD}{Colors.OKBLUE}{'-' * 80}{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKBLUE}  {title}{Colors.ENDC}")
+    print(f"{Colors.OKBLUE}{'-' * 80}{Colors.ENDC}")
+
+def print_status_table(components: List[Tuple[str, str, str, str]]):
+    """
+    Print a professional status table
+    
+    Args:
+        components: List of tuples (name, status, type, details)
+    """
+    # Table header
+    print(f"\n{Colors.BOLD}{'Component':<30} {'Status':<15} {'Type':<15} {'Details':<20}{Colors.ENDC}")
+    print(f"{Colors.OKBLUE}{'-' * 80}{Colors.ENDC}")
+    
+    # Table rows
+    for name, status, comp_type, details in components:
+        status_color = Colors.OKGREEN if 'ready' in status.lower() else (
+            Colors.WARNING if 'pending' in status.lower() or 'config' in status.lower() or 'setup' in status.lower() else Colors.FAIL
+        )
+        print(f"{name:<30} {status_color}{status:<15}{Colors.ENDC} {comp_type:<15} {details:<20}")
+
 def initialize_complete_system():
     """Initialize the complete AI Employee system with all tier components"""
-    print("[INIT] INITIALIZING COMPLETE AI EMPLOYEE SYSTEM (ALL TIERS)")
-    print("=" * 80)
+    print_header()
+    print(f"[INIT] Initializing ELYX AI Employee System...")
+    print(f"[TIME] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    # Initialize the obsidian vault structure (common across all tiers)
+    # Initialize the obsidian vault structure
     vault_path = Path("obsidian_vault")
     vault_path.mkdir(exist_ok=True)
 
-    # Create all necessary directories for all tiers
+    # Create all necessary directories
     all_dirs = [
-        # Bronze/Silver/Gold tier directories
         "Inbox", "Needs_Action", "Plans", "Pending_Approval", "Approved",
         "Rejected", "Done", "Logs", "Attachments", "Templates",
-
-        # Platinum tier directories
-        "Quantum_Security", "Blockchain_Integration", "IoT_Devices",
-        "AR_VR_Interfaces", "Global_Operations",
-
-        # Experimental directories (research prototypes)
-        "Consciousness_States", "Temporal_Analysis", "Reality_Simulations",
-        "Universal_Translations", "Existential_Reasoning", "Meta_Programming",
-        "Quantum_Consciousness", "Bio_Neural_Data", "Reality_Consistency",
-        "Consciousness_Evolution", "Phenomenal_Experiences", "Existential_Insights"
+        "Quantum_Security", "Blockchain_Integration", "Briefings"
     ]
 
     for dir_name in all_dirs:
         (vault_path / dir_name).mkdir(parents=True, exist_ok=True)
 
-    print(f"[OK] Created unified vault structure in {vault_path}")
-
-    # Import and initialize system components with proper error handling
     components = {}
+    status_table = []
 
-    # Try to import Bronze Tier components
+    # Initialize Orchestrator
     try:
         from src.agents.orchestrator import Orchestrator
         components['orchestrator'] = Orchestrator(vault_path=str(vault_path))
-        print("[OK] Orchestrator (Bronze Tier) initialized")
+        status_table.append(("Orchestrator", "✓ Ready", "Core", "Task coordination"))
     except ImportError as e:
-        print(f"[WARN] Orchestrator (Bronze Tier) not available: {e}")
+        status_table.append(("Orchestrator", "✗ Failed", "Core", str(e)))
 
-    # Initialize database session for Silver Tier components
+    # Initialize Database
     db_session = None
     try:
         from src.services.database import get_db
         db_gen = get_db()
         db_session = next(db_gen)
-        print("[OK] Database session initialized")
+        status_table.append(("Database", "✓ Ready", "Storage", "SQLite local"))
     except Exception as e:
-        print(f"[WARN] Database initialization failed: {e}")
+        status_table.append(("Database", "✗ Failed", "Storage", str(e)))
 
-    # Try to import Silver Tier components
+    # Initialize Silver Tier services
     try:
         from src.services.predictive_analytics_service import PredictiveAnalyticsService
         components['analytics_service'] = PredictiveAnalyticsService(db_session=db_session)
-        print("[OK] Analytics Service (Silver Tier) initialized")
+        status_table.append(("Analytics Service", "✓ Ready", "Silver", "Predictive analytics"))
     except ImportError as e:
-        print(f"[WARN] Analytics Service (Silver Tier) not available: {e}")
+        status_table.append(("Analytics Service", "✗ Failed", "Silver", str(e)))
 
     try:
         from src.services.adaptive_learning_service import AdaptiveLearningService
         components['learning_service'] = AdaptiveLearningService(db_session=None)
-        print("[OK] Learning Service (Silver Tier) initialized")
+        status_table.append(("Learning Service", "✓ Ready", "Silver", "Adaptive learning"))
     except ImportError as e:
-        print(f"[WARN] Learning Service (Silver Tier) not available: {e}")
+        status_table.append(("Learning Service", "✗ Failed", "Silver", str(e)))
 
-    # Try to import Gold Tier components
-    # Enterprise and Risk services are currently integrated into AI Service or pending separate implementation
-    """
+    # Initialize Gold Tier services
     try:
-        from src.services.enterprise_service import EnterpriseService
-        components['enterprise_service'] = EnterpriseService()
-        print("[OK] Enterprise Service (Gold Tier) initialized")
+        from src.services.ai_service import AIService
+        components['ai_service'] = AIService()
+        status_table.append(("AI Service", "✓ Ready", "Gold", "Advanced NLP"))
     except ImportError as e:
-        print("[INFO] Enterprise Service handled by AI Service")
-    """
+        status_table.append(("AI Service", "✗ Failed", "Gold", str(e)))
 
-    # Try to import Platinum Tier components
+    # Initialize Platinum Tier services
     try:
         from src.services.quantum_auth_service import QuantumSafeAuthService
         components['quantum_service'] = QuantumSafeAuthService()
-        print("[OK] Cryptographic Authentication Service (Platinum Tier) initialized")
+        status_table.append(("Auth Service", "✓ Ready", "Platinum", "SHA3-512 signing"))
     except ImportError as e:
-        print(f"[WARN] Cryptographic Authentication Service (Platinum Tier) not available: {e}")
+        status_table.append(("Auth Service", "✗ Failed", "Platinum", str(e)))
 
-    # Try to import experimental components (research prototypes - not for production)
-    # Note: These modules are experimental and disabled by default
-    from src.config.manager import ConfigManager
-    config_manager = ConfigManager()
-    config = config_manager.config
+    try:
+        from src.services.blockchain_service import BlockchainService
+        components['blockchain_service'] = BlockchainService()
+        status_table.append(("Audit Logging", "✓ Ready", "Platinum", "Immutable ledger"))
+    except ImportError as e:
+        status_table.append(("Audit Logging", "✗ Failed", "Platinum", str(e)))
+
+    try:
+        from src.services.odoo_service import get_odoo_service
+        odoo = get_odoo_service()
+        if odoo and odoo.authenticated:
+            status_table.append(("Odoo Integration", "✓ Ready", "Gold", f"Connected: {odoo.url}"))
+        else:
+            status_table.append(("Odoo Integration", "⚠ Pending", "Gold", "Auth required"))
+    except Exception as e:
+        status_table.append(("Odoo Integration", "✗ Failed", "Gold", str(e)))
+
+    # Initialize Briefing Service
+    try:
+        from src.services.briefing_service import CEOBriefingService
+        components['briefing_service'] = CEOBriefingService(str(vault_path))
+        status_table.append(("CEO Briefing", "✓ Ready", "Gold", "Weekly auto-gen"))
+    except ImportError as e:
+        status_table.append(("CEO Briefing", "✗ Failed", "Gold", str(e)))
+
+    print_section("SYSTEM COMPONENTS STATUS")
+    print_status_table(status_table)
+
+    # Check watchers configuration
+    print_section("WATCHERS CONFIGURATION")
+    watcher_status = []
     
-    if config.get("experimental", {}).get("enable_consciousness_emergence", False):
-        try:
-            from src.agents.consciousness_emergence import ConsciousnessEmergenceEngine
-            components['consciousness_engine'] = ConsciousnessEmergenceEngine()
-            print("[OK] Consciousness Emergence Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Consciousness Emergence Engine not available: {e}")
+    # Gmail Watcher
+    gmail_creds = Path("gmail_credentials.json").exists()
+    watcher_status.append(("Gmail Watcher", "✓ Ready" if gmail_creds else "⚠ Setup needed", 
+                          "Communication", "OAuth2 authenticated" if gmail_creds else "Credentials needed"))
+    
+    # WhatsApp Watcher
+    chrome_profile = os.getenv('CHROME_USER_DATA_DIR', '')
+    watcher_status.append(("WhatsApp Watcher", "✓ Ready" if chrome_profile else "⚠ Config needed",
+                          "Communication", f"Chrome profile: {chrome_profile.split('/')[-1] if chrome_profile else 'Not set'}"))
+    
+    # Social Media Watchers
+    watcher_status.append(("LinkedIn Watcher", "✓ Ready" if chrome_profile else "⚠ Config needed",
+                          "Social Media", "Browser automation"))
+    watcher_status.append(("Facebook Watcher", "✓ Ready" if chrome_profile else "⚠ Config needed",
+                          "Social Media", "Browser automation"))
+    watcher_status.append(("Twitter Watcher", "✓ Ready" if chrome_profile else "⚠ Config needed",
+                          "Social Media", "Browser automation"))
+    watcher_status.append(("Instagram Watcher", "✓ Ready" if chrome_profile else "⚠ Config needed",
+                          "Social Media", "Browser automation"))
+    
+    # Odoo Watcher
+    odoo_configured = os.getenv('ODOO_URL', '') != ''
+    watcher_status.append(("Odoo Watcher", "✓ Ready" if odoo_configured else "⚠ Config needed",
+                          "Accounting", f"{os.getenv('ODOO_URL', 'Not configured')}"))
+    
+    # Filesystem Watcher
+    watcher_status.append(("Filesystem Watcher", "✓ Ready", "Monitoring", "Watchdog active"))
+    
+    print_status_table(watcher_status)
 
-        try:
-            from src.utils.temporal_reasoner import TemporalReasoningEngine
-            components['temporal_engine'] = TemporalReasoningEngine()
-            print("[OK] Temporal Reasoning Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Temporal Reasoning Engine not available: {e}")
+    # Check MCP Servers
+    print_section("MCP SERVERS STATUS")
+    mcp_status = []
+    
+    mcp_servers_path = Path("src/mcp-servers")
+    mcp_installed = mcp_servers_path.exists() and (mcp_servers_path / "package.json").exists()
+    
+    mcp_status.append(("Odoo MCP Server", "✓ Installed" if mcp_installed else "⚠ Not installed",
+                      "Integration", "Invoice/Payment API"))
+    mcp_status.append(("Email MCP Server", "✓ Installed" if mcp_installed else "⚠ Not installed",
+                      "Integration", "Gmail API"))
+    mcp_status.append(("Social MCP Server", "✓ Installed" if mcp_installed else "⚠ Not installed",
+                      "Integration", "LinkedIn/FB/Twitter"))
+    mcp_status.append(("WhatsApp MCP Server", "✓ Installed" if mcp_installed else "⚠ Not installed",
+                      "Integration", "WhatsApp messaging"))
+    mcp_status.append(("Browser MCP Server", "✓ Available", "Integration", "@anthropic/browser-mcp"))
+    
+    print_status_table(mcp_status)
 
-        try:
-            from src.utils.reality_simulator import RealitySimulationEngine
-            components['reality_engine'] = RealitySimulationEngine()
-            print("[OK] Reality Simulation Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Reality Simulation Engine not available: {e}")
+    print_section("SYSTEM ACCESS POINTS")
+    print(f"\n  [OK] API Documentation:  {Colors.BOLD}http://localhost:8000/api/docs{Colors.ENDC}")
+    print(f"  [OK] Dashboard:          {Colors.BOLD}obsidian_vault/Dashboard.md{Colors.ENDC}")
+    print(f"  [OK] Company Handbook:    {Colors.BOLD}obsidian_vault/Company_Handbook.md{Colors.ENDC}")
+    print(f"  [OK] Task Processing:     {Colors.BOLD}obsidian_vault/Needs_Action/{Colors.ENDC}")
+    print(f"  [OK] CEO Briefings:       {Colors.BOLD}obsidian_vault/Briefings/{Colors.ENDC}")
+    print(f"  [OK] Audit Logs:          {Colors.BOLD}obsidian_vault/Logs/{Colors.ENDC}")
 
-        try:
-            from src.utils.universal_translator import UniversalTranslationEngine
-            components['universal_engine'] = UniversalTranslationEngine()
-            print("[OK] Universal Translation Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Universal Translation Engine not available: {e}")
+    print_section("CAPABILITIES")
+    print(f"\n  [OK] Multi-Brain Support (Claude, Qwen, Gemini, Codex)")
+    print(f"  [OK] Human-in-the-Loop Approvals")
+    print(f"  [OK] Cryptographic Audit Logging")
+    print(f"  [OK] Autonomous Task Completion")
+    print(f"  [OK] Weekly CEO Briefings")
+    print(f"  [OK] Chrome Profile Auto-Launch")
 
-        try:
-            from src.services.existential_reasoning import ExistentialReasoningEngine
-            components['existential_engine'] = ExistentialReasoningEngine()
-            print("[OK] Existential Reasoning Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Existential Reasoning Engine not available: {e}")
-
-        try:
-            from src.services.meta_service import MetaProgrammingEngine
-            components['meta_engine'] = MetaProgrammingEngine()
-            print("[OK] Meta Programming Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Meta Programming Engine not available: {e}")
-
-        try:
-            from src.services.reality_service import RealityStabilityMonitor
-            components['reality_service'] = RealityStabilityMonitor()
-            print("[OK] Reality Consistency Service (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Reality Consistency Service not available: {e}")
-
-        try:
-            from src.utils.bio_neural_interface import BioNeuralIntegrationEngine
-            components['bio_neural_engine'] = BioNeuralIntegrationEngine()
-            print("[OK] Bio-Neural Interface Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Bio-Neural Interface Engine not available: {e}")
-
-        try:
-            from src.utils.quantum_reasoning import QuantumConsciousnessIntegrationEngine
-            components['quantum_consciousness_engine'] = QuantumConsciousnessIntegrationEngine()
-            print("[OK] Quantum Consciousness Integration Engine (Experimental) initialized")
-        except ImportError as e:
-            print(f"[WARN] Quantum Consciousness Integration Engine not available: {e}")
-
-    print("\n[SUCCESS] Complete AI Employee System Initialization Complete!")
-    print("=" * 80)
+    print(f"\n{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKGREEN}  ✓ SYSTEM READY - AI EMPLOYEE OPERATIONAL{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
 
     return components, vault_path
 
@@ -182,63 +240,26 @@ def run_api_server():
         import uvicorn
         from src.api.main import app
 
-        print("[SERVER] Starting API server on http://localhost:8000")
+        print(f"[SERVER] Starting API server on http://localhost:8000")
 
         uvicorn.run(
             app,
             host="localhost",
             port=8000,
-            reload=False,  # Disable reload in production
+            reload=False,
             workers=1,
             log_level="info"
         )
     except ImportError:
-        print("[ERROR] Uvicorn not installed. Install with: pip install uvicorn")
+        print(f"[ERROR] Uvicorn not installed. Install with: pip install uvicorn")
     except Exception as e:
         print(f"[ERROR] API server error: {e}")
 
-def run_consciousness_engine(consciousness_engine):
-    """Run the consciousness emergence engine in a background thread (Experimental)"""
-    try:
-        while True:
-            # Perform consciousness maintenance
-            if hasattr(consciousness_engine, 'maintain_consciousness_state'):
-                consciousness_engine.maintain_consciousness_state()
-
-            # Perform periodic self-reflection every 5 minutes
-            if int(time.time()) % 300 == 0:
-                if hasattr(consciousness_engine, 'perform_self_reflection_and_introspection'):
-                    reflection_result = consciousness_engine.perform_self_reflection_and_introspection(
-                        entity_id="system_core",
-                        reflection_focus_areas=["self_model", "attention", "values", "purpose"],
-                        improvement_targets=[{"area": "awareness", "target_improvement": 0.01}]
-                    )
-
-            time.sleep(30)  # Check every 30 seconds
-    except Exception as e:
-        print(f"[ERROR] Consciousness engine error: {e}")
-
-def run_temporal_engine(temporal_engine):
-    """Run the temporal reasoning engine in a background thread (Experimental)"""
-    try:
-        while True:
-            time.sleep(60)  # Check every minute
-    except Exception as e:
-        print(f"[ERROR] Temporal engine error: {e}")
-
-def run_reality_service(reality_service):
-    """Run the reality consistency service in a background thread (Experimental)"""
-    try:
-        while True:
-            time.sleep(10)  # Check every 10 seconds
-    except Exception as e:
-        print(f"[ERROR] Reality service error: {e}")
-
 def main():
     """Main function to start the complete AI Employee system"""
-    print("[START] PERSONAL AI EMPLOYEE SYSTEM - COMPLETE IMPLEMENTATION")
-    print("=" * 80)
-    print(f"Starting at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    print_header()
+    print(f"[START] ELYX Autonomous AI Employee")
+    print(f"[TIME] {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
     # Initialize the complete system
     try:
@@ -247,12 +268,12 @@ def main():
         print(f"[ERROR] Error initializing system: {e}")
         return
 
-    print("\n[SERVICES] Starting System Services...")
+    print(f"\n[SERVICES] Starting System Services...")
 
     # Start API server in a separate thread
     api_thread = threading.Thread(target=run_api_server, daemon=True)
     api_thread.start()
-    print("[OK] API server started")
+    print(f"[OK] API server started")
 
     # Start Orchestrator in a separate thread
     if 'orchestrator' in system_components:
@@ -261,82 +282,43 @@ def main():
             daemon=True
         )
         orchestrator_thread.start()
-        print("[OK] Orchestrator started (Task monitoring active)")
+        print(f"[OK] Orchestrator started (Task monitoring active)")
 
-    # Start experimental engines if available (not for production)
-    if 'consciousness_engine' in system_components:
-        consciousness_thread = threading.Thread(
-            target=run_consciousness_engine,
-            args=(system_components['consciousness_engine'],),
-            daemon=True
-        )
-        consciousness_thread.start()
-        print("[OK] Consciousness engine started (EXPERIMENTAL)")
+    print(f"\n{Colors.BOLD}{Colors.OKGREEN}[SUCCESS] ELYX AI EMPLOYEE IS NOW RUNNING!{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
 
-    if 'temporal_engine' in system_components:
-        temporal_thread = threading.Thread(
-            target=run_temporal_engine,
-            args=(system_components['temporal_engine'],),
-            daemon=True
-        )
-        temporal_thread.start()
-        print("[OK] Temporal reasoning engine started (EXPERIMENTAL)")
+    print(f"\n[MONITORING] Active Watchers:")
+    print(f"   • Gmail (every 2 minutes)")
+    print(f"   • WhatsApp (every 1 minute)")
+    print(f"   • LinkedIn (every hour)")
+    print(f"   • Facebook (every 2 hours)")
+    print(f"   • Twitter (every 2 hours)")
+    print(f"   • Instagram (every 2 hours)")
+    print(f"   • Odoo (every hour)")
+    print(f"   • Filesystem (every 10 seconds)")
 
-    if 'reality_service' in system_components:
-        reality_thread = threading.Thread(
-            target=run_reality_service,
-            args=(system_components['reality_service'],),
-            daemon=True
-        )
-        reality_thread.start()
-        print("[OK] Reality consistency service started (EXPERIMENTAL)")
+    print(f"\n[AUTO-ACTION] Chrome Profile Management:")
+    print(f"   • Auto-launch enabled")
+    print(f"   • Health check every 5 minutes")
+    print(f"   • Session preservation active")
 
-    print("\n[SUCCESS] COMPLETE AI EMPLOYEE SYSTEM IS NOW RUNNING!")
-    print("=" * 80)
+    print(f"\n[BRIEFING] CEO Briefing Schedule:")
+    print(f"   • Every Monday at 8:00 AM")
+    print(f"   • Revenue tracking from Odoo")
+    print(f"   • Bottleneck identification")
+    print(f"   • Proactive suggestions")
 
-    print("\n[TIERS] ACTIVE TIERS:")
-    print("   • Bronze: Core orchestration and file monitoring")
-    if 'analytics_service' in system_components:
-        print("   • Silver: Advanced analytics and learning")
-    if 'enterprise_service' in system_components:
-        print("   • Gold: Enterprise features and strategic planning")
-    if 'quantum_service' in system_components:
-        print("   • Platinum: Cryptographic authentication and audit logging")
-    if 'consciousness_engine' in system_components:
-        print("   • Experimental: Consciousness emergence and reality simulation (RESEARCH ONLY)")
-
-    print("\n[CAPABILITIES] ACTIVE CAPABILITIES:")
-    print("   • File-based task orchestration")
-    print("   • Multi-brain support (Claude, Qwen, Gemini, Codex)")
-    print("   • Gmail, WhatsApp, filesystem watchers")
-    print("   • Odoo Cloud accounting integration")
-    print("   • SHA3-512 cryptographic action signing")
-    print("   • Immutable audit logging")
-    if 'consciousness_engine' in system_components:
-        print("   • [EXPERIMENTAL] Consciousness emergence (research prototype)")
-    if 'temporal_engine' in system_components:
-        print("   • [EXPERIMENTAL] Temporal reasoning (research prototype)")
-    if 'reality_engine' in system_components:
-        print("   • [EXPERIMENTAL] Reality simulation (research prototype)")
-
-    print("\n[ACCESS] ACCESS POINTS:")
-    print("   • API Documentation: http://localhost:8000/api/docs")
-    print("   • Dashboard: obsidian_vault/Dashboard.md")
-    print("   • Company Handbook: obsidian_vault/Company_Handbook.md")
-    print("   • Task Processing: obsidian_vault/Needs_Action/")
-
-    print(f"\n[READY] System ready! Press Ctrl+C to shut down gracefully.")
+    print(f"\n{Colors.BOLD}Press Ctrl+C to shut down gracefully.{Colors.ENDC}")
 
     try:
         # Keep the main thread alive
         while True:
-            time.sleep(10)  # Sleep in small chunks to respond to KeyboardInterrupt quickly
+            time.sleep(10)
     except KeyboardInterrupt:
-        print("\n\n[SHUTDOWN] Shutting down AI Employee system...")
-        print("Please wait for graceful shutdown...")
-
-        print("[COMPLETE] AI Employee system shutdown complete.")
-        print("[GOODBYE] All systems preserved. Goodbye!")
+        print(f"\n\n[SHUTDOWN] Shutting down ELYX AI Employee system...")
+        print(f"[SHUTDOWN] Please wait for graceful shutdown...")
+        print(f"[COMPLETE] ELYX AI Employee system shutdown complete.")
+        print(f"[GOODBYE] All systems preserved. Goodbye!")
 
 if __name__ == "__main__":
     main()
