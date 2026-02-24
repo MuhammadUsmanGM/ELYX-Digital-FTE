@@ -14,7 +14,11 @@ class LinkedInWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str = None):
         interval = int(os.getenv('LINKEDIN_CHECK_INTERVAL', 3600))
         super().__init__(vault_path, check_interval=interval)
-        self.session_path = Path(session_path) if session_path else Path.home() / ".linkedin_session"
+        # Use session_path from parameter, or from .env, or default to sessions/linkedin_session
+        if session_path:
+            self.session_path = Path(session_path)
+        else:
+            self.session_path = Path(os.getenv('LINKEDIN_SESSION_PATH', './sessions/linkedin_session'))
         self.keywords = ['urgent', 'asap', 'meeting', 'proposal', 'opportunity', 'help', 'important', 'follow', 'contact']
         self.processed_messages = set()
 

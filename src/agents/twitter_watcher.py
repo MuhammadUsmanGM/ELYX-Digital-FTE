@@ -11,7 +11,11 @@ class TwitterWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str = None):
         interval = int(os.getenv('TWITTER_CHECK_INTERVAL', 7200))
         super().__init__(vault_path, check_interval=interval)
-        self.session_path = Path(session_path) if session_path else Path.home() / ".twitter_session"
+        # Use session_path from parameter, or from .env, or default to sessions/twitter_session
+        if session_path:
+            self.session_path = Path(session_path)
+        else:
+            self.session_path = Path(os.getenv('TWITTER_SESSION_PATH', './sessions/twitter_session'))
         self.processed_ids = set()
 
     def check_for_updates(self) -> list:

@@ -13,7 +13,11 @@ class WhatsAppWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str = None):
         interval = int(os.getenv('WHATSAPP_CHECK_INTERVAL', 3600))
         super().__init__(vault_path, check_interval=interval)
-        self.session_path = Path(session_path) if session_path else Path.home() / ".whatsapp_session"
+        # Use session_path from parameter, or from .env, or default to sessions/whatsapp_session
+        if session_path:
+            self.session_path = Path(session_path)
+        else:
+            self.session_path = Path(os.getenv('WHATSAPP_SESSION_PATH', './sessions/whatsapp_session'))
         self.keywords = ['urgent', 'asap', 'invoice', 'payment', 'help', 'emergency', 'critical', 'important']
         self.processed_messages = set()
 

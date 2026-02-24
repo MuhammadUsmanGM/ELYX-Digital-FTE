@@ -11,7 +11,11 @@ class FacebookWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str = None):
         interval = int(os.getenv('FACEBOOK_CHECK_INTERVAL', 7200))
         super().__init__(vault_path, check_interval=interval)
-        self.session_path = Path(session_path) if session_path else Path.home() / ".facebook_session"
+        # Use session_path from parameter, or from .env, or default to sessions/facebook_session
+        if session_path:
+            self.session_path = Path(session_path)
+        else:
+            self.session_path = Path(os.getenv('FACEBOOK_SESSION_PATH', './sessions/facebook_session'))
         self.keywords = ['urgent', 'asap', 'business', 'opportunity', 'order', 'client']
         self.processed_items = set()
 
