@@ -28,13 +28,17 @@ class OdooService:
         self.db = os.getenv('ODOO_DB', 'elyx-ai')
         self.username = os.getenv('ODOO_USERNAME', 'elyx.ai.employ@gmail.com')
         self.password = os.getenv('ODOO_PASSWORD', '')
-        self.api_key = os.getenv('ODOO_API_KEY', '')
+        self.api_key = os.getenv('ODOO_API_KEY', '')  # API Key for better security
         self.company_id = int(os.getenv('ODOO_COMPANY_ID', '1'))
         self.currency_id = int(os.getenv('ODOO_CURRENCY_ID', '2'))
         
         self.uid = None  # User ID after authentication
         self.authenticated = False
         self.session_id = None
+        
+        # Use API key if available, otherwise use password
+        self.auth_method = 'api_key' if self.api_key else 'password'
+        logger.info(f"Odoo auth method: {self.auth_method.upper()}")
         
         # Authenticate on initialization
         self.authenticate()
@@ -99,7 +103,7 @@ class OdooService:
     
     def authenticate(self) -> bool:
         """
-        Authenticate with Odoo and get session
+        Authenticate with Odoo using API Key (preferred) or password
         
         Returns:
             True if authentication successful
@@ -107,13 +111,23 @@ class OdooService:
         try:
             url = f"{self.url}/web/session/authenticate"
             
+            # Use API key if available, otherwise use password
+            if self.api_key:
+                # API Key authentication (more secure)
+                logger.info("Authenticating with API Key...")
+                auth_password = self.api_key
+            else:
+                # Password authentication (fallback)
+                logger.info("Authenticating with Password...")
+                auth_password = self.password
+            
             payload = {
                 "jsonrpc": "2.0",
                 "method": "call",
                 "params": {
                     "db": self.db,
                     "login": self.username,
-                    "password": self.password,
+                    "password": auth_password,
                     "context": {}
                 },
                 "id": 1
@@ -134,7 +148,8 @@ class OdooService:
                     self.session_id = response.cookies['session_id']
                 
                 logger.info(f"[OK] Odoo authenticated as user ID: {self.uid}")
-                logger.info(f"Session ID: {self.session_id[:20]}...")
+                logger.info(f"Auth method: {self.auth_method.upper()}")
+                logger.info(f"Session ID: {self.session_id[:20] if self.session_id else 'N/A'}...")
                 return True
             else:
                 logger.error("[ERROR] Odoo authentication failed - no UID returned")
