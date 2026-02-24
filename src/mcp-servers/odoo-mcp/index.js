@@ -80,16 +80,40 @@ async function authenticate() {
   try {
     const authPassword = ODOO_API_KEY || ODOO_PASSWORD;
     
-    const result = await odooRpc('/web/session/authenticate', 'call', {
+    console.error('[ODOO MCP] Authenticating with Odoo...');
+    console.error('[ODOO MCP] URL:', ODOO_URL);
+    console.error('[ODOO MCP] DB:', ODOO_DB);
+    console.error('[ODOO MCP] Username:', ODOO_USERNAME);
+    
+    // Try direct authentication via /jsonrpc endpoint
+    const result = await odooRpc('/jsonrpc', 'call', {
+      service: "common",
+      method: "authenticate",
+      args: [
+        ODOO_DB,
+        ODOO_USERNAME,
+        authPassword,
+        {}
+      ]
+    });
+    
+    if (result && result.uid) {
+      userId = result.uid;
+      console.error('[ODOO MCP] Authenticated as user', userId);
+      return true;
+    }
+    
+    // Fallback: Try web/session/authenticate
+    const sessionResult = await odooRpc('/web/session/authenticate', 'call', {
       db: ODOO_DB,
       login: ODOO_USERNAME,
       password: authPassword,
       context: {}
     });
     
-    if (result.uid) {
-      userId = result.uid;
-      console.error(`[ODOO MCP] Authenticated as user ${userId}`);
+    if (sessionResult.uid) {
+      userId = sessionResult.uid;
+      console.error('[ODOO MCP] Authenticated as user', userId);
       return true;
     }
     
@@ -108,13 +132,16 @@ async function executeKw(model, method, args = [], kwargs = {}) {
     await authenticate();
   }
   
+  const authPassword = ODOO_API_KEY || ODOO_PASSWORD;
+  
+  // Odoo 19+ JSON-RPC format for execute_kw
   const result = await odooRpc('/jsonrpc', 'call', {
-    service: 'object',
-    method: 'execute_kw',
+    service: "object",
+    method: "execute_kw",
     args: [
       ODOO_DB,
       userId,
-      ODOO_API_KEY || ODOO_PASSWORD,
+      authPassword,
       model,
       method,
       args,
