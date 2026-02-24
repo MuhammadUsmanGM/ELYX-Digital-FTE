@@ -10,7 +10,7 @@ Creates action files in /Needs_Action for Claude to process
 """
 
 from ..base_watcher import BaseWatcher
-from .odoo_service import get_odoo_service
+from ..services.odoo_service import get_odoo_service
 from pathlib import Path
 from datetime import datetime
 import os
