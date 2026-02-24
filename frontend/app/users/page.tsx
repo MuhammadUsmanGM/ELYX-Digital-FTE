@@ -70,7 +70,7 @@ export default function UsersPage() {
   }, []);
 
   const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to remove this member from the neural network?")) {
+    if (confirm("Are you sure you want to remove this member from the system network?")) {
       const success = await deleteTeamMember(id);
       if (success) {
         setMembers(members.filter(m => m.id !== id));
@@ -99,11 +99,11 @@ export default function UsersPage() {
               </span>
               <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Capacity: {members.length}/10</span>
             </div>
-            <h1 className="text-6xl font-black tracking-tighter text-white leading-none">
-              Team <span className="text-primary italic relative">Intelligence<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-30" /></span>
+            <h1 className="text-6xl font-black tracking-tighter text-white leading-none uppercase">
+              Team <span className="text-primary italic relative">Management<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-30" /></span>
             </h1>
             <p className="text-slate-500 font-bold max-w-2xl text-sm leading-relaxed">
-              Delegate neural authority and manage access across the <span className="text-slate-200">ELYX Neural Network</span>. Currently <span className="text-accent underline underline-offset-4 decoration-accent/30">{members.filter(m => m.status === 'active').length} active</span> operators with distributed permissions.
+              Delegate system authority and manage access across the <span className="text-slate-200">ELYX Business Network</span>. Currently <span className="text-accent underline underline-offset-4 decoration-accent/30">{members.filter(m => m.status === 'active').length} active</span> operators with distributed permissions.
             </p>
           </div>
           <div className="flex items-center gap-6 relative z-10 flex-wrap">
@@ -144,7 +144,7 @@ export default function UsersPage() {
               </div>
               <div className="space-y-2 text-center">
                 <p className="text-sm font-black text-slate-400 uppercase tracking-[0.4em]">Syncing Team Metadata<LoadingDots /></p>
-                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">Neural network handshake in progress</p>
+                <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">System handshake in progress</p>
               </div>
             </div>
           ) : (
@@ -185,8 +185,8 @@ export default function UsersPage() {
                           <tr>
                             <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Team Member</th>
                             <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Assigned Role</th>
-                            <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Neural Status</th>
-                            <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Last Auth</th>
+                            <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Access Status</th>
+                            <th className="p-8 font-black text-[10px] uppercase text-slate-500 tracking-[0.3em]">Last Access</th>
                             <th className="p-8 text-right"></th>
                           </tr>
                         </thead>
@@ -298,9 +298,9 @@ export default function UsersPage() {
                     
                     <div className="space-y-6">
                       {[
-                        { title: "Master Admin", desc: "Full neural authority. Unrestricted reality anchoring and core overrides.", members: 1, icon: <Crown className="text-red-500" />, color: "red" },
-                        { title: "Neural Operator", desc: "Management of consciousness chains and operations workflows.", members: 2, icon: <BrainCircuit className="text-primary" />, color: "primary" },
-                        { title: "Strategic Analyst", desc: "Read and analyze reality forecasts. Restricted from neural overrides.", members: 1, icon: <Activity className="text-emerald-500" />, color: "emerald" }
+                        { title: "Master Admin", desc: "Full system authority. Unrestricted data anchoring and core overrides.", members: 1, icon: <Crown className="text-red-500" />, color: "red" },
+                        { title: "System Operator", desc: "Management of automation workflows and operations.", members: 2, icon: <BrainCircuit className="text-primary" />, color: "primary" },
+                        { title: "Strategic Analyst", desc: "Read and analyze performance reports. Restricted from core overrides.", members: 1, icon: <Activity className="text-emerald-500" />, color: "emerald" }
                       ].map((role, i) => (
                         <motion.div 
                           initial={{ opacity: 0, x: -20 }}
@@ -350,18 +350,18 @@ export default function UsersPage() {
                       </div>
                       <div className="space-y-8">
                         <PermissionGroup 
-                          label="Neural Integrity" 
-                          perms={['State Override', 'Phi Synchronization', 'Introspection Flush']} 
+                          label="System Integrity" 
+                          perms={['State Override', 'Sync Protocol', 'Cache Flush']} 
                           active={true}
                         />
                         <PermissionGroup 
-                          label="Temporal Ops" 
-                          perms={['Timeline Anchoring', 'Causal Forecast', 'Sim-Reset']} 
+                          label="Workflow Ops" 
+                          perms={['Process Anchoring', 'Security Audit', 'Task Reset']} 
                           active={false}
                         />
                         <PermissionGroup 
                           label="System Access" 
-                          perms={['Team Recruit', 'Audit Export', 'Billing Lead']} 
+                          perms={['Team Recruitment', 'Audit Export', 'Billing Lead']} 
                           active={false}
                         />
                       </div>
@@ -385,28 +385,28 @@ export default function UsersPage() {
                             <Fingerprint size={28} />
                           </div>
                           <div>
-                            <h3 className="text-3xl font-black text-white tracking-tight">Global Access Directives</h3>
+                            <h3 className="text-3xl font-black text-white tracking-tight uppercase">System Access Directives</h3>
                             <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Security Protocols</p>
                           </div>
                         </div>
                         <p className="text-sm text-slate-500 font-medium leading-relaxed mb-12">
-                          Configure unified security protocols for all neural terminal access points.
+                          Configure unified security protocols for all system terminal access points.
                         </p>
 
                         <div className="space-y-6">
                           <AccessToggle 
-                            title="Multi-Factor Neural Auth" 
+                            title="Multi-Factor System Auth" 
                             desc="Require biometric and physical key verification for all operational logins."
                             active={true}
                           />
                           <AccessToggle 
-                            title="Temporal Session Drift" 
-                            desc="Automatically terminate sessions if detected access time drifts from primary continuity."
+                            title="Session Timeout Protection" 
+                            desc="Automatically terminate sessions after a period of inactivity."
                             active={true}
                           />
                           <AccessToggle 
-                            title="IP Causal Perimeter" 
-                            desc="Restrict terminal access to verified geographic and causal nodes."
+                            title="IP Geofencing" 
+                            desc="Restrict terminal access to verified geographic and network nodes."
                             active={false}
                           />
                         </div>
@@ -432,7 +432,7 @@ export default function UsersPage() {
                             <h4 className="text-sm font-black text-slate-100 uppercase tracking-tight">Panic Lock Protocol</h4>
                           </div>
                           <p className="text-xs text-slate-500 font-medium leading-relaxed mb-8">
-                            Immediately revokes all delegated neural authorities except for the Master Admin. Use only in emergency situations.
+                            Immediately revokes all delegated system authorities except for the Master Admin. Use only in emergency situations.
                           </p>
                           <motion.button 
                             whileHover={{ scale: 1.02 }}
@@ -477,8 +477,8 @@ export default function UsersPage() {
                         <UserPlus size={28} />
                       </div>
                       <div>
-                        <h3 className="text-3xl font-black text-white tracking-tight">Recruit Member</h3>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Neural Network Invitation</p>
+                        <h3 className="text-3xl font-black text-white tracking-tight uppercase">Recruit Member</h3>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Business Network Invitation</p>
                       </div>
                     </div>
                     <motion.button
@@ -511,7 +511,7 @@ export default function UsersPage() {
                     <div>
                       <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Authority Role</label>
                       <select className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all">
-                        <option>Neural Operator</option>
+                        <option>System Operator</option>
                         <option>Strategic Analyst</option>
                         <option>Master Admin</option>
                       </select>
@@ -519,7 +519,7 @@ export default function UsersPage() {
                     <div>
                       <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Invitation Message (Optional)</label>
                       <textarea
-                        placeholder="Welcome to the ELYX Neural Network..."
+                        placeholder="Welcome to the ELYX Business Network..."
                         rows={3}
                         className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all resize-none"
                       />

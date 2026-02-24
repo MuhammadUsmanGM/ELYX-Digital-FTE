@@ -71,15 +71,15 @@ export default function AnalyticsPage() {
             <div className="flex items-center gap-3 mb-2">
               <span className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] font-black text-accent uppercase tracking-[0.2em] flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shadow-[0_0_8px_rgba(16,185,129,1)]" />
-                Intelligence Active
+                System Active
               </span>
               <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Timeframe: {timeframe.toUpperCase()}</span>
             </div>
-            <h1 className="text-6xl font-black tracking-tighter text-white leading-none">
-              Neural <span className="text-accent italic relative">Intelligence<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-accent to-transparent opacity-30" /></span>
+            <h1 className="text-6xl font-black tracking-tighter text-white leading-none uppercase">
+              Performance <span className="text-accent italic relative">Analytics<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-accent to-transparent opacity-30" /></span>
             </h1>
             <p className="text-slate-500 font-bold max-w-2xl text-sm leading-relaxed">
-              Advanced performance analytics and engagement metrics synthesized from <span className="text-slate-200">{data?.metrics.tasks_processed.toLocaleString() || "..."}</span> autonomous operations with <span className="text-accent underline underline-offset-4 decoration-accent/30">{data?.metrics.success_rate || "..."}%</span> success coefficient.
+              Advanced performance analytics and engagement metrics synthesized from <span className="text-slate-200">{data?.metrics.tasks_processed.toLocaleString() || "..."}</span> autonomous operations with <span className="text-accent underline underline-offset-4 decoration-accent/30">{data?.metrics.success_rate || "..."}%</span> execution accuracy.
             </p>
           </div>
           <div className="flex items-center gap-6 relative z-10 flex-wrap">
@@ -115,7 +115,7 @@ export default function AnalyticsPage() {
               className="btn-premium-primary !px-8 !py-5 shadow-2xl shadow-primary/20 border border-white/10 group"
             >
               <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
-              <span className="font-outfit text-xs font-black uppercase tracking-[0.2em]">Export Intelligence</span>
+              <span className="font-outfit text-xs font-black uppercase tracking-[0.2em]">Export Analytics</span>
             </motion.button>
           </div>
         </div>
@@ -128,7 +128,7 @@ export default function AnalyticsPage() {
             </div>
             <div className="space-y-2 text-center">
               <p className="text-sm font-black text-slate-400 uppercase tracking-[0.4em]">Synthesizing Data Streams<LoadingDots /></p>
-              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">Neural intelligence compilation in progress</p>
+              <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest italic">Performance data compilation in progress</p>
             </div>
           </div>
         ) : (
@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
                 trend={`${data.trends.percentage_change}%`}
                 isUp={data.trends.improving}
                 icon={<Zap size={22} />}
-                subtext="Neural Operations"
+                subtext="System Operations"
                 color="primary"
               />
               <AnalyticsStatCard 
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
                 trend="-2.4s"
                 isUp={true}
                 icon={<Clock size={22} />}
-                subtext="Avg Handshake"
+                subtext="Average Latency"
                 color="emerald"
               />
               <AnalyticsStatCard 
@@ -192,7 +192,7 @@ export default function AnalyticsPage() {
                       </div>
                       <div>
                         <h3 className="text-3xl font-black text-white tracking-tight">Engagement Pulse</h3>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">24-Hour Temporal Density</p>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">24-Hour Activity Density</p>
                       </div>
                     </div>
                   </div>
@@ -244,8 +244,8 @@ export default function AnalyticsPage() {
                       <PieChart size={24} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-white tracking-tight">Intelligence Distribution</h3>
-                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Category Breakdown</p>
+                      <h3 className="text-2xl font-black text-white tracking-tight">Task Distribution</h3>
+                      <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Operational Breakdown</p>
                     </div>
                   </div>
                 </div>
@@ -286,8 +286,8 @@ export default function AnalyticsPage() {
                   <div className="space-y-6">
                     <CategoryProgress label="Communication (Email/WA)" value={45} color="bg-primary" />
                     <CategoryProgress label="Operational Sync" value={25} color="bg-emerald-500" />
-                    <CategoryProgress label="CRM & Intelligence" value={18} color="bg-blue-500" />
-                    <CategoryProgress label="Custom Paradigms" value={12} color="bg-accent" />
+                    <CategoryProgress label="CRM & Analytics" value={18} color="bg-blue-500" />
+                    <CategoryProgress label="Custom Modules" value={12} color="bg-accent" />
                   </div>
                 </div>
               </div>
@@ -348,16 +348,16 @@ export default function AnalyticsPage() {
                   <h3 className="text-xl font-black text-white tracking-tight">Reports</h3>
                 </div>
                 <div className="space-y-4">
-                  <ReportItem title="Weekly Neural Performance" date="Feb 06, 2026" score="98.4" />
-                  <ReportItem title="Comm Engagement Audit" date="Feb 05, 2026" score="96.2" />
-                  <ReportItem title="Causal Logic Review" date="Feb 03, 2026" score="94.8" />
+                  <ReportItem title="Weekly Performance Audit" date="Feb 06, 2026" score="98.4" />
+                  <ReportItem title="Comm Engagement Report" date="Feb 05, 2026" score="96.2" />
+                  <ReportItem title="Workflow Logic Review" date="Feb 03, 2026" score="94.8" />
                 </div>
                 <motion.button 
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full mt-8 py-5 bg-white/[0.03] border border-white/10 rounded-3xl text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-white hover:border-primary/30 transition-all flex items-center justify-center gap-3 group shadow-xl"
                 >
-                  Compile Full Dossier
+                  Generate Complete Report
                   <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </motion.button>
               </div>
@@ -370,12 +370,12 @@ export default function AnalyticsPage() {
                     <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-xl shadow-emerald-500/5">
                       <Gauge size={22} />
                     </div>
-                    <h3 className="text-xl font-black text-white tracking-tight">Logic Gain</h3>
+                    <h3 className="text-xl font-black text-white tracking-tight">Efficiency Gain</h3>
                   </div>
                   <span className="text-3xl font-black text-emerald-500 tracking-tight">+14.2%</span>
                 </div>
                 <p className="text-xs text-slate-500 font-medium leading-relaxed relative z-10">
-                  Neural logic efficiency has improved by <span className="text-emerald-500 font-bold">14.2%</span> compared to the previous cycle through autonomous self-reflection and temporal prophecy correction algorithms.
+                  System workflow efficiency has improved by <span className="text-emerald-500 font-bold">14.2%</span> compared to the previous cycle through autonomous optimization and systematic workflow corrections.
                 </p>
               </div>
             </div>
@@ -459,7 +459,7 @@ function ReportItem({ title, date, score }: any) {
         </div>
       </div>
       <div className="text-right">
-        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Q-Score</p>
+        <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Conf. Score</p>
         <p className="text-sm font-black text-slate-200">{score}</p>
       </div>
     </motion.div>

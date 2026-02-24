@@ -47,8 +47,8 @@ export default function SecurityPage() {
     // Initial logs
     const initialLogs: SecurityLog[] = [
       { id: '1', timestamp: new Date().toLocaleTimeString(), source: '192.168.0.104', action: 'Handshake Attempt', status: 'verified', protocol: 'ECC-521' },
-      { id: '2', timestamp: new Date().toLocaleTimeString(), source: '84.22.102.15', action: 'Neural Port Scan', status: 'blocked', protocol: 'CAUSAL-GATE' },
-      { id: '3', timestamp: new Date().toLocaleTimeString(), source: 'INTERNAL-CORE', action: 'Entropy Refresh', status: 'verified', protocol: 'QUANTUM-GEN' },
+      { id: '2', timestamp: new Date().toLocaleTimeString(), source: '84.22.102.15', action: 'System Port Scan', status: 'blocked', protocol: 'SYS-GATE' },
+      { id: '3', timestamp: new Date().toLocaleTimeString(), source: 'INTERNAL-CORE', action: 'Entropy Refresh', status: 'verified', protocol: 'AES-GEN' },
     ];
     setLogs(initialLogs);
 
@@ -63,9 +63,9 @@ export default function SecurityPage() {
     // Random log generation
     const logInterval = setInterval(() => {
       const sources = ['45.18.22.1', 'NODE-B', 'SAT-LINK-7', '10.0.0.4', 'GATEWAY-X'];
-      const actions = ['Protocol Validation', 'Reality Sync Request', 'Causal Chain Audit', 'Packet Decryption', 'Identity Verification'];
+      const actions = ['Protocol Validation', 'System Sync Request', 'Logic Chain Audit', 'Packet Decryption', 'Identity Verification'];
       const statuses: ('blocked' | 'verified' | 'flagged')[] = ['blocked', 'verified', 'verified', 'verified', 'flagged'];
-      const protocols = ['Q-LINK', 'SHA-3', 'RSA-4096', 'ECC', 'CAUSAL'];
+      const protocols = ['TLS-SEC', 'SHA-3', 'RSA-4096', 'ECC', 'WORKFLOW'];
       
       const newLog: SecurityLog = {
         id: Math.random().toString(36).substr(2, 9),
@@ -100,10 +100,10 @@ export default function SecurityPage() {
               <div className="w-10 h-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
                 <ShieldCheck size={24} />
               </div>
-              <h1 className="text-4xl font-black tracking-tight text-white">Security Perimeter</h1>
+              <h1 className="text-4xl font-black tracking-tight text-white">System Integrity</h1>
             </div>
             <p className="text-slate-400 font-medium max-w-2xl">
-              Absolute causal integrity maintained via triple-layer quantum encryption and zero-trust neural architecture.
+              Local-first security architecture with AES-256 vault encryption and strict zero-trust permission modules.
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -120,7 +120,7 @@ export default function SecurityPage() {
               className="px-6 py-4 bg-red-500/10 border border-red-500/20 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-500 flex items-center gap-3 hover:bg-white hover:text-red-500 transition-all active:scale-95 disabled:opacity-50 group"
             >
               {scanning ? <Loader2 size={16} className="animate-spin" /> : <Eye size={16} className="group-hover:rotate-12 transition-transform" />}
-              Scan Reality Leaks
+              Scan Vulnerabilities
             </button>
           </div>
         </div>
@@ -133,7 +133,7 @@ export default function SecurityPage() {
             </div>
             <div className="text-center space-y-2">
               <p className="text-slate-200 font-black uppercase tracking-[0.3em] text-sm">Initializing Defensive Layers</p>
-              <p className="text-slate-500 text-xs font-mono flex items-center">Quantum Key Exchange in progress<LoadingDots /></p>
+              <p className="text-slate-500 text-xs font-mono flex items-center">AES Key Rotation in progress<LoadingDots /></p>
             </div>
           </div>
         ) : (
@@ -145,25 +145,25 @@ export default function SecurityPage() {
               {/* Primary Metrics Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <MetricCard 
-                  label="Quantum Entropy" 
+                  label="System Load" 
                   value={`${entropy.toFixed(2)}%`}
-                  sub="Stability Level: S-Tier"
+                  sub="CPU/Compute Pressure"
                   icon={<Radio className="text-primary" size={20} />}
                   progress={entropy}
                   color="cyan"
                 />
                 <MetricCard 
-                  label="Encryption Depth" 
-                  value="8192 Bit"
-                  sub="CAUSAL-LAYER-7 ACTIVE"
+                  label="Memory Density" 
+                  value="8192 MB"
+                  sub="Local Resource Allocation"
                   icon={<Lock className="text-emerald-500" size={20} />}
                   progress={100}
                   color="emerald"
                 />
                 <MetricCard 
-                  label="Active Firewalls" 
+                  label="Security Nodes" 
                   value="1,422"
-                  sub="0 BREACHES (24H)"
+                  sub="Active Permission Gates"
                   icon={<Activity className="text-blue-500" size={20} />}
                   progress={100}
                   color="blue"
@@ -176,7 +176,7 @@ export default function SecurityPage() {
                   <div>
                     <h3 className="text-lg font-black text-white flex items-center gap-3">
                       <Terminal size={20} className="text-primary" />
-                      Live Neural Firewall Feed
+                      Live System Firewall Feed
                     </h3>
                     <p className="text-xs text-slate-500 font-medium mt-1">Real-time packet analysis across all communication nodes.</p>
                   </div>
@@ -231,7 +231,7 @@ export default function SecurityPage() {
                     active={true}
                   />
                   <AccessItem 
-                    label="Neural Link" 
+                    label="System Link" 
                     status="Encrypted" 
                     desc="Local Environment Override" 
                     active={true}
@@ -257,11 +257,11 @@ export default function SecurityPage() {
                   <h3 className="text-lg font-black text-white">Active Defense</h3>
                 </div>
                 <div className="space-y-5">
-                   <ProtocolItem name="Causal Chain Anchoring" status="active" />
-                   <ProtocolItem name="Quantum Key Rotation" status="active" />
-                   <ProtocolItem name="Zero-Trust Neural Gate" status="active" />
-                   <ProtocolItem name="Temporal Sync Protection" status="active" />
-                   <ProtocolItem name="Reality Consistency Check" status="warning" />
+                   <ProtocolItem name="Logic Chain Anchoring" status="active" />
+                   <ProtocolItem name="Automated Key Rotation" status="active" />
+                   <ProtocolItem name="Zero-Trust System Gate" status="active" />
+                   <ProtocolItem name="Workflow Sync Protection" status="active" />
+                   <ProtocolItem name="Data Integrity Check" status="warning" />
                 </div>
               </div>
 
@@ -273,10 +273,10 @@ export default function SecurityPage() {
                 </h3>
                 <div className="space-y-4">
                   <button className="w-full py-5 bg-red-500 text-white rounded-3xl font-black text-xs uppercase tracking-[0.2em] hover:bg-white hover:text-red-500 transition-all shadow-xl shadow-red-500/20 active:scale-95">
-                    Neural Core Purge
+                    System Core Purge
                   </button>
                   <p className="text-[9px] text-slate-600 text-center uppercase font-black leading-normal px-6">
-                    Immediate irreversible termination of all neural memories and reality anchors.
+                    Immediate irreversible termination of all system logs and secure data storage.
                   </p>
                 </div>
               </div>

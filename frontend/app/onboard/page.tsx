@@ -38,10 +38,10 @@ export default function OnboardingPage() {
   const router = useRouter();
 
   const channels = [
-    { id: 'email', name: 'Neural Email Relay', icon: <Mail size={18} />, desc: 'Primary communication vector' },
-    { id: 'slack', name: 'Strategic Slack Bridge', icon: <Slack size={18} />, desc: 'Real-time internal workspace' },
-    { id: 'whatsapp', name: 'Mobile Intelligence Box', icon: <MessageSquare size={18} />, desc: 'End-to-end encrypted mobility' },
-    { id: 'linkedin', name: 'Corporate Social Node', icon: <Globe2 size={18} />, desc: 'B2B growth & outreach' },
+    { id: 'email', name: 'Email Connector', icon: <Mail size={18} />, desc: 'Primary communication channel' },
+    { id: 'slack', name: 'Slack Integration', icon: <Slack size={18} />, desc: 'Real-time internal workspace' },
+    { id: 'whatsapp', name: 'WhatsApp Secure', icon: <MessageSquare size={18} />, desc: 'End-to-end encrypted mobility' },
+    { id: 'linkedin', name: 'LinkedIn Professional', icon: <Globe2 size={18} />, desc: 'B2B growth & outreach' },
   ];
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function OnboardingPage() {
         });
       }
       
-      toast.success("Intelligence Link Established. Welcome to the Network.", {
+      toast.success("System Link Established. Welcome to the Workspace.", {
         duration: 4000
       });
 
@@ -121,7 +121,7 @@ export default function OnboardingPage() {
       }, 2500);
     } catch (error) {
        console.error("Onboarding failed", error);
-       toast.error("Handshake Failed: Persistence relay error.");
+       toast.error("Handshake Failed: Database storage error.");
        setLoading(false);
     }
   };
@@ -136,7 +136,7 @@ export default function OnboardingPage() {
         <div className="w-full max-w-4xl flex items-center justify-between mb-4">
            <div className="flex items-center gap-3">
               <Image src="/icon.png" alt="ELYX" width={32} height={32} />
-              <span className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase">Neural Provisioning v2.0</span>
+              <span className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase">System Provisioning v2.0</span>
            </div>
            <div className="text-[10px] font-black text-primary tracking-widest uppercase">
              Step {currentStep} of 4
@@ -162,8 +162,8 @@ export default function OnboardingPage() {
                 </div>
               </div>
               <div className="space-y-4">
-                <h1 className="text-5xl font-black tracking-tighter">Welcome to the <span className="text-primary italic">Neural Network</span>.</h1>
-                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">You are about to initialize your personal AI employee. Let's calibrate your strategic environment.</p>
+                <h1 className="text-5xl font-black tracking-tighter uppercase">Welcome to <span className="text-primary italic">ELYX</span>.</h1>
+                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">You are about to initialize your personal AI employee. Let's calibrate your workspace environment.</p>
               </div>
               <div className="grid grid-cols-3 gap-4 text-left">
                 <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
@@ -174,7 +174,7 @@ export default function OnboardingPage() {
                 <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
                    <Zap size={20} className="text-primary mb-2" />
                    <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Real-time</p>
-                   <p className="text-[11px] font-bold text-slate-200">Causal synchronization.</p>
+                   <p className="text-[11px] font-bold text-slate-200">System synchronization.</p>
                 </div>
                 <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
                    <Settings size={20} className="text-accent mb-2" />
@@ -192,8 +192,8 @@ export default function OnboardingPage() {
                    <Cpu className="text-primary" />
                  </div>
                  <div>
-                   <h2 className="text-2xl font-black tracking-tight">Configure Neural Core</h2>
-                   <p className="text-slate-500 text-sm font-bold">Connecting the Anthropic Claude brain Proxy.</p>
+                   <h2 className="text-2xl font-black tracking-tight text-white uppercase">Configure AI Core</h2>
+                   <p className="text-slate-500 text-sm font-bold">Connecting the Anthropic Claude provider.</p>
                  </div>
               </div>
               <div className="glass-panel p-8 rounded-3xl border-card-border space-y-6">
@@ -247,14 +247,14 @@ export default function OnboardingPage() {
                    </div>
                 </div>
                 <div className="space-y-4">
-                  <h2 className="text-4xl font-black tracking-tight">Initializing Reality Bridge</h2>
-                  <p className="text-slate-400 font-bold max-w-sm mx-auto">All neural pathways have been mapped. Preparing your Enterprise workspace.</p>
+                  <h2 className="text-4xl font-black tracking-tight uppercase">Initializing Workspace</h2>
+                  <p className="text-slate-400 font-bold max-w-sm mx-auto">All system pathways have been mapped. Preparing your Enterprise workspace.</p>
                 </div>
                 <div className="p-6 rounded-3xl bg-slate-900/50 border border-card-border flex flex-col gap-4 text-left">
                   <div className="flex items-center justify-between text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase"><span>Status</span><span className="text-emerald-500">99% Complete</span></div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Cpu size={14} className="text-primary"/> Neural Core</span><span className="text-emerald-500">Active</span></div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Database size={14} className="text-indigo-400"/> Local Vault</span><span className="text-indigo-400">Encrypted</span></div>
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Cpu size={14} className="text-primary"/> AI Core</span><span className="text-emerald-500">Active</span></div>
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Database size={14} className="text-indigo-400"/> Local Vault</span><span className="text-indigo-400">Secure</span></div>
                     <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Terminal size={14} className="text-accent"/> Logic Engine</span><span className="text-accent">Calibrated</span></div>
                   </div>
                 </div>
@@ -276,7 +276,7 @@ export default function OnboardingPage() {
                   className="flex items-center gap-4 text-xs font-black uppercase text-primary tracking-[0.25em] font-outfit"
                 >
                   <Loader2 className="animate-spin" size={20} />
-                  <span className="flex items-center">Calibrating Neural Pathways<LoadingDots /></span>
+                  <span className="flex items-center">Initializing System Workflows<LoadingDots /></span>
                 </motion.div>
              ) : (
                 <button onClick={handleNext} className="btn-premium-primary !px-10 !py-4 shadow-[0_20px_40px_rgba(6,182,212,0.15)] group">

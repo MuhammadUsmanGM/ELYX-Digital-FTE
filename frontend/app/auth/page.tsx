@@ -67,14 +67,14 @@ export default function AuthPage() {
         return;
       }
       if (password !== confirmPassword) {
-        const msg = "Neural keys do not match. Please verify your security sequence.";
+        const msg = "Passwords do not match. Please verify your security sequence.";
         setError(msg);
         toast.error(msg);
         setLoading(false);
         return;
       }
       if (!agreed) {
-        const msg = "You must accept the Sovereign Intelligence Directives.";
+        const msg = "You must accept the System Terms of Service.";
         setError(msg);
         toast.error(msg);
         setLoading(false);
@@ -119,7 +119,7 @@ export default function AuthPage() {
         window.location.href = "/dashboard";
       }
     } catch (err: any) {
-      const msg = err.message || "Neural authentication failed. Access denied.";
+      const msg = err.message || "System authentication failed. Access denied.";
       setError(msg);
       toast.error(msg);
     } finally {
@@ -184,8 +184,8 @@ export default function AuthPage() {
             <div className="glass-panel p-8 rounded-[2.5rem] border-white/5 relative overflow-hidden group hover:border-emerald-500/30 transition-all duration-500">
               <div className="absolute -right-4 -top-4 w-12 h-12 bg-emerald-500/5 rounded-full blur-xl group-hover:bg-emerald-500/10 transition-colors" />
               <Zap className="text-emerald-400 mb-4" size={28} />
-              <p className="text-xs font-black text-white uppercase tracking-[0.2em] mb-2 font-outfit">NEURAL SYNC</p>
-              <p className="text-[10px] text-slate-500 font-bold leading-loose">Synchronous causal-chain verification.</p>
+              <p className="text-xs font-black text-white uppercase tracking-[0.2em] mb-2 font-outfit">SYSTEM SYNC</p>
+              <p className="text-[10px] text-slate-500 font-bold leading-loose">Synchronous workflow verification.</p>
             </div>
           </div>
         </motion.div>
@@ -218,7 +218,7 @@ export default function AuthPage() {
                  <Image src="/icon.png" alt="ELYX" width={48} height={48} className="mx-auto transition-transform group-hover:scale-110 duration-500" />
                </Link>
                <h3 className="text-4xl font-black text-white tracking-tight mb-3 font-outfit">
-                 {isLogin ? "Neural Terminal" : "Initialize Node"}
+                 {isLogin ? "Secure Login" : "System Register"}
                </h3>
                <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-white/5 border border-white/10">
                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -315,7 +315,7 @@ export default function AuthPage() {
                          {agreed ? <CheckSquare size={20} /> : <Square size={20} />}
                       </div>
                       <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-left leading-relaxed font-outfit">
-                        I accept the <Link href="/terms" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Neural Access Protocol</Link> and <Link href="/privacy" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Privacy Directives</Link>
+                        I accept the <Link href="/terms" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Security Access Protocol</Link> and <Link href="/privacy" className="text-slate-300 hover:text-primary transition-colors cursor-pointer italic underline underline-offset-4 decoration-primary/20">Privacy Directives</Link>
                       </span>
                     </button>
                   </motion.div>
@@ -346,7 +346,7 @@ export default function AuthPage() {
                   >
                     <Loader2 className="animate-spin text-white" size={20} />
                     <span className="tracking-[.3em] font-outfit text-[10px] font-black uppercase flex items-center">
-                      {isLogin ? "Synchronizing Neural Keys" : "Provisioning Identity"}
+                      {isLogin ? "Synchronizing System Access" : "Provisioning Identity"}
                       <LoadingDots />
                     </span>
                   </motion.div>
@@ -391,7 +391,7 @@ export default function AuthPage() {
                 }}
                 className="text-[10px] font-black text-slate-500 hover:text-primary uppercase tracking-[0.3em] transition-all duration-300 font-outfit underline-offset-8 decoration-primary/30 hover:underline"
               >
-                {isLogin ? "Initialize New Core Entity?" : "Return to Baseline Terminal"}
+                {isLogin ? "Register New User?" : "Return to Login Terminal"}
               </button>
             </div>
           </div>

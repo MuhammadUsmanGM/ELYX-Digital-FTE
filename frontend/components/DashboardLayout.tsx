@@ -8,6 +8,7 @@ import {
   BrainCircuit,
   Clock,
   Globe2,
+  Briefcase,
   ShieldCheck,
   MessageSquare,
   CheckCircle2,
@@ -48,17 +49,15 @@ export default function SidebarLayout({
   const router = useRouter();
 
   const sidebarItems = [
-    { icon: <LayoutDashboard size={18} />, label: "Dashboard", href: "/dashboard" },
-    { icon: <BarChart3 size={18} />, label: "Analytics", href: "/analytics" },
-    { icon: <Users size={18} />, label: "Team", href: "/users" },
-    { icon: <CheckCircle2 size={18} />, label: "Operations", href: "/operations" },
-    { icon: <Activity size={18} />, label: "Business", href: "/business" },
-    { icon: <MessageSquare size={18} />, label: "Communications", href: "/comms" },
+    { icon: <LayoutDashboard size={18} />, label: "Mission Control", href: "/dashboard" },
+    { icon: <BarChart3 size={18} />, label: "Decision Matrix", href: "/analytics" },
+    { icon: <Users size={18} />, label: "Team Directory", href: "/users" },
+    { icon: <Briefcase size={18} />, label: "Business Operations", href: "/business" },
+    { icon: <MessageSquare size={18} />, label: "Global Comms", href: "/comms" },
     { icon: <Activity size={18} />, label: "System Monitor", href: "/system-monitor" },
-    { icon: <BarChart3 size={18} />, label: "Decision Analysis", href: "/decision-analysis" },
-    { icon: <Calendar size={18} />, label: "Scheduler", href: "/scheduling" },
-    { icon: <ShieldCheck size={18} />, label: "Security", href: "/security" },
-    { icon: <Settings size={18} />, label: "Settings", href: "/settings" },
+    { icon: <Calendar size={18} />, label: "Task Scheduler", href: "/scheduling" },
+    { icon: <ShieldCheck size={18} />, label: "Vault Security", href: "/security" },
+    { icon: <Settings size={18} />, label: "OS Settings", href: "/settings" },
   ];
 
   useEffect(() => {
@@ -97,7 +96,7 @@ export default function SidebarLayout({
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Neural Session Terminated. Returning to Baseline.");
+    toast.success("System Session Terminated. Returning to Login.");
     router.push("/auth");
   };
 
@@ -130,7 +129,7 @@ export default function SidebarLayout({
             </motion.div>
             <div className="flex flex-col">
               <span className="text-xl font-black tracking-tighter text-white group-hover:text-primary transition-colors">ELYX</span>
-              <span className="text-[8px] font-black tracking-[0.3em] text-slate-500 uppercase">Neural OS v2.0</span>
+              <span className="text-[8px] font-black tracking-[0.3em] text-slate-500 uppercase">System Workspace v2.0</span>
             </div>
           </Link>
         </div>
@@ -188,7 +187,7 @@ export default function SidebarLayout({
             </div>
             <div className="flex flex-col">
               <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Developer</span>
-              <span className="text-[11px] font-bold text-slate-300 group-hover:text-white transition-colors">Neural Interface</span>
+               <span className="text-[11px] font-bold text-slate-300 group-hover:text-white transition-colors">System Interface</span>
             </div>
           </Link>
 
@@ -202,12 +201,12 @@ export default function SidebarLayout({
                 <div className={`w-1.5 h-1.5 rounded-full ${data?.health.status === 'healthy' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'}`} />
                 <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Core Stability</span>
               </div>
-              <span className="text-[10px] font-black text-accent">{data?.consciousness.phi.toFixed(1) || "98.4"}%</span>
+              <span className="text-[10px] font-black text-accent">{data?.system.stability_score.toFixed(1) || "98.4"}%</span>
             </div>
             <div className="h-1 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
               <motion.div 
                 initial={{ width: 0 }}
-                animate={{ width: `${data?.consciousness.phi || 98.4}%` }}
+                animate={{ width: `${data?.system.stability_score || 98.4}%` }}
                 className="h-full bg-gradient-to-r from-accent/40 to-accent"
               />
             </div>
@@ -225,7 +224,7 @@ export default function SidebarLayout({
               <Search size={18} className="text-slate-500 group-focus-within:text-primary transition-colors" />
               <input 
                 type="text" 
-                placeholder="Query neural network..." 
+                placeholder="Query system database..." 
                 className="bg-transparent border-none outline-none text-[13px] text-slate-300 w-full font-bold placeholder:text-slate-600 tracking-wide"
               />
               <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 bg-slate-900 border border-white/5 rounded-lg">
@@ -253,7 +252,7 @@ export default function SidebarLayout({
             <div className="flex items-center gap-5">
               <div className="text-right hidden xl:block">
                 <p className="text-xs font-black text-slate-200 capitalize tracking-tight leading-none mb-1">
-                  {user?.email?.split('@')[0].replace('.', ' ') || "Neural Admin"}
+                  {user?.email?.split('@')[0].replace('.', ' ') || "System Admin"}
                 </p>
                 <div className="flex items-center justify-end gap-1.5">
                   <div className="w-1 h-1 rounded-full bg-primary" />
@@ -278,13 +277,13 @@ export default function SidebarLayout({
                     <p className="text-[10px] font-bold text-slate-500">System Integrity: Optimal</p>
                   </div>
                   <Link href="/settings" className="flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
-                    <Settings size={14} /> Neural Settings
+                    <Settings size={14} /> Workspace Settings
                   </Link>
                   <button 
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-red-500/80 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all border-t border-white/5 mt-2 pt-4"
                   >
-                    <LogOut size={14} /> Terminate Handshake
+                    <LogOut size={14} /> Sign Out Session
                   </button>
                 </div>
               </div>
@@ -304,7 +303,7 @@ export default function SidebarLayout({
            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                  <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Neural Link: Active</span>
+                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">System Link: Active</span>
               </div>
               <div className="h-3 w-px bg-white/10" />
               <div className="flex items-center gap-2">
@@ -313,7 +312,7 @@ export default function SidebarLayout({
               </div>
            </div>
            <div className="text-[9px] font-black text-slate-600 uppercase tracking-widest">
-              ELYX Neural Core © 2024 • Quantum Secure
+              ELYX System Core © 2024 • Enterprise Secure
            </div>
         </footer>
       </div>

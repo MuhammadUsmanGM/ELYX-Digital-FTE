@@ -27,12 +27,12 @@ export default function SettingsPage() {
     communication_whatsapp: true,
     communication_linkedin: true,
     communication_email_sorting: false,
-    workflow_causal_verification: true,
-    ai_temporal_projection: true,
-    ai_emotional_resonance: true,
-    ai_existential_safety: true,
+    workflow_verification: true,
+    ai_logic_projection: true,
+    ai_tone_adjustment: true,
+    ai_safety_anchors: true,
     notifications_instant_alerts: true,
-    notifications_strategy_requests: true,
+    notifications_workflow_requests: true,
     notifications_daily_digest: false,
     brand_voice: "Corporate Professional (Standard)"
   });
@@ -75,7 +75,7 @@ export default function SettingsPage() {
       for (const [key, value] of Object.entries(settings)) {
         await updateUserPreference(key, value);
       }
-      alert("Configuration committed to neural core successfully.");
+      alert("Configuration committed to system core successfully.");
     } catch (error) {
       alert("Failed to sync settings with backend.");
     } finally {
@@ -96,7 +96,7 @@ export default function SettingsPage() {
       <DashboardLayout>
         <div className="flex flex-col items-center justify-center min-h-[60vh]">
           <Loader2 className="animate-spin text-primary mb-4" size={48} />
-          <p className="text-slate-400 font-bold uppercase tracking-widest">Accessing Neural Config...</p>
+          <p className="text-slate-400 font-bold uppercase tracking-widest">Accessing System Config...</p>
         </div>
       </DashboardLayout>
     );
@@ -112,7 +112,7 @@ export default function SettingsPage() {
               <Settings className="text-primary" size={32} />
               System Configuration
             </h1>
-            <p className="text-slate-500 font-medium">Fine-tune your ELYX digital employee's neural constraints and operational scope.</p>
+            <p className="text-slate-500 font-medium">Fine-tune your ELYX digital employee's operational constraints and logic scope.</p>
           </div>
           <button 
             onClick={handleSave} 
@@ -172,7 +172,7 @@ export default function SettingsPage() {
                     />
                     <SettingToggle 
                       title="Email Priority Sorting" 
-                      desc="Automatically categorize incoming emails based on neural urgency detection."
+                      desc="Automatically categorize incoming emails based on system priority detection."
                       active={settings.communication_email_sorting}
                       onToggle={() => handleToggle('communication_email_sorting')}
                     />
@@ -183,7 +183,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between mb-6">
                     <h3 className="text-lg font-bold text-white">Brand Voice Profile</h3>
                     <div className="px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-[10px] font-black text-primary uppercase tracking-widest">
-                       Neural Synthesis Active
+                       Logical Synthesis Active
                     </div>
                   </div>
                   
@@ -220,7 +220,7 @@ export default function SettingsPage() {
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-card-border/30 bg-slate-900/60">
-                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Metric Parameters</th>
+                          <th className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Logic Parameters</th>
                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-500">Value Delta</th>
                           <th className="p-4 text-[10px] font-black uppercase tracking-widest text-slate-500 text-right">Optimization</th>
                         </tr>
@@ -262,10 +262,10 @@ export default function SettingsPage() {
                   </h3>
                   <div className="space-y-8">
                     <SettingToggle 
-                      title="Strict Causal Verification" 
-                      desc="Require dual-layered reality verification for all high-stakes business decisions."
-                      active={settings.workflow_causal_verification}
-                      onToggle={() => handleToggle('workflow_causal_verification')}
+                      title="Strict Process Verification" 
+                      desc="Require dual-layered workflow verification for all high-stakes business decisions."
+                      active={settings.workflow_verification}
+                      onToggle={() => handleToggle('workflow_verification')}
                     />
                     <div className="p-6 rounded-2xl bg-primary/5 border border-primary/10">
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-primary mb-2">Threshold Configuration</p>
@@ -286,26 +286,26 @@ export default function SettingsPage() {
                 <section>
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <BrainCircuit size={20} className="text-primary" />
-                    Neural Logic Constraints
+                    AI Logic Constraints
                   </h3>
                   <div className="space-y-6">
                     <SettingToggle 
-                      title="Temporal Projection" 
-                      desc="Enable the AI to project outcomes into simulated future timelines before responding."
-                      active={settings.ai_temporal_projection}
-                      onToggle={() => handleToggle('ai_temporal_projection')}
+                      title="Workflow Outcome Projection" 
+                      desc="Enable the AI to project outcomes into simulated scenarios before responding."
+                      active={settings.ai_logic_projection}
+                      onToggle={() => handleToggle('ai_logic_projection')}
                     />
                     <SettingToggle 
-                      title="Emotional Resonance System" 
-                      desc="Allow AI to adjust communication tone based on detected human emotional states."
-                      active={settings.ai_emotional_resonance}
-                      onToggle={() => handleToggle('ai_emotional_resonance')}
+                      title="Adaptive Tone System" 
+                      desc="Allow AI to adjust communication tone based on perceived context and intent."
+                      active={settings.ai_tone_adjustment}
+                      onToggle={() => handleToggle('ai_tone_adjustment')}
                     />
                     <SettingToggle 
-                      title="Existential Safety Mode" 
-                      desc="Ensure all AI reasoning adheres to primary ethical and operational anchors."
-                      active={settings.ai_existential_safety}
-                      onToggle={() => handleToggle('ai_existential_safety')}
+                      title="Operational Safety Anchors" 
+                      desc="Ensure all AI reasoning adheres to primary ethical and operational rules."
+                      active={settings.ai_safety_anchors}
+                      onToggle={() => handleToggle('ai_safety_anchors')}
                     />
                   </div>
                 </section>
@@ -317,7 +317,7 @@ export default function SettingsPage() {
                 <section>
                   <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <Bell size={20} className="text-primary" />
-                    Neural Alert Configurations
+                    System Alert Configurations
                   </h3>
                   <div className="space-y-6">
                     <SettingToggle 
@@ -327,13 +327,13 @@ export default function SettingsPage() {
                       onToggle={() => handleToggle('notifications_instant_alerts')}
                     />
                     <SettingToggle 
-                      title="Strategy Verification Requests" 
+                      title="Workflow Verification Requests" 
                       desc="Notify via desktop and mobile when a high-stakes decision requires manual oversight."
-                      active={settings.notifications_strategy_requests}
-                      onToggle={() => handleToggle('notifications_strategy_requests')}
+                      active={settings.notifications_workflow_requests}
+                      onToggle={() => handleToggle('notifications_workflow_requests')}
                     />
                     <SettingToggle 
-                      title="Daily Intelligence Digest" 
+                      title="Daily Performance Digest" 
                       desc="Synthesize all interactions into a single comprehensive morning report."
                       active={settings.notifications_daily_digest}
                       onToggle={() => handleToggle('notifications_daily_digest')}
@@ -364,7 +364,7 @@ export default function SettingsPage() {
                    <RefreshCw size={48} className="text-slate-600" />
                  </div>
                  <h3 className="text-xl font-bold text-slate-400 uppercase tracking-widest">Sector Initializing</h3>
-                 <p className="text-slate-600 max-w-xs mx-auto">This neural configuration module is currently being optimized for your tier.</p>
+                 <p className="text-slate-600 max-w-xs mx-auto">This system configuration module is currently being optimized for your tier.</p>
               </div>
             )}
           </div>

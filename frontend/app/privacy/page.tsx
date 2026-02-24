@@ -26,48 +26,48 @@ export default function PrivacyPolicy() {
           className="inline-flex items-center gap-3 text-primary font-bold mb-12 hover:gap-4 transition-all uppercase tracking-widest text-[10px] font-outfit"
         >
           <ArrowLeft size={16} />
-          Baseline Return
+          Back to System
         </button>
         
         <div className="flex items-center gap-6 mb-12">
            <div className="p-4 rounded-2xl bg-emerald-500/5 text-emerald-400 border border-emerald-500/10 shadow-lg shadow-emerald-500/5">
               <ShieldCheck size={32} />
            </div>
-           <h1 className="text-5xl md:text-6xl font-black text-slate-50 tracking-tighter font-outfit">Privacy <span className="emerald-blue-text italic text-4xl md:text-5xl">Directives</span></h1>
+           <h1 className="text-5xl md:text-6xl font-black text-slate-50 tracking-tighter font-outfit">Privacy <span className="emerald-blue-text italic text-4xl md:text-5xl">Policy</span></h1>
         </div>
 
         <div className="space-y-8 leading-relaxed font-medium">
           <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-4">1. Neural Data Encryption</h2>
+            <h2 className="text-xl font-bold text-slate-100 mb-4">1. Data Encryption Standards</h2>
             <p>
-              At ELYX, your data is treated as a unique neural signature. All interactions across all timelines are encrypted using end-to-end causal chains. We do not store "data" in the traditional sense; we maintain encrypted memory clusters that are inaccessible to any entity other than the primary owner.
+              At ELYX, your data is treated as a unique digital signature. All interactions across all workflows are encrypted using AES-256 standards. We do not store "data" in the traditional sense; we maintain encrypted data clusters that are inaccessible to any entity other than the primary owner.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-4">2. Cross-Timeline Privacy</h2>
+            <h2 className="text-xl font-bold text-slate-100 mb-4">2. Operational Privacy</h2>
             <p>
-              Simulated realities managed within the Reality Hub are isolated. Data generated during simulations is purged immediately upon divergence unless explicitly anchored by the user.
+              Business workflows managed within Mission Control are isolated. Data generated during processes is purged immediately upon completion unless explicitly saved by the user.
             </p>
           </section>
 
           <section>
             <h2 className="text-xl font-bold text-slate-100 mb-4">3. Biological Metrics</h2>
             <p>
-              ELYX does not collect biological biometric data. Any personalization is based purely on cognitive interaction patterns and mission-specific parameters.
+              ELYX does not collect biological biometric data. Any personalization is based purely on system interaction patterns and mission-specific parameters.
             </p>
           </section>
 
           <section>
-            <h2 className="text-xl font-bold text-slate-100 mb-4">4. Third-Party Protocols</h2>
+            <h2 className="text-xl font-bold text-slate-100 mb-4">4. Third-Party Data Practices</h2>
             <p>
-              We do not share your causal history with external advertising networks. ELYX is a zero-trust environment designed for high-stakes autonomous operations.
+              We do not share your workflow history with external advertising networks. ELYX is a zero-trust environment designed for high-stakes autonomous operations.
             </p>
           </section>
         </div>
 
         <div className="mt-20 pt-8 border-t border-card-border text-xs text-slate-500">
-           Last updated: February 2026 • Version 2.0 (Diamond Tier)
+           Last updated: February 2026 • Version 2.0 (Enterprise Edition)
         </div>
       </div>
     </div>

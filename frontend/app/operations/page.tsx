@@ -132,7 +132,7 @@ export default function OperationsPage() {
                 <h3 className="font-bold">Queue Health</h3>
               </div>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                The neural processor is handling 14 chains with 99.8% precision.
+                The system processor is handling 14 workflows with 99.8% precision.
               </p>
               <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                 <div className="bg-primary h-full w-[85%]" />

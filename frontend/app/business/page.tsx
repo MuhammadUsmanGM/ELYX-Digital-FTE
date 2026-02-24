@@ -54,7 +54,7 @@ export default function BusinessPage() {
         <div className="flex items-end justify-between">
           <div>
             <h1 className="text-4xl font-black tracking-tight mb-2">Business Operations</h1>
-            <p className="text-slate-400 font-medium">Monitoring Platinum Tier performance and financial vectors.</p>
+            <p className="text-slate-400 font-medium">Monitoring enterprise performance and financial vectors.</p>
           </div>
           <div className="flex gap-3">
             <button className="btn-premium-secondary">
@@ -107,7 +107,7 @@ export default function BusinessPage() {
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <DollarSign size={20} className="text-primary" />
-                Financial Vectors
+                Financial Transactions
               </h2>
               <button className="text-xs font-bold text-primary hover:underline">View All</button>
             </div>
@@ -146,7 +146,7 @@ export default function BusinessPage() {
              <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <Zap size={20} className="text-accent" />
-                Active Process Chains
+                Active Workflows
               </h2>
               <button className="text-xs font-bold text-accent hover:underline">Configure</button>
             </div>
@@ -197,7 +197,7 @@ export default function BusinessPage() {
                   <div>
                      <h4 className="text-sm font-bold text-accent mb-1 uppercase tracking-tighter">AI Process Optimization</h4>
                      <p className="text-xs text-slate-400 leading-relaxed">
-                       ELYX suggests merging the "Reconciliation" and "Sentiment" loops to save 14% of temporal compute power.
+                       ELYX suggests merging the "Reconciliation" and "Sentiment" loops to save 14% of system resources and compute time.
                      </p>
                   </div>
                </div>

@@ -48,14 +48,14 @@ export default function DashboardPage() {
       setTasks(taskList);
       setApprovals(approvalList);
       if (isRefresh) {
-        toast.success("Neural Core Synchronized", {
+        toast.success("System Core Synchronized", {
           id: 'sync-success',
           icon: '⚡',
         });
       }
     } catch (error) {
       console.error("Dashboard error:", error);
-      toast.error("Handshake Failed: Neural Core unreachable");
+      toast.error("Handshake Failed: System Core unreachable");
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -101,13 +101,20 @@ export default function DashboardPage() {
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(6,182,212,1)]" />
                 Live Network Active
               </span>
-              <span className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">Session ID: {Math.random().toString(36).substring(7).toUpperCase()}</span>
+              <span className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] font-black text-accent uppercase tracking-[0.2em] flex items-center gap-2">
+                <BrainCircuit size={10} />
+                Claude 3.5 Sonnet
+              </span>
+              <span className="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                <Globe2 size={10} />
+                Local Vault Sync
+              </span>
             </div>
-            <h1 className="text-6xl font-black tracking-tighter text-white leading-none">
-              Mission <span className="text-primary italic relative">Control<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-30" /></span>
+            <h1 className="text-6xl font-black tracking-tighter text-white leading-none uppercase">
+              System <span className="text-primary italic relative">Workspace<div className="absolute -bottom-1 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent opacity-30" /></span>
             </h1>
             <p className="text-slate-500 font-bold max-w-2xl text-sm leading-relaxed">
-              Real-time oversight for the ELYX autonomous intelligence network. Synthesizing <span className="text-slate-200">{data?.tasks.active_chains || "..."}</span> decision chains with <span className="text-accent underline underline-offset-4 decoration-accent/30">{data?.reality.stability_index.toFixed(3) || "..."}</span> reality coherence.
+              Real-time operational oversight for ELYX Autonomous FTE. Coordinating <span className="text-slate-200">{data?.tasks.active_chains || "..."}</span> background process threads with <span className="text-accent underline underline-offset-4 decoration-accent/30">99.98%</span> system synchronization integrity.
             </p>
           </div>
           <div className="flex items-center gap-6 relative z-10">
@@ -132,7 +139,7 @@ export default function DashboardPage() {
                  ) : (
                    <>
                      <Zap size={18} className="group-hover:text-black group-hover:fill-current transition-all" />
-                     <span className="font-outfit text-xs font-black uppercase tracking-[0.2em]">Resync Neural Core</span>
+                     <span className="font-outfit text-xs font-black uppercase tracking-[0.2em]">Resync System Core</span>
                    </>
                  )}
                </div>
@@ -143,35 +150,35 @@ export default function DashboardPage() {
         {/* Top-Level Grid Overview */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
           <StatCard 
-            label="Neural Stability" 
-            value={`${data?.consciousness.phi.toFixed(1) || "..."}%`}
+            label="System Accuracy" 
+            value={`${data?.system.stability_score.toFixed(1) || "..."}%`}
             icon={<BrainCircuit size={22} />}
             trend={`${(Math.random() * 2 + 1).toFixed(1)}%`}
-            subtext="Phi-Index"
+            subtext="Performance Score"
             color="primary"
           />
           <StatCard 
-            label="Active Chains" 
+            label="Live Workflows" 
             value={data?.tasks.active_chains.toString() || "..."}
             icon={<Activity size={22} />}
             trend="Real-time"
-            subtext="Execution Threads"
+            subtext="Active Processes"
             color="accent"
           />
           <StatCard 
-            label="Reality Coherence" 
-            value={data?.reality.stability_index.toFixed(3) || "..."}
+            label="System Sync" 
+            value={data?.scenarios.stability_index.toFixed(3) || "..."}
             icon={<Globe2 size={22} />}
             trend="Stable"
-            subtext="Matrix Stability"
+            subtext="Data Integrity"
             color="emerald"
           />
           <StatCard 
-            label="Pending Gates" 
+            label="Pending Approvals" 
             value={data?.tasks.pending_count.toString() || "..."}
             icon={<ShieldCheck size={22} />}
-            trend={`${data?.tasks.pending_count ? 'Crit' : 'Safe'}`}
-            subtext="Auth Required"
+            trend={`${data?.tasks.pending_count ? 'Action' : 'Safe'}`}
+            subtext="HITL Required"
             color="red"
           />
         </motion.div>
@@ -195,8 +202,8 @@ export default function DashboardPage() {
                           <Activity size={24} className="animate-pulse" />
                        </div>
                        <div>
-                          <h2 className="text-3xl font-black text-white tracking-tight">Consciousness Pulse</h2>
-                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Synaptic Monitoring Loop</p>
+                          <h2 className="text-3xl font-black text-white tracking-tight">Operational Pulse</h2>
+                          <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">System Monitoring Loop</p>
                        </div>
                     </div>
                  </div>
@@ -212,8 +219,8 @@ export default function DashboardPage() {
                  <div className="flex flex-col items-center justify-center h-56 gap-6 relative z-10">
                    <div className="w-16 h-16 rounded-full border-t-2 border-primary animate-spin" />
                    <div className="space-y-2 text-center">
-                     <p className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">Mapping Synapses<LoadingDots /></p>
-                     <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">Neural core handshake in progress</p>
+                     <p className="text-xs font-black text-slate-400 uppercase tracking-[0.4em]">Mapping Workflows<LoadingDots /></p>
+                     <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest italic">System core handshake in progress</p>
                    </div>
                  </div>
                ) : (
@@ -240,7 +247,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-6">
                      <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-emerald-500/30 transition-all cursor-crosshair group/item">
                         <TrendingUp size={16} className="text-emerald-500 group-hover/item:scale-125 transition-transform" />
-                        <span className="text-[10px] font-black text-slate-400 group-hover/item:text-slate-100 uppercase tracking-widest transition-colors">Prophecy: High Stability</span>
+                        <span className="text-[10px] font-black text-slate-400 group-hover/item:text-slate-100 uppercase tracking-widest transition-colors">Outlook: High Stability</span>
                      </div>
                      <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all cursor-wait group/item">
                         <Cpu size={16} className="text-primary group-hover/item:animate-spin transition-all" />
@@ -251,7 +258,7 @@ export default function DashboardPage() {
                     whileHover={{ x: 5 }}
                     className="flex items-center gap-3 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-primary transition-all group"
                   >
-                    Open Neural Audit Archive <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+                    Open System Audit Archive <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
                   </motion.button>
                </div>
             </motion.div>
@@ -264,10 +271,10 @@ export default function DashboardPage() {
                      <div className="w-14 h-14 rounded-[1.5rem] bg-gradient-to-br from-slate-900 to-black border border-white/10 flex items-center justify-center text-primary shadow-2xl rotate-3 group-hover:rotate-0 transition-transform">
                         <Clock size={24} />
                      </div>
-                     <div>
-                        <h3 className="text-2xl font-black text-white tracking-tight">Causal Chain Events</h3>
-                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Temporal Event Stream</p>
-                     </div>
+                      <div>
+                        <h3 className="text-2xl font-black text-white tracking-tight">Recent Activity Log</h3>
+                        <p className="text-[10px] text-slate-500 font-black uppercase tracking-[0.3em]">Autonomous Audit Trail</p>
+                      </div>
                   </div>
                   <button className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] hover:text-primary transition-all px-6 py-3 bg-white/[0.03] border border-white/5 rounded-2xl hover:border-primary/20">Full History</button>
                </div>
@@ -282,32 +289,32 @@ export default function DashboardPage() {
                     <div className="relative pl-6 space-y-2">
                        <div className="absolute left-3 top-0 bottom-0 w-px bg-gradient-to-b from-primary/40 via-white/5 to-transparent" />
                        <LogItem 
-                        type="CAUSAL" 
-                        title="Self-Reflection Loop Converged" 
-                        desc="Optimized autonomous LinkedIn outreach nodes. Growth forecast adjusted: +22%." 
-                        time="01m ago" 
+                        type="SYSTEM" 
+                        title="Drafting response to Client A" 
+                        desc="Synthesizing operational context from Company_Handbook.md for high-priority reply." 
+                        time="Active" 
                         status="success"
                       />
+                       <LogItem 
+                        type="SYSTEM" 
+                        title="Scanning Action Items" 
+                        desc="Synchronizing local business logic states with system cache. 2 new tasks identified." 
+                        time="01m ago" 
+                        status="info"
+                      />
                       <LogItem 
-                        type="REALITY" 
-                        title="Scenario Prophet Sync" 
-                        desc="Reality index #B-2 filtered through causal filters. Stability confirmed at 99.42%." 
+                        type="ODOO" 
+                        title="Financial Sync Completed" 
+                        desc="Verified 14 pending invoices via JSON-RPC. Cross-referencing with /Invoices/ system storage." 
                         time="12m ago" 
                         status="success"
                       />
                       <LogItem 
-                        type="SECURITY" 
-                        title="Quantum Key Rotation" 
-                        desc="Handshake protocol established with remote nodes via secure entanglement." 
+                        type="SYSTEM" 
+                        title="Permission Gate Triggered" 
+                        desc="Invoice over $5,000 detected. Moved to /Pending_Approval for human oversight." 
                         time="42m ago" 
-                        status="info"
-                      />
-                      <LogItem 
-                         type="CONTROL" 
-                         title="Manual Override Required" 
-                         desc="Large-scale resource allocation detected. Terminal handshake required for final commit." 
-                         time="1h ago" 
-                         status="warning"
+                        status="warning"
                       />
                     </div>
                  )}
@@ -354,7 +361,7 @@ export default function DashboardPage() {
                   </AnimatePresence>
                   {approvals.length === 0 && (
                     <div className="text-center py-10 border border-dashed border-white/10 rounded-3xl bg-white/[0.01]">
-                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Neural Blocks Absent</p>
+                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.3em]">Operational Blocks Absent</p>
                     </div>
                   )}
                </div>
@@ -378,7 +385,7 @@ export default function DashboardPage() {
                   <QuickTool icon={<Globe2 size={20} />} label="Decision Matrix" link="/decision-analysis" active color="primary" />
                   <QuickTool icon={<ShieldCheck size={20} />} label="Security Hub" link="/security" color="red" />
                   <QuickTool icon={<Bell size={20} />} label="Notifications" link="/comms" color="accent" />
-                  <QuickTool icon={<BrainCircuit size={20} />} label="Neural Config" link="/settings" color="emerald" />
+                  <QuickTool icon={<BrainCircuit size={20} />} label="System Config" link="/settings" color="emerald" />
                </div>
             </motion.div>
 
@@ -397,7 +404,7 @@ export default function DashboardPage() {
                <div className="space-y-8 relative z-10">
                   <ResourceItem label="Compute Overload" value={92} color="bg-primary" />
                   <ResourceItem label="Memory Density" value={76} color="bg-accent" />
-                  <ResourceItem label="Reality Buffer" value={98} color="bg-emerald-500" />
+                  <ResourceItem label="Process Buffer" value={98} color="bg-emerald-500" />
                </div>
             </motion.div>
 

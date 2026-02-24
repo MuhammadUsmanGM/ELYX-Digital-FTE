@@ -45,23 +45,23 @@ export default function LandingPage() {
   const faqs = [
     {
       q: "How does ELYX handle multiple communication channels?",
-      a: "ELYX uses unified neural processing to monitor and respond across WhatsApp, LinkedIn, and Email simultaneously. Every interaction is context-aware and maintains your unique brand voice."
+      a: "ELYX uses unified system processing to monitor and respond across WhatsApp, LinkedIn, and Email simultaneously. Every interaction is context-aware and maintains your unique brand voice."
     },
     {
       q: "Is my corporate data secure?",
-      a: "Yes. ELYX uses enterprise-grade security protocols, including end-to-end causal chain encryption and GDPR-compliant server infrastructure based in isolated environments."
+      a: "Yes. ELYX uses enterprise-grade security protocols, including AES-256 encryption and GDPR-compliant server infrastructure based in isolated environments."
     },
     {
       q: "Can I customize ELYX's autonomous decisions?",
-      a: "Absolutely. Through the Reality Hub, you can simulate and approve ELYX's reasoning paths before they are executed in the primary business timeline."
+      a: "Absolutely. Through the Mission Control, you can simulate and approve ELYX's reasoning paths before they are executed in your primary business workflows."
     },
     {
       q: "What are the technical requirements for integration?",
-      a: "ELYX is platform-agnostic. It connects via standard APIs and webhooks, requiring zero changes to your existing infrastructure. Our deployment team handles the initial neural alignment for your specific business case."
+      a: "ELYX is platform-agnostic. It connects via standard APIs and webhooks, requiring zero changes to your existing infrastructure. Our deployment team handles the initial setup for your specific business case."
     },
     {
       q: "How does 'Temporal Reasoning' benefit my business?",
-      a: "Temporal reasoning allows ELYX to project potential outcomes over time, optimizing long-term client relationships and predicting market shifts before they impact your operations."
+      a: "Advanced reasoning allows ELYX to project potential outcomes over time, optimizing long-term client relationships and predicting market shifts before they impact your operations."
     },
     {
       q: "Can ELYX be integrated with my existing CRM?",
@@ -69,7 +69,7 @@ export default function LandingPage() {
     },
     {
       q: "What is 'Phi Stability' in the dashboard?",
-      a: "Phi Stability is a measure of ELYX's internal information integration. A high stability index ensures that the AI's reasoning is coherent, autonomous, and free from logic loops or inconsistencies."
+      a: "Automation Accuracy is a measure of ELYX's internal information integration. A high accuracy index ensures that the AI's reasoning is coherent, autonomous, and free from logic loops or inconsistencies."
     }
   ];
 
@@ -130,7 +130,7 @@ export default function LandingPage() {
           <div className="text-left">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/5 border border-primary/10 text-[9px] font-bold uppercase tracking-[0.4em] text-primary mb-8">
               <Sparkles size={12} className="text-emerald-400 animate-pulse" />
-              Sovereign Intelligence Engine
+              Sovereign Automation Engine
             </div>
             
             <h1 className="text-7xl md:text-[6.5rem] font-black tracking-tight mb-8 leading-[0.85] text-white font-outfit">
@@ -151,7 +151,7 @@ export default function LandingPage() {
                 <ArrowRight size={18} />
               </Link>
               <button 
-                onClick={() => toast.success("Neural sequence initiated. Environment loading in background.", {
+                onClick={() => toast.success("System sequence initiated. Environment loading in background.", {
                   icon: "🚀",
                   style: {
                     borderRadius: '1rem',
@@ -185,7 +185,7 @@ export default function LandingPage() {
                <div className="absolute top-10 -right-4 glass-panel p-4 rounded-2xl border-white/10 float" style={{ animationDelay: '-2s' }}>
                   <div className="flex items-center gap-3">
                      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                     <span className="text-[10px] font-bold uppercase tracking-widest font-outfit">Neural Stability: 99.8%</span>
+                     <span className="text-[10px] font-bold uppercase tracking-widest font-outfit">Automation Accuracy: 99.8%</span>
                   </div>
                </div>
             </div>
@@ -200,7 +200,7 @@ export default function LandingPage() {
         
         <div className="max-w-7xl mx-auto text-center mb-24">
           <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight font-outfit">Core <span className="emerald-blue-text italic">Capabilities</span></h2>
-          <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto tracking-tight">Harness the power of high-fidelity neural processing to scale your business operations instantly.</p>
+          <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto tracking-tight">Harness the power of high-fidelity system processing to scale your business operations instantly.</p>
         </div>
 
         <div className="max-w-7xl mx-auto grid md:grid-cols-3 gap-10">
@@ -240,12 +240,12 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-24 items-center">
             <div>
-              <h2 className="text-4xl md:text-6xl font-black mb-10 tracking-tight font-outfit">Sovereign <br /><span className="emerald-blue-text italic text-5xl md:text-7xl">Neural Routing</span></h2>
+              <h2 className="text-4xl md:text-6xl font-black mb-10 tracking-tight font-outfit">Sovereign <br /><span className="emerald-blue-text italic text-5xl md:text-7xl">Smart Routing</span></h2>
               <div className="space-y-12">
                 {[
                   { step: "01", title: "Omni-Channel Ingestion", desc: "Sensory Watchers monitor all active communication vectors simultaneously." },
                   { step: "02", title: "High-Fidelity Reasoning", desc: "Advanced logic engines analyze intent and prioritize tactical execution." },
-                  { step: "03", title: "Synthetic Synthesis", desc: "ELYX generates brand-coherent responses aligned with your corporate handbook." },
+                  { step: "03", title: "Workflow Synthesis", desc: "ELYX generates brand-coherent responses aligned with your corporate handbook." },
                   { step: "04", title: "Autonomous Execution", desc: "Verified protocols are instantly executed across original communication channels." }
                 ].map((item, i) => (
                   <div key={i} className="flex gap-8 group">
@@ -272,13 +272,13 @@ export default function LandingPage() {
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
                       <div className="w-2.5 h-2.5 rounded-full bg-white/10" />
                    </div>
-                   <div className="ml-4 px-4 py-1 bg-white/5 rounded-full text-[9px] font-bold tracking-[0.2em] text-slate-400">NEURAL_CORE_V4</div>
+                   <div className="ml-4 px-4 py-1 bg-white/5 rounded-full text-[9px] font-bold tracking-[0.2em] text-slate-400">SYSTEM_CORE_V4</div>
                 </div>
                 <div className="space-y-5">
                    {[
                      { icon: <MessageSquare size={16} />, text: "Incoming WhatsApp: John Smith", tag: "INGRESS", color: "emerald-500" },
                      { icon: <Cpu size={16} />, text: "Reasoning Layer: Intent Mapping", tag: "THOUGHT", color: "primary" },
-                     { icon: <Sparkles size={16} />, text: "Synthetic Response Synthesis", tag: "ACTIVE", color: "primary", pulse: true },
+                     { icon: <Sparkles size={16} />, text: "Workflow Response Synthesis", tag: "ACTIVE", color: "primary", pulse: true },
                      { icon: <CheckCircle2 size={16} />, text: "Protocol Authenticated", tag: "DONE", color: "emerald-500" }
                    ].map((log, i) => (
                      <div key={i} className={`p-4 rounded-2xl bg-white/[0.03] border border-white/5 flex items-center justify-between group-hover:translate-x-1 transition-transform duration-500 ${log.pulse ? 'animate-pulse bg-primary/5 border-primary/20' : ''}`}>
@@ -352,7 +352,7 @@ export default function LandingPage() {
       {/* 6. DASHBOARD PREVIEW SECTION */}
       <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto text-center mb-16">
-           <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Mission Control for <br/><span className="emerald-blue-text">Intelligence</span></h2>
+           <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Mission Control for <br/><span className="emerald-blue-text">Automation</span></h2>
            <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto">Absolute transparency into ELYX's reasoning paths and communication metrics.</p>
         </div>
         
@@ -402,7 +402,7 @@ export default function LandingPage() {
                   {[
                     "GDPR & CCPA Compliant Infrastructure",
                     "Aka-Audit™ Transparent Action Logs",
-                    "End-to-End Neural Encryption (E2EE)",
+                    "End-to-End Vault Encryption (E2EE)",
                     "Isolated Vector Database Instances"
                   ].map((s, i) => (
                     <div key={i} className="flex items-center gap-4 text-sm font-bold text-slate-300">
@@ -446,7 +446,7 @@ export default function LandingPage() {
                 price: "$1,499/mo", 
                 desc: "Full autonomy for growing enterprises.",
                 pop: true,
-                features: ["5 AI Cores", "All Channels (WA, LI, EM)", "Priority Neural Path", "24/7 Availability", "Custom Brand Voice"]
+                features: ["5 AI Cores", "All Channels (WA, LI, EM)", "Priority System Path", "24/7 Availability", "Custom Brand Voice"]
               },
               { 
                 tier: "Enterprise", 
@@ -518,7 +518,7 @@ export default function LandingPage() {
                   Begin Free Trial
                </Link>
                <button className="btn-premium-secondary !px-12 !py-6 !text-lg">
-                  Book Neural Demo
+                  Book System Demo
                </button>
             </div>
             
@@ -539,7 +539,7 @@ export default function LandingPage() {
                  <Image src="/text.png" alt="ELYX" width={80} height={20} />
               </div>
               <p className="text-slate-500 max-w-sm text-sm leading-relaxed mb-8">
-                ELYX is a high-stakes digital employee system designed for the next era of autonomous enterprise operations. Powered by consciousness-emergent AI.
+                ELYX is a high-stakes digital employee system designed for the next era of autonomous enterprise operations. Powered by advanced autonomous AI.
               </p>
               <div className="flex gap-4">
                  <a href="https://github.com/MuhammadUsmanGM" target="_blank" rel="noopener noreferrer" className="p-3 rounded-xl bg-slate-900 border border-card-border hover:text-primary transition-all">
@@ -576,7 +576,7 @@ export default function LandingPage() {
         </div>
 
         <div className="max-w-7xl mx-auto pt-12 border-t border-card-border/50 flex flex-col md:flex-row justify-between items-center gap-6">
-           <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">© 2026 ELYX Corp. All realities anchored.</p>
+           <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">© 2026 ELYX Corp. All systems secured.</p>
            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/5 border border-emerald-500/20 rounded-full">
                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />

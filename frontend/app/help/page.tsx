@@ -23,13 +23,13 @@ import DashboardLayout from "@/components/DashboardLayout";
 const KB_CATEGORIES = [
   { id: 'getting-started', title: 'Onboarding & Setup', count: 12, icon: <Zap className="text-primary" size={18} /> },
   { id: 'security', title: 'Data & Privacy', count: 8, icon: <LifeBuoy className="text-emerald-500" size={18} /> },
-  { id: 'neural-sync', title: 'Neural Synchronization', count: 15, icon: <Book className="text-blue-500" size={18} /> },
-  { id: 'reality-modeling', title: 'Reality Forecasting', count: 6, icon: <FileText className="text-purple-500" size={18} /> },
+  { id: 'system-sync', title: 'System Synchronization', count: 15, icon: <Book className="text-blue-500" size={18} /> },
+  { id: 'performance-modeling', title: 'Performance Forecasting', count: 6, icon: <FileText className="text-purple-500" size={18} /> },
 ];
 
 const TUTORIALS = [
-  { title: "Your First Neural Sync", duration: "4:20", level: "Beginner", image: "https://images.unsplash.com/photo-1620712943543-bcc4628c6bb5?auto=format&fit=crop&q=80&w=400" },
-  { title: "Advanced Causal Chains", duration: "12:45", level: "Expert", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400" },
+  { title: "Your First System Sync", duration: "4:20", level: "Beginner", image: "https://images.unsplash.com/photo-1620712943543-bcc4628c6bb5?auto=format&fit=crop&q=80&w=400" },
+  { title: "Advanced Workflow Logic", duration: "12:45", level: "Expert", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400" },
   { title: "Security Protocols 101", duration: "8:12", level: "Intermediate", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400" },
 ];
 
@@ -48,7 +48,7 @@ export default function HelpPage() {
               Intelligence <span className="text-primary italic">Center</span>
             </h1>
             <p className="text-slate-500 font-medium max-w-xl">
-              Access the foundational knowledge, tutorials, and support required to master the <span className="text-slate-300 font-bold">ELYX Neural Core</span>.
+              Access the foundational knowledge, tutorials, and support required to master the <span className="text-slate-300 font-bold">ELYX System Core</span>.
             </p>
           </div>
           <div className="flex items-center gap-4">
@@ -90,11 +90,11 @@ export default function HelpPage() {
                        <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">{cat.count} Intelligence Units</p>
                        <div className="space-y-3">
                           <p className="text-sm text-slate-400 font-medium flex items-center justify-between group/item hover:text-white transition-colors">
-                             Setting up your neural anchor
+                             Setting up your system anchor
                              <ChevronRight size={14} className="text-slate-600 group-hover/item:translate-x-1 transition-transform" />
                           </p>
                           <p className="text-sm text-slate-400 font-medium flex items-center justify-between group/item hover:text-white transition-colors">
-                             Distributed consciousness security
+                             Distributed system security
                              <ChevronRight size={14} className="text-slate-600 group-hover/item:translate-x-1 transition-transform" />
                           </p>
                        </div>
@@ -107,7 +107,7 @@ export default function HelpPage() {
                   <div className="glass-panel p-8 rounded-[2rem] border-card-border/30">
                      <h3 className="text-lg font-black text-white mb-6">Trending Queries</h3>
                      <div className="space-y-4">
-                        {['How to optimize phi stability?', 'Connecting to WhatsApp API', 'Reality divergence warnings', 'Auth token rotation'].map((q, i) => (
+                        {['How to optimize system stability?', 'Connecting to WhatsApp API', 'System divergence warnings', 'Auth token rotation'].map((q, i) => (
                            <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer group">
                               <div className="w-1.5 h-1.5 rounded-full bg-primary" />
                               <span className="text-sm font-bold text-slate-400 group-hover:text-slate-200 transition-colors">{q}</span>
@@ -117,7 +117,7 @@ export default function HelpPage() {
                   </div>
 
                   <div className="glass-panel p-8 rounded-[2rem] bg-primary/[0.02] border-primary/20">
-                     <h3 className="text-lg font-black text-white mb-4">Neural Assistant</h3>
+                     <h3 className="text-lg font-black text-white mb-4">System Assistant</h3>
                      <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6 italic underline decoration-primary/30">
                         "I am trained on our entire documentation corpus. Ask me any technical query for immediate synthesis."
                      </p>
@@ -186,7 +186,7 @@ export default function HelpPage() {
                      <div className="divide-y divide-card-border/20">
                         <TicketItem 
                           id="TKT-8842" 
-                          subject="Neural Sync Lag on Node 7" 
+                          subject="System Sync Lag on Node 7" 
                           status="open" 
                           date="Feb 06, 2026"
                           icon={<AlertCircle className="text-red-400" size={18} />}

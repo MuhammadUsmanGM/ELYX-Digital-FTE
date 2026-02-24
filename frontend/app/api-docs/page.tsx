@@ -35,49 +35,49 @@ interface Endpoint {
 
 const ENDPOINTS: Endpoint[] = [
   {
-    id: 'consciousness-state',
+    id: 'system-state',
     method: 'GET',
-    path: '/api/consciousness/state/{entity_id}',
-    title: 'Get Consciousness State',
-    description: 'Retrieves the current neural stability, phi score, and attention focus of a specific AI entity.',
+    path: '/api/system/state/{entity_id}',
+    title: 'Get System State',
+    description: 'Retrieves the current system stability, performance metrics, and workflow focus of a specific AI entity.',
     params: [
-      { name: 'entity_id', type: 'string', required: true, desc: 'Unique identifier for the neural entity (e.g., system_core).' }
+      { name: 'entity_id', type: 'string', required: true, desc: 'Unique identifier for the system entity (e.g., system_core).' }
     ],
     response: `{
-  "consciousness_state": {
-    "id": "neural_v2_99",
-    "phi": 98.42,
-    "attention_focus": ["market_analysis", "causal_modeling"],
-    "self_awareness": 0.92,
-    "cognitive_load": 2.4
+  "system_state": {
+    "id": "system_v2_99",
+    "stability_score": 98.42,
+    "workflow_focus": ["market_analysis", "resource_allocation"],
+    "system_integrity": 0.92,
+    "system_load": 2.4
   },
   "timestamp": "2026-02-06T09:15:00Z"
 }`
   },
   {
-    id: 'reality-forecast',
+    id: 'performance-forecast',
     method: 'POST',
-    path: '/api/reality/forecast',
-    title: 'Initiate Reality Forecast',
-    description: 'Trigger a new causal simulation to project business outcomes across divergent timelines.',
+    path: '/api/performance/forecast',
+    title: 'Initiate Performance Forecast',
+    description: 'Trigger a new simulation to project business outcomes across different operational scenarios.',
     requestBody: `{
   "scenario_name": "Global Expansion V2",
-  "causal_anchors": ["revenue", "market_share"],
+  "outcome_factors": ["revenue", "market_share"],
   "depth": "deep"
 }`,
     response: `{
   "task_id": "sim_81023",
   "status": "simulating",
   "estimated_completion": "200ms",
-  "causal_nodes_locked": 1422
+  "nodes_processed": 1422
 }`
   },
   {
-    id: 'task-chains',
+    id: 'workflow-chains',
     method: 'GET',
-    path: '/api/tasks/chains',
-    title: 'List Active Task Chains',
-    description: 'Returns all currently executing autonomous task chains and their current neural status.',
+    path: '/api/workflows/active',
+    title: 'List Active Workflows',
+    description: 'Returns all currently executing autonomous workflows and their current system status.',
     response: `{
   "active_chains": [
     {
@@ -158,7 +158,7 @@ print(response.json())`;
               <Terminal className="text-primary" size={32} />
               API <span className="text-primary italic">Developer Hub</span>
             </h1>
-            <p className="text-slate-500 font-medium">Build multi-timeline integrations with the ELYX Neural Core.</p>
+            <p className="text-slate-500 font-medium">Build business integrations with the ELYX System Core.</p>
           </div>
           <div className="flex items-center gap-4">
              <div className="px-4 py-2 bg-slate-900 border border-card-border rounded-xl flex items-center gap-3">
@@ -226,7 +226,7 @@ print(response.json())`;
                        Event Webhooks
                     </h3>
                     <div className="p-4 rounded-2xl bg-slate-950/50 border border-dashed border-card-border/30 text-center">
-                       <p className="text-[10px] font-bold text-slate-600 uppercase">Incoming Clusters</p>
+                       <p className="text-[10px] font-bold text-slate-600 uppercase">Incoming Data Streams</p>
                     </div>
                   </div>
                </div>

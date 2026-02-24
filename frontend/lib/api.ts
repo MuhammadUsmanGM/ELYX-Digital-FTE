@@ -1,4 +1,4 @@
-import { DashboardData, ConsciousnessState, RealityStatus, Task, ApprovalRequest, Communication, Transaction, KPI, BusinessWorkflow, ConsciousnessHistory, RealityScenario, TemporalTask } from "./types";
+import { DashboardData, SystemState, ScenarioStatus, Task, ApprovalRequest, Communication, Transaction, KPI, BusinessWorkflow, SystemHistory, Scenario, WorkflowTask } from "./types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
@@ -6,30 +6,35 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/a
 
 // Fallback Mock Data as required by the ELYX platform for seamless UI experience
 const MOCK_FALLBACKS = {
-  consciousnessHistory: Array.from({ length: 24 }, (_, i) => ({
+  systemHistory: Array.from({ length: 24 }, (_, i) => ({
     timestamp: new Date(Date.now() - (23 - i) * 3600000).toISOString(),
-    phi: 85 + Math.random() * 10,
-    self_awareness: 0.8 + Math.random() * 0.15,
+    stability: 85 + Math.random() * 10,
+    performance: 0.8 + Math.random() * 0.15,
     attention: 0.7 + Math.random() * 0.25
   })),
-  realityScenarios: [
-    { id: "S1", name: "Global Market Expansion", type: "strategic", probability: 0.65, status: "simulating", impact_score: 92, causal_links: 1422, description: "Analyzing the impact of entering the EU market.", last_calculation: new Date().toISOString() },
-    { id: "S2", name: "Standard Growth Path", type: "strategic", probability: 0.88, status: "anchored", impact_score: 15, causal_links: 450, description: "Baseline projection with minimal risk.", last_calculation: new Date().toISOString() }
+  scenarios: [
+    { id: "S1", name: "Global Market Expansion", type: "strategic", probability: 0.65, status: "simulating", impact_score: 92, process_links: 1422, description: "Analyzing the impact of entering the EU market.", last_calculation: new Date().toISOString() },
+    { id: "S2", name: "Standard Growth Path", type: "strategic", probability: 0.88, status: "anchored", impact_score: 15, process_links: 450, description: "Baseline projection with minimal risk.", last_calculation: new Date().toISOString() }
   ],
   kpis: [
     { label: "Monthly Revenue", value: "$45,210", change: 12.5, trend: "up" },
     { label: "Operating Efficiency", value: "94.2%", change: -2.1, trend: "down" },
     { label: "New Leads", value: "142", change: 8.4, trend: "up" },
     { label: "Churn Rate", value: "0.8%", change: 0, trend: "neutral" }
+  ],
+  businessWorkflows: [
+    { id: "WF1", name: "Invoicing Optimization", status: "active", efficiency: 94, steps_completed: 4, total_steps: 6, last_run: new Date().toISOString() },
+    { id: "WF2", name: "Lead Generation Relay", status: "active", efficiency: 88, steps_completed: 2, total_steps: 5, last_run: new Date().toISOString() },
+    { id: "WF3", name: "Expense Reconciliation", status: "completed", efficiency: 99, steps_completed: 8, total_steps: 8, last_run: new Date().toISOString() }
   ]
 };
 
-export async function fetchConsciousnessState(entityId: string = "system_core"): Promise<ConsciousnessState> {
+export async function fetchSystemState(entityId: string = "system_core"): Promise<SystemState> {
   try {
-    const response = await fetch(`${API_BASE_URL}/consciousness/state/${entityId}`);
+    const response = await fetch(`${API_BASE_URL}/system/state/${entityId}`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
-    const state = data.consciousness_state;
+    const state = data.system_state;
     
     return {
       id: state.id || "system_core",
@@ -37,61 +42,61 @@ export async function fetchConsciousnessState(entityId: string = "system_core"):
       entity_type: state.entity_type || "ai_system",
       state_type: state.state_type || "active",
       attention_focus: state.attention_focus || { current: "System Core" },
-      self_awareness_level: state.self_awareness_level || 0.85,
+      stability_level: state.stability_level || 0.85,
       introspection_depth: state.introspection_depth || 0.7,
       emotional_state: state.emotional_state || { mood: "neutral" },
-      cognitive_load: state.cognitive_load || 2.4,
+      load_level: state.load_level || 2.4,
       creativity_level: state.creativity_level || 0.6,
       memory_integration_status: state.memory_integration_status || "stable",
-      attention_coherence: state.attention_coherence || 0.9,
-      self_model_accuracy: state.self_model_accuracy || 0.95,
-      phi: (data.consciousness_integrity_score || 9.8) * 10,
+      coherence_level: state.coherence_level || 0.9,
+      model_accuracy: state.model_accuracy || 0.95,
+      stability_score: (data.system_integrity_score || 9.8) * 10,
       updated_at: data.timestamp || new Date().toISOString()
     };
   } catch (error) {
-    console.warn("Using mock consciousness state");
+    console.warn("Using mock system state");
     return {
       id: "mock_id",
       entity_id: entityId,
       entity_type: "ai_system",
       state_type: "active",
       attention_focus: { current: "Market Volatility" },
-      self_awareness_level: 0.92,
+      stability_level: 0.92,
       introspection_depth: 0.85,
       emotional_state: { mood: "focused" },
-      cognitive_load: 2.4,
+      load_level: 2.4,
       creativity_level: 0.8,
       memory_integration_status: "stable",
-      attention_coherence: 0.95,
-      self_model_accuracy: 0.99,
-      phi: 98.4,
+      coherence_level: 0.95,
+      model_accuracy: 0.99,
+      stability_score: 98.4,
       updated_at: new Date().toISOString()
     };
   }
 }
 
-export async function fetchRealityStatus(domain: string = "primary"): Promise<RealityStatus> {
+export async function fetchScenarioStatus(domain: string = "primary"): Promise<ScenarioStatus> {
   try {
-    const response = await fetch(`${API_BASE_URL}/reality/status/${domain}`);
+    const response = await fetch(`${API_BASE_URL}/scenario/status/${domain}`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
     
     return {
-      domain: data.reality_domain || domain,
-      current_score: (data.reality_coherence_score || 9.9) * 10,
-      stability_index: (data.reality_stability_index || 9.9) * 10,
-      anchoring_strength: (data.reality_anchoring_strength || 9.5) * 10,
-      boundary_integrity: (data.boundary_integrity || 9.8) * 10,
-      current_status: data.reality_status?.status || "stable",
+      domain: data.domain || domain,
+      stability_score: (data.stability_score || 9.9) * 10,
+      stability_index: (data.stability_index || 9.9) * 10,
+      anchoring_strength: (data.anchoring_strength || 9.5) * 10,
+      integrity_score: (data.integrity_score || 9.8) * 10,
+      current_status: data.status || "stable",
       next_check_due: data.timestamp || new Date().toISOString()
     };
   } catch (error) {
     return {
       domain: domain,
-      current_score: 99.98,
+      stability_score: 99.98,
       stability_index: 99.4,
       anchoring_strength: 95.2,
-      boundary_integrity: 98.7,
+      integrity_score: 98.7,
       current_status: "stable",
       next_check_due: new Date().toISOString()
     };
@@ -100,15 +105,15 @@ export async function fetchRealityStatus(domain: string = "primary"): Promise<Re
 
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {
-    const [statusRes, consciousness, reality] = await Promise.all([
+    const [statusRes, system, scenarios] = await Promise.all([
       fetch(`${API_BASE_URL}/dashboard/status`).then(r => r.json()),
-      fetchConsciousnessState(),
-      fetchRealityStatus()
+      fetchSystemState(),
+      fetchScenarioStatus()
     ]);
     
     return {
-      consciousness,
-      reality,
+      system,
+      scenarios,
       tasks: {
         pending_count: statusRes.pending_approvals || 0,
         completed_today: statusRes.tasks_processed_today || 0,
@@ -117,16 +122,16 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       health: {
         status: statusRes.status === "active" ? "healthy" : "warning",
         uptime: statusRes.system_uptime || "0m",
-        version: "Neural v2.0"
+        version: "System v2.0"
       }
     };
   } catch (error) {
     // Fallback to full mock if backend is down
     return {
-      consciousness: await fetchConsciousnessState(),
-      reality: await fetchRealityStatus(),
+      system: await fetchSystemState(),
+      scenarios: await fetchScenarioStatus(),
       tasks: { pending_count: 3, completed_today: 14, active_chains: 5 },
-      health: { status: "healthy", uptime: "14d 6h 22m", version: "Neural v2.0" }
+      health: { status: "healthy", uptime: "14d 6h 22m", version: "System v2.0" }
     };
   }
 }
@@ -150,7 +155,7 @@ export async function fetchTasks(): Promise<Task[]> {
     }));
   } catch (error) {
     return [
-      { id: "EMAIL_123", type: "email", from: "investor@example.com", priority: "high", status: "pending", created: new Date().toISOString(), subject: "Investment Opportunity", content: "Discussing Neural Network rollout.", suggested_actions: ["Draft reply"] }
+      { id: "EMAIL_123", type: "email", from: "investor@example.com", priority: "high", status: "pending", created: new Date().toISOString(), subject: "Investment Opportunity", content: "Discussing System rollout.", suggested_actions: ["Draft reply"] }
     ] as Task[];
   }
 }
@@ -194,19 +199,23 @@ export async function fetchKPIs(): Promise<KPI[]> {
   return MOCK_FALLBACKS.kpis as KPI[];
 }
 
-
-export async function fetchConsciousnessHistory(): Promise<ConsciousnessHistory[]> {
-  return MOCK_FALLBACKS.consciousnessHistory as ConsciousnessHistory[];
+export async function fetchWorkflows(): Promise<BusinessWorkflow[]> {
+  return MOCK_FALLBACKS.businessWorkflows as BusinessWorkflow[];
 }
 
-export async function fetchRealityScenarios(): Promise<RealityScenario[]> {
-  return MOCK_FALLBACKS.realityScenarios as RealityScenario[];
+
+export async function fetchSystemHistory(): Promise<SystemHistory[]> {
+  return MOCK_FALLBACKS.systemHistory as SystemHistory[];
 }
 
-export async function fetchTemporalTasks(): Promise<TemporalTask[]> {
+export async function fetchScenarios(): Promise<Scenario[]> {
+  return MOCK_FALLBACKS.scenarios as Scenario[];
+}
+
+export async function fetchWorkflowTasks(): Promise<WorkflowTask[]> {
   return [
-    { id: "TT1", title: "Quarterly Financial Prophet Sync", scheduled_time: new Date(Date.now() + 3600000).toISOString(), timeline: "primary", priority: "high", status: "scheduled", impact_coefficient: 0.88 }
-  ] as TemporalTask[];
+    { id: "TT1", title: "Quarterly Financial Analysis Sync", scheduled_time: new Date(Date.now() + 3600000).toISOString(), workflow: "primary", priority: "high", status: "scheduled", impact_coefficient: 0.88 }
+  ] as WorkflowTask[];
 }
 
 export async function fetchUserPreferences(): Promise<any[]> {
@@ -219,8 +228,8 @@ export async function fetchUserPreferences(): Promise<any[]> {
     console.warn("Using mock preferences");
     return [
       { preference_key: "communication_whatsapp", preference_value: "true", preference_type: "communication" },
-      { preference_key: "workflow_causal_verification", preference_value: "true", preference_type: "operational" },
-      { preference_key: "ai_temporal_projection", preference_value: "true", preference_type: "behavioral" }
+      { preference_key: "workflow_verification", preference_value: "true", preference_type: "operational" },
+      { preference_key: "system_projection", preference_value: "true", preference_type: "behavioral" }
     ];
   }
 }
@@ -297,21 +306,21 @@ export async function fetchTeamMembers(): Promise<any[]> {
         id: "1",
         name: "Usman Mustafa",
         email: "usman@elyx.ai",
-        role: "Neural Architect",
+        role: "System Architect",
         status: "active",
         last_active: new Date().toISOString(),
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Usman",
-        permissions: ["admin", "neural_core_access", "reality_manipulation"]
+        permissions: ["admin", "system_core_access", "data_integrity_check"]
       },
       {
         id: "2",
         name: "Sarah Chen",
         email: "sarah@elyx.ai",
-        role: "Logic Operator",
+        role: "Workflow Operator",
         status: "active",
         last_active: new Date().toISOString(),
         avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
-        permissions: ["task_management", "temporal_audit"]
+        permissions: ["task_management", "audit_log"]
       }
     ];
   }

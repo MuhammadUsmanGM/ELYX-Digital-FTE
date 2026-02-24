@@ -1,27 +1,27 @@
-export interface ConsciousnessState {
+export interface SystemState {
   id: string;
   entity_id: string;
   entity_type: string;
   state_type: string;
   attention_focus: Record<string, any>;
-  self_awareness_level: number;
+  stability_level: number;
   introspection_depth: number;
   emotional_state: Record<string, any>;
-  cognitive_load: number;
+  load_level: number;
   creativity_level: number;
   memory_integration_status: string;
-  attention_coherence: number;
-  self_model_accuracy: number;
-  phi: number;
+  coherence_level: number;
+  model_accuracy: number;
+  stability_score: number;
   updated_at: string;
 }
 
-export interface RealityStatus {
+export interface ScenarioStatus {
   domain: string;
-  current_score: number;
+  stability_score: number;
   stability_index: number;
   anchoring_strength: number;
-  boundary_integrity: number;
+  integrity_score: number;
   current_status: string;
   next_check_due: string;
 }
@@ -32,16 +32,16 @@ export interface TaskStatus {
   active_chains: number;
 }
 
-export interface ConsciousnessHistory {
+export interface SystemHistory {
   timestamp: string;
-  phi: number;
-  self_awareness: number;
+  stability: number;
+  performance: number;
   attention: number;
 }
 
 export interface DashboardData {
-  consciousness: ConsciousnessState;
-  reality: RealityStatus;
+  system: SystemState;
+  scenarios: ScenarioStatus;
   tasks: TaskStatus;
   health: {
     status: string;
@@ -123,23 +123,23 @@ export interface BusinessWorkflow {
   last_run: string;
 }
 
-export interface RealityScenario {
+export interface Scenario {
   id: string;
   name: string;
   type: 'business' | 'personal' | 'strategic' | 'financial';
   probability: number;
   status: 'simulating' | 'stable' | 'diverged' | 'anchored';
   impact_score: number;
-  causal_links: number;
+  process_links: number;
   description: string;
   last_calculation: string;
 }
 
-export interface TemporalTask {
+export interface WorkflowTask {
   id: string;
   title: string;
   scheduled_time: string;
-  timeline: 'primary' | 'simulated' | 'historical';
+  workflow: 'primary' | 'simulated' | 'historical';
   priority: 'low' | 'medium' | 'high';
   status: 'scheduled' | 'running' | 'completed' | 'failed';
   impact_coefficient: number;
