@@ -11,6 +11,8 @@ import threading
 from pathlib import Path
 from datetime import datetime
 from typing import Dict, List, Tuple
+import socket
+import subprocess
 
 # Add the project root to the Python path
 project_root = Path(__file__).parent
@@ -213,7 +215,9 @@ def initialize_complete_system():
     print_status_table(mcp_status)
 
     print_section("SYSTEM ACCESS POINTS")
-    print(f"\n  [OK] API Documentation:  {Colors.BOLD}http://localhost:8000/api/docs{Colors.ENDC}")
+    frontend_port = find_available_port(3000)
+    print(f"\n  [OK] Frontend Dashboard: {Colors.BOLD}http://localhost:{frontend_port}{Colors.ENDC}")
+    print(f"  [OK] API Documentation:  {Colors.BOLD}http://localhost:8000/api/docs{Colors.ENDC}")
     print(f"  [OK] Dashboard:          {Colors.BOLD}obsidian_vault/Dashboard.md{Colors.ENDC}")
     print(f"  [OK] Company Handbook:    {Colors.BOLD}obsidian_vault/Company_Handbook.md{Colors.ENDC}")
     print(f"  [OK] Task Processing:     {Colors.BOLD}obsidian_vault/Needs_Action/{Colors.ENDC}")
@@ -255,6 +259,45 @@ def run_api_server():
     except Exception as e:
         print(f"[ERROR] API server error: {e}")
 
+def is_port_in_use(port: int) -> bool:
+    """Check if a port is currently in use"""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        return s.connect_ex(('localhost', port)) == 0
+
+def find_available_port(start_port: int, max_attempts: int = 20) -> int:
+    """Find the next available port starting from start_port"""
+    for port in range(start_port, start_port + max_attempts):
+        if not is_port_in_use(port):
+            return port
+    return start_port
+
+def run_frontend(port: int):
+    """Run the Next.js frontend server"""
+    try:
+        frontend_dir = Path(__file__).parent / "frontend"
+        if not frontend_dir.exists():
+            print(f"[ERROR] Frontend directory not found at {frontend_dir}")
+            return
+
+        print(f"[FRONTEND] Initiating Next.js on http://localhost:{port}")
+        
+        # Use shell=True for windows npm commands
+        cmd = f"npm run dev -- -p {port}"
+        
+        # Start as a subprocess
+        process = subprocess.Popen(
+            cmd, 
+            cwd=str(frontend_dir), 
+            shell=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.STDOUT
+        )
+        
+        # Keep track of process if needed or just let it run
+        process.wait()
+    except Exception as e:
+        print(f"[ERROR] Frontend server error: {e}")
+
 def main():
     """Main function to start the complete AI Employee system"""
     print_header()
@@ -283,6 +326,16 @@ def main():
         )
         orchestrator_thread.start()
         print(f"[OK] Orchestrator started (Task monitoring active)")
+
+    # Start Frontend in a separate thread
+    frontend_port = find_available_port(3000)
+    frontend_thread = threading.Thread(
+        target=run_frontend,
+        args=(frontend_port,),
+        daemon=True
+    )
+    frontend_thread.start()
+    print(f"[OK] Frontend engine started on port {frontend_port}")
 
     print(f"\n{Colors.BOLD}{Colors.OKGREEN}[SUCCESS] ELYX AI EMPLOYEE IS NOW RUNNING!{Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
