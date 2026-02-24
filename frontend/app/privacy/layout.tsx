@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Neural Privacy Protocol | ELYX Security Matrix",
-  description: "Advanced data encryption and privacy protocols for autonomous business intelligence.",
+  title: "Data Privacy Protocol | ELYX Security Standards",
+  description: "Advanced data encryption and privacy protocols for autonomous business operations.",
 };
 
 export default function PrivacyLayout({

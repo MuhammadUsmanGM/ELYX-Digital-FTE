@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Temporal Chain | Historical Operations & Logs",
-  description: "Access the historical causal chain and operational history of the ELYX neural agent.",
+  title: "Workflow Timeline | Operational History & Logs",
+  description: "Access the operational logs and task execution history of the ELYX system.",
 };
 
-export default function TemporalLayout({
+export default function SchedulingLayout({
   children,
 }: {
   children: React.ReactNode;

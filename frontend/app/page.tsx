@@ -60,7 +60,7 @@ export default function LandingPage() {
       a: "ELYX is platform-agnostic. It connects via standard APIs and webhooks, requiring zero changes to your existing infrastructure. Our deployment team handles the initial setup for your specific business case."
     },
     {
-      q: "How does 'Temporal Reasoning' benefit my business?",
+      q: "How does 'Advanced Reasoning' benefit my business?",
       a: "Advanced reasoning allows ELYX to project potential outcomes over time, optimizing long-term client relationships and predicting market shifts before they impact your operations."
     },
     {
@@ -68,8 +68,8 @@ export default function LandingPage() {
       a: "Yes. ELYX supports bi-directional synchronization with major CRM platforms like Salesforce, HubSpot, and Microsoft Dynamics, ensuring your data remains consistent across all departments."
     },
     {
-      q: "What is 'Phi Stability' in the dashboard?",
-      a: "Automation Accuracy is a measure of ELYX's internal information integration. A high accuracy index ensures that the AI's reasoning is coherent, autonomous, and free from logic loops or inconsistencies."
+      q: "What is 'System Accuracy' in the dashboard?",
+      a: "System Accuracy is a measure of ELYX's internal information integration. A high accuracy index ensures that the AI's reasoning is coherent, autonomous, and free from logic loops or inconsistencies."
     }
   ];
 
@@ -207,7 +207,7 @@ export default function LandingPage() {
           {[
             {
               icon: <Activity size={32} />,
-              title: "Unified Intelligence Sync",
+              title: "Unified System Sync",
               desc: "Elyx manages WhatsApp, LinkedIn, and Email simultaneously with absolute contextual coherence and zero tactical downtime.",
               color: "emerald-400"
             },
@@ -430,7 +430,7 @@ export default function LandingPage() {
       {/* 8. PRICING SECTION */}
       <section id="pricing" className="py-32 px-6">
          <div className="max-w-7xl mx-auto text-center mb-24">
-            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Intelligence Licensing</h2>
+            <h2 className="text-4xl md:text-6xl font-black mb-6 tracking-tight">Operation Licensing</h2>
             <p className="text-slate-500 font-medium text-lg max-w-2xl mx-auto">Tiered operational levels designed for maximum scalability.</p>
          </div>
          <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-8">
@@ -452,7 +452,7 @@ export default function LandingPage() {
                 tier: "Enterprise", 
                 price: "Custom", 
                 desc: "Unlimited scale and complexity management.",
-                features: ["Unlimited Cores", "Full API Access", "Reality Simulation Hub", "Account Manager", "Dedicated Infrastructure"]
+                features: ["Unlimited Cores", "Full API Access", "Scenario Simulation Hub", "Account Manager", "Dedicated Infrastructure"]
               }
             ].map((p, i) => (
               <div key={i} className={`glass-panel p-10 rounded-[3rem] flex flex-col h-full relative ${p.pop ? 'border-primary ring-1 ring-primary/30 shadow-[0_0_80px_rgba(6,182,212,0.15)]' : ''}`}>
@@ -483,7 +483,7 @@ export default function LandingPage() {
       {/* 9. FAQ SECTION */}
       <section id="faq" className="py-32 px-6 bg-slate-900/10">
          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl font-black mb-12 text-center tracking-tight">Introspection: <span className="emerald-blue-text">Common Inquiries</span></h2>
+            <h2 className="text-3xl font-black mb-12 text-center tracking-tight">Analysis: <span className="emerald-blue-text">Common Inquiries</span></h2>
             <div className="space-y-4">
                {faqs.map((f, i) => (
                  <div key={i} className="glass-panel rounded-2xl overflow-hidden border-card-border/30 hover:border-primary/30 transition-colors">
@@ -555,7 +555,7 @@ export default function LandingPage() {
            </div>
            
            <div>
-              <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-100 mb-6">Intelligence</h4>
+              <h4 className="text-xs font-black uppercase tracking-[0.3em] text-slate-100 mb-6">Operations</h4>
               <ul className="space-y-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                  <li><Link href="/dashboard" className="hover:text-primary">Dashboard</Link></li>
                  <li><Link href="/decision-analysis" className="hover:text-primary">Decision Analysis</Link></li>
@@ -580,7 +580,7 @@ export default function LandingPage() {
            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/5 border border-emerald-500/20 rounded-full">
                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">Operational Intelligence Active</span>
+                 <span className="text-[9px] font-black text-emerald-500 uppercase tracking-widest">System Operations Active</span>
               </div>
            </div>
         </div>

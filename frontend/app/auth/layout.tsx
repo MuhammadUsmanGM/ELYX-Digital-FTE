@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Secure Handshake | ELYX Neural Terminal",
-  description: "Authenticate with the ELYX autonomous intelligence network. Secure causal-chain verification.",
+  title: "Secure Access | ELYX System Terminal",
+  description: "Authenticate with the ELYX autonomous operations network. Secure system access verification.",
 };
 
 export default function AuthLayout({

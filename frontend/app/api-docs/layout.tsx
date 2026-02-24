@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Developer Terminal | Integrated API Documentation",
-  description: "Technical instructions and API references for integrating the ELYX neural network.",
+  title: "API Hub | Integrated System Documentation",
+  description: "Technical instructions and API references for integrating with the ELYX system network.",
 };
 
 export default function ApiDocsLayout({

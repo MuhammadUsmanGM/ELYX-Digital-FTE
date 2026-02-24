@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Core Calibration | Neural System Settings",
-  description: "Configure neural core parameters and system-wide settings for the ELYX platform.",
+  title: "Core Configuration | System Settings",
+  description: "Configure core operational parameters and system-wide settings for the ELYX platform.",
 };
 
 export default function SettingsLayout({

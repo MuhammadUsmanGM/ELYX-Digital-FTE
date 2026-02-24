@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sovereign Directives | ELYX Terms of Service",
-  description: "Legal parameters and intelligence directives governing the ELYX neural network.",
+  title: "Service Terms | ELYX Operational Framework",
+  description: "Legal parameters and operational directives governing the ELYX system network.",
 };
 
 export default function TermsLayout({
