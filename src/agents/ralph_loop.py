@@ -55,9 +55,8 @@ class RalphLoop:
             "For each task: "
             "1. Read the task file. "
             "2. Cross-reference with Company_Handbook.md for rules. "
-            "3. Check Trusted_Contacts.md for whitelisting. "
-            "4. Execute the task (draft email, post to LinkedIn, etc.) using available MCP tools. "
-            "5. Move the task file to /Done when finished. "
+            "3. Execute the task (draft email, post to LinkedIn, etc.) using available MCP tools. "
+            "4. Move the task file to /Done when finished. "
             "Do not stop until you have processed all pending files in /Needs_Action."
         )
 

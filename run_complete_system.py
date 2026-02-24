@@ -73,7 +73,7 @@ def initialize_complete_system():
     all_dirs = [
         "Inbox", "Needs_Action", "Plans", "Pending_Approval", "Approved",
         "Rejected", "Done", "Logs", "Attachments", "Templates",
-        "Quantum_Security", "Blockchain_Integration", "Briefings"
+        "Briefings", "Accounting", "In_Progress", "Invoices", "Active_Projects"
     ]
 
     for dir_name in all_dirs:
