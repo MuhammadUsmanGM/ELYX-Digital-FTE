@@ -31,14 +31,14 @@ class Colors:
 
 def print_banner():
     """Print ELYX startup banner with ASCII art"""
-    # ELYX ASCII Art in cyan color
+    # ELYX ASCII Art - Pure ASCII (no Unicode)
     print(f"\n{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ███████╗██╗     ██╗   ██╗██╗  ██╗{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ██╔════╝██║     ╚██╗ ██╔╝╚██╗██╔╝{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  █████╗  ██║      ╚████╔╝  ╚███╔╝ {Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ██╔══╝  ██║       ╚██╔╝   ██╔██╗ {Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ███████╗███████╗   ██║   ██╔╝ ██╗{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  [E]____[L]____[Y]____[X]____{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  | ___| | ___| | ___| | ___|{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  | |__  | |__  | |__  | |__  {Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  |  __| |  __| |  __| |  __| {Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  | |___ | |___ | |___ | |___ {Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  |____| |____| |____| |____| {Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
     print(f"{Colors.BOLD}  Autonomous AI Employee - Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
