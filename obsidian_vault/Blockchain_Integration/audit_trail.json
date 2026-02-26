@@ -1,0 +1,14 @@
+[
+  {
+    "index": 1,
+    "timestamp": "2026-02-26T09:36:45.791380",
+    "data": {
+      "message": "Platinum Tier Genesis Block",
+      "timestamp": 1772098605.7913716,
+      "version": "1.0.0"
+    },
+    "previous_hash": "0000000000000000000000000000000000000000000000000000000000000000",
+    "nonce": 0,
+    "hash": "76c4aedbcf91a1295ee9a8ab0d8a5982f35b4fa68aafdc593708efae03335d41"
+  }
+]
