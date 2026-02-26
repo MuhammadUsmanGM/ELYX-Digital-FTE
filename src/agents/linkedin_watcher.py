@@ -24,19 +24,62 @@ class LinkedInWatcher(BaseWatcher):
 
     def check_for_updates(self) -> list:
         """
-        Check LinkedIn for new urgent messages
+        Check LinkedIn for new urgent messages using Chrome profile
         """
         messages = []
 
         try:
             with sync_playwright() as p:
-                # Launch browser with saved session
-                browser = p.chromium.launch_persistent_context(
-                    str(self.session_path),
-                    headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
-                    viewport={'width': 1280, 'height': 800},
-                    locale='en-US'
-                )
+                # Use Chrome profile from .env (where user is logged in)
+                chrome_user_data_dir = os.getenv('CHROME_USER_DATA_DIR', '')
+                
+                if chrome_user_data_dir:
+                    # Launch with user's Chrome profile (already logged in)
+                    browser = p.chromium.launch_persistent_context(
+                        chrome_user_data_dir,
+                        headless=False,  # Always show browser for logged-in profile
+                        viewport={'width': 1280, 'height': 800},
+                        locale='en-US',
+                        channel='chrome',  # Use Chrome, not Chromium
+                        args=[
+                            '--disable-blink-features=AutomationControlled',
+                            '--disable-dev-shm-usage',
+                            '--no-sandbox'
+                        ]
+                    )
+                else:
+                    # Fallback to session-based (not recommended)
+                    # Use Chrome profile from .env (where user is logged in)
+                chrome_user_data_dir = os.getenv('CHROME_USER_DATA_DIR', '')
+                
+                if chrome_user_data_dir:
+                    # Launch with user's Chrome profile (already logged in)
+                    browser = p.chromium.launch_persistent_context(
+                        chrome_user_data_dir,
+                        headless=False,  # Always show browser for logged-in profile
+                        viewport={'width': 1280, 'height': 800},
+                        locale='en-US',
+                        channel='chrome',  # Use Chrome, not Chromium
+                        args=[
+                            '--disable-blink-features=AutomationControlled',
+                            '--disable-dev-shm-usage',
+                            '--no-sandbox'
+                        ]
+                    )
+                else:
+                    # Fallback to session-based (not recommended)
+                    # Use Chrome profile
+                chrome_user_data_dir = os.getenv("CHROME_USER_DATA_DIR", "")
+                if chrome_user_data_dir:
+                    browser = p.chromium.launch_persistent_context(chrome_user_data_dir, headless=False, viewport={"width": 1280, "height": 800}, channel="chrome", args=["--disable-blink-features=AutomationControlled"])
+                        headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
+                        viewport={'width': 1280, 'height': 800},
+                        locale='en-US'
+                    )
+                        headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
+                        viewport={'width': 1280, 'height': 800},
+                        locale='en-US'
+                    )
 
                 page = browser.new_page()
                 page.goto('https://www.linkedin.com/feed/')
