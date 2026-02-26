@@ -1,159 +1,136 @@
 from playwright.sync_api import sync_playwright
 from ..base_watcher import BaseWatcher
 from pathlib import Path
-import json
-from datetime import datetime
-import time
 import os
+
 
 class WhatsAppWatcher(BaseWatcher):
     """
-    Monitors WhatsApp for urgent messages using Playwright
+    Monitors WhatsApp Web for urgent messages
+    Keeps browser open for QR code scanning on first run
     """
     def __init__(self, vault_path: str, session_path: str = None):
-        interval = int(os.getenv('WHATSAPP_CHECK_INTERVAL', 3600))
+        interval = int(os.getenv('WHATSAPP_CHECK_INTERVAL', 60))
         super().__init__(vault_path, check_interval=interval)
-        # Use session_path from parameter, or from .env, or default to sessions/whatsapp_session
-        if session_path:
-            self.session_path = Path(session_path)
-        else:
-            self.session_path = Path(os.getenv('WHATSAPP_SESSION_PATH', './sessions/whatsapp_session'))
-        self.keywords = ['urgent', 'asap', 'invoice', 'payment', 'help', 'emergency', 'critical', 'important']
+        self.session_path = Path(session_path) if session_path else Path('./sessions/whatsapp_session')
+        self.keywords = os.getenv('WHATSAPP_KEYWORDS', 'urgent,asap,invoice,payment,help').split(',')
         self.processed_messages = set()
+        self.qr_shown = False
 
     def check_for_updates(self) -> list:
-        """
-        Check WhatsApp Web for new urgent messages
-        """
+        """Check WhatsApp Web for urgent messages"""
         messages = []
 
         try:
             with sync_playwright() as p:
-                # Launch browser with saved session
+                # Launch browser with persistent session
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
-                    viewport={'width': 1280, 'height': 800}
+                    headless=False,  # Always show browser for QR code
+                    viewport={'width': 1280, 'height': 800},
+                    timeout=60000  # 60 second timeout for QR scanning
                 )
 
-                page = browser.new_page()
-                page.goto('https://web.whatsapp.com')
-
-                # Wait for WhatsApp to load (check if already logged in)
+                page = browser.pages[0]
+                page.goto('https://web.whatsapp.com', timeout=60000)
+                
+                # Wait for chat list or QR code
                 try:
-                    page.wait_for_selector('[data-testid="chat-list"]', timeout=15000)
-                    self.logger.info("WhatsApp Web loaded successfully - already logged in")
+                    # Try to find chat list (already logged in)
+                    page.wait_for_selector('[data-testid="chat-list"]', timeout=10000)
+                    self.logger.info("WhatsApp already logged in")
+                    self.qr_shown = False
                 except:
-                    # Not logged in yet - check if QR code is visible
-                    self.logger.info("WhatsApp Web not loaded yet, checking for QR code...")
+                    # QR code should be showing
+                    if not self.qr_shown:
+                        self.logger.info("=" * 60)
+                        self.logger.info("WHATSAPP NOT LOGGED IN!")
+                        self.logger.info("Please scan QR code with your phone:")
+                        self.logger.info("1. Open WhatsApp on phone")
+                        self.logger.info("2. Settings > Linked Devices")
+                        self.logger.info("3. Tap 'Link a Device'")
+                        self.logger.info("4. Scan QR code on screen")
+                        self.logger.info("=" * 60)
+                        self.qr_shown = True
+                    
+                    # Wait for login (user scans QR)
+                    self.logger.info("Waiting for QR scan (60 seconds)...")
                     try:
-                        # Wait for QR code canvas to appear
-                        page.wait_for_selector('canvas, [data-testid="qrcode"]', timeout=15000)
-                        self.logger.info("=" * 60)
-                        self.logger.info("QR CODE DETECTED! Please scan it with your WhatsApp app.")
-                        self.logger.info("Open WhatsApp on your phone -> Linked Devices -> Link a Device")
-                        self.logger.info("Waiting up to 120 seconds for you to scan...")
-                        self.logger.info("=" * 60)
-                        
-                        # Now wait for login to complete after QR scan
-                        try:
-                            page.wait_for_selector('[data-testid="chat-list"]', timeout=120000)
-                            self.logger.info("QR code scanned successfully! WhatsApp is now connected.")
-                        except:
-                            self.logger.warning("Timed out waiting for QR scan. Please try again.")
-                            browser.close()
-                            return []
+                        page.wait_for_selector('[data-testid="chat-list"]', timeout=60000)
+                        self.logger.info("WhatsApp login successful!")
+                        self.qr_shown = False
                     except:
-                        self.logger.warning("Could not find QR code or chat list. WhatsApp Web may have changed its layout.")
+                        self.logger.warning("QR code not scanned within 60 seconds")
                         browser.close()
-                        return []
-
-                # Find unread chats
-                unread_chats = page.query_selector_all('[data-icon="muted-unread"]')
-
-                for chat in unread_chats:
-                    try:
-                        # Click on the chat to see messages
-                        chat.click()
-
-                        # Get messages in the chat
-                        message_elements = page.query_selector_all('[data-testid="conversation"] [dir="ltr"]')
-
-                        for msg_elem in message_elements:
-                            text = msg_elem.text_content().lower()
-
-                            # Check if message contains urgent keywords and hasn't been processed
-                            if any(kw in text for kw in self.keywords):
-                                message_id = hash(text)  # Simple way to track processed messages
-                                if message_id not in self.processed_messages:
-                                    messages.append({
-                                        'text': text,
-                                        'chat': chat,
-                                        'full_text': msg_elem.text_content(),
-                                        'timestamp': datetime.now().isoformat()
-                                    })
-                                    self.processed_messages.add(message_id)
-
-                    except Exception as e:
-                        self.logger.error(f"Error processing chat: {e}")
-                        continue
-
+                        return messages
+                
+                # Find unread chats with urgent keywords
+                try:
+                    unread_chats = page.query_selector_all('[data-icon="muted-unread"]')
+                    
+                    for chat in unread_chats[:5]:
+                        try:
+                            # Click to open chat
+                            chat.click()
+                            page.wait_for_timeout(1000)
+                            
+                            # Get messages
+                            message_elements = page.query_selector_all('[data-testid="conversation"] [dir="ltr"]')
+                            
+                            for msg_elem in message_elements:
+                                text = msg_elem.text_content().lower()
+                                
+                                # Check for urgent keywords
+                                if any(kw in text for kw in self.keywords):
+                                    msg_id = hash(text)
+                                    if msg_id not in self.processed_messages:
+                                        messages.append({
+                                            'type': 'whatsapp_urgent',
+                                            'text': msg_elem.text_content()[:200],
+                                            'keywords_found': [kw for kw in self.keywords if kw in text],
+                                            'timestamp': str(page.evaluate("new Date().toISOString()"))
+                                        })
+                                        self.processed_messages.add(msg_id)
+                            
+                        except Exception as e:
+                            self.logger.error(f"Error processing chat: {e}")
+                            continue
+                
+                except Exception as e:
+                    self.logger.error(f"Error checking WhatsApp: {e}")
+                
+                # Keep browser open for next check
                 browser.close()
-
+                
         except Exception as e:
-            self.logger.error(f"Error in WhatsApp checking: {e}")
-
+            self.logger.error(f"Error in WhatsApp watcher: {e}")
+        
         return messages
 
-    def create_action_file(self, message) -> Path:
-        """
-        Create an action file in Needs_Action folder for the urgent WhatsApp message
-        """
+    def create_action_file(self, item) -> Path:
+        """Create action file for WhatsApp urgent message"""
         content = f'''---
-type: whatsapp
-from: WhatsApp Chat
+type: {item['type']}
+from: WhatsApp
 priority: high
 status: pending
-received: {message["timestamp"]}
-keywords_found: {", ".join([kw for kw in self.keywords if kw in message["text"].lower()])}
+received: {item["timestamp"]}
+keywords: {", ".join(item["keywords_found"])}
 ---
 
-## Urgent WhatsApp Message
+# URGENT WhatsApp Message
 
-**Message**: {message["full_text"]}
+**Message**: {item["text"]}
 
-**Received**: {message["timestamp"]}
+**Keywords Found**: {", ".join(item["keywords_found"])}
 
-## Keywords Detected
-{", ".join([kw for kw in self.keywords if kw in message["text"].lower()])}
+**Received**: {item["timestamp"]}
 
 ## Suggested Actions
-- [ ] Assess urgency level
-- [ ] Respond appropriately based on Company Handbook
-- [ ] Escalate if needed
+- [ ] Respond urgently via WhatsApp
+- [ ] Forward to relevant party
+- [ ] Archive after processing
 '''
-
-        filepath = self.needs_action / f'WHATSAPP_{hash(message["text"])}.md'
-        filepath.write_text(content)
+        filepath = self.needs_action / f'WHATSAPP_{hash(item["text"])}.md'
+        filepath.write_text(content, encoding='utf-8')
         return filepath
-
-
-def run_whatsapp_watcher(vault_path: str, session_path: str = None):
-    """
-    Convenience function to run the WhatsApp watcher continuously
-    """
-    watcher = WhatsAppWatcher(vault_path, session_path)
-
-    # Log startup
-    watcher.logger.info("Starting WhatsApp Watcher...")
-
-    while True:
-        try:
-            items = watcher.check_for_updates()
-            for item in items:
-                action_file = watcher.create_action_file(item)
-                watcher.logger.info(f'Created action file: {action_file}')
-        except Exception as e:
-            watcher.logger.error(f'Error in WhatsApp Watcher: {e}')
-
-        time.sleep(watcher.check_interval)
