@@ -28,18 +28,23 @@ class WhatsAppWatcher(BaseWatcher):
                     str(self.session_path),
                     headless=False,  # Always show browser for QR code
                     viewport={'width': 1280, 'height': 800},
-                    timeout=60000  # 60 second timeout for QR scanning
+                    timeout=120000,  # 2 minute timeout for QR scanning
+                    args=['--disable-session-crashed-bubble']  # Prevent session loss
                 )
 
                 page = browser.pages[0]
-                page.goto('https://web.whatsapp.com', timeout=60000)
+                page.goto('https://web.whatsapp.com', timeout=120000)
                 
                 # Wait for chat list or QR code
                 try:
                     # Try to find chat list (already logged in)
-                    page.wait_for_selector('[data-testid="chat-list"]', timeout=10000)
+                    page.wait_for_selector('[data-testid="chat-list"]', timeout=15000)
                     self.logger.info("WhatsApp already logged in")
                     self.qr_shown = False
+                    
+                    # Wait a bit for session to stabilize
+                    page.wait_for_timeout(5000)
+                    
                 except:
                     # QR code should be showing
                     if not self.qr_shown:
@@ -50,17 +55,20 @@ class WhatsAppWatcher(BaseWatcher):
                         self.logger.info("2. Settings > Linked Devices")
                         self.logger.info("3. Tap 'Link a Device'")
                         self.logger.info("4. Scan QR code on screen")
+                        self.logger.info("KEEP BROWSER OPEN UNTIL QR DISAPPEARS!")
                         self.logger.info("=" * 60)
                         self.qr_shown = True
                     
                     # Wait for login (user scans QR)
-                    self.logger.info("Waiting for QR scan (60 seconds)...")
+                    self.logger.info("Waiting for QR scan (120 seconds)...")
                     try:
-                        page.wait_for_selector('[data-testid="chat-list"]', timeout=60000)
+                        page.wait_for_selector('[data-testid="chat-list"]', timeout=120000)
                         self.logger.info("WhatsApp login successful!")
+                        self.logger.info("Waiting 10 seconds to save session...")
+                        page.wait_for_timeout(10000)  # Wait for session to save
                         self.qr_shown = False
                     except:
-                        self.logger.warning("QR code not scanned within 60 seconds")
+                        self.logger.warning("QR code not scanned within 120 seconds")
                         browser.close()
                         return messages
                 
@@ -99,7 +107,7 @@ class WhatsAppWatcher(BaseWatcher):
                 except Exception as e:
                     self.logger.error(f"Error checking WhatsApp: {e}")
                 
-                # Keep browser open for next check
+                # Close browser AFTER session is saved
                 browser.close()
                 
         except Exception as e:
