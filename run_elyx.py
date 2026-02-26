@@ -30,11 +30,15 @@ class Colors:
     UNDERLINE = '\033[4m'
 
 def print_banner():
-    """Print ELYX startup banner"""
+    """Print ELYX startup banner with ASCII art"""
+    # ELYX ASCII Art in cyan color
     print(f"\n{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ╔═╗╔═╗╦  ╔═╗╔═╗╦═╗  ╔═╗╔═╗╦ ╦╔═╗╔═╗╔╦╗  ╔╦╗╦ ╦╔═╗╔═╗{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ╠═╝╠═╣║  ║ ║║ ║╠╦╝  ╚═╗╠═╝╠═╣║ ║╠═╝ ║║  ║║║║ ║╠═╝╠═╣{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  ╩  ╩ ╩╩═╝╚═╝╚═╝╩╚═  ╚═╝╩  ╩ ╩╚═╝╩   ═╩╝  ╚═╝╩  ╩ ╩{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ███████╗██╗     ██╗   ██╗██╗  ██╗{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ██╔════╝██║     ╚██╗ ██╔╝╚██╗██╔╝{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  █████╗  ██║      ╚████╔╝  ╚███╔╝ {Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ██╔══╝  ██║       ╚██╔╝   ██╔██╗ {Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ███████╗███████╗   ██║   ██╔╝ ██╗{Colors.ENDC}")
+    print(f"{Colors.BOLD}{Colors.OKCYAN}  ╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝{Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
     print(f"{Colors.BOLD}  Autonomous AI Employee - Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
@@ -66,49 +70,49 @@ def print_system_status():
     print(f"  {Colors.BOLD}Active Since:{Colors.ENDC} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     # Watchers Status
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}✓ ACTIVE WATCHERS:{Colors.ENDC}")
-    print(f"    ┌────────────────────────────────────────────────────────────┐")
-    print(f"    │  📧 Gmail           → Every 2 minutes   │  ✅ Active     │")
-    print(f"    │  💬 WhatsApp        → Every 1 minute    │  ✅ Active     │")
-    print(f"    │  💼 LinkedIn        → Every hour        │  ✅ Active     │")
-    print(f"    │  📘 Facebook        → Every 2 hours     │  ✅ Active     │")
-    print(f"    │  🐦 Twitter/X       → Every 2 hours     │  ✅ Active     │")
-    print(f"    │  📸 Instagram       → Every 2 hours     │  ✅ Active     │")
-    print(f"    │  📊 Odoo Accounting → Every hour        │  ✅ Active     │")
-    print(f"    │  📁 Filesystem      → Every 10 seconds  │  ✅ Active     │")
-    print(f"    └────────────────────────────────────────────────────────────┘")
+    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[ACTIVE WATCHERS]:{Colors.ENDC}")
+    print(f"    +------------------------------------------------------------+")
+    print(f"    |  [G] Gmail           -> Every 2 minutes   |  [OK] Active  |")
+    print(f"    |  [W] WhatsApp        -> Every 1 minute    |  [OK] Active  |")
+    print(f"    |  [L] LinkedIn        -> Every hour        |  [OK] Active  |")
+    print(f"    |  [F] Facebook        -> Every 2 hours     |  [OK] Active  |")
+    print(f"    |  [T] Twitter/X       -> Every 2 hours     |  [OK] Active  |")
+    print(f"    |  [I] Instagram       -> Every 2 hours     |  [OK] Active  |")
+    print(f"    |  [O] Odoo Accounting -> Every hour        |  [OK] Active  |")
+    print(f"    |  [S] Filesystem      -> Every 10 seconds  |  [OK] Active  |")
+    print(f"    +------------------------------------------------------------+")
     
     # Capabilities
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}✓ CAPABILITIES:{Colors.ENDC}")
-    print(f"    • Multi-platform communication monitoring (7 channels)")
-    print(f"    • Automated response to routine inquiries")
-    print(f"    • Human-in-the-loop approval for sensitive actions")
-    print(f"    • Weekly CEO Briefing generation (Mondays 8 AM)")
-    print(f"    • Social media auto-posting")
-    print(f"    • Invoice & payment tracking via Odoo")
-    print(f"    • Cryptographic audit logging (SHA3-512)")
-    print(f"    • Autonomous multi-step task completion (Ralph Wiggum)")
-    print(f"    • Chrome profile auto-launch & session preservation")
+    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[CAPABILITIES]:{Colors.ENDC}")
+    print(f"    [+] Multi-platform communication monitoring (7 channels)")
+    print(f"    [+] Automated response to routine inquiries")
+    print(f"    [+] Human-in-the-loop approval for sensitive actions")
+    print(f"    [+] Weekly CEO Briefing generation (Mondays 8 AM)")
+    print(f"    [+] Social media auto-posting")
+    print(f"    [+] Invoice & payment tracking via Odoo")
+    print(f"    [+] Cryptographic audit logging (SHA3-512)")
+    print(f"    [+] Autonomous multi-step task completion (Ralph Wiggum)")
+    print(f"    [+] Chrome profile auto-launch & session preservation")
     
     # Access Points
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}✓ ACCESS POINTS:{Colors.ENDC}")
-    print(f"    ┌────────────────────────────────────────────────────────────┐")
-    print(f"    │  📊 Dashboard:      obsidian_vault/Dashboard.md           │")
-    print(f"    │  📖 Handbook:       obsidian_vault/Company_Handbook.md    │")
-    print(f"    │  📥 Tasks:          obsidian_vault/Needs_Action/          │")
-    print(f"    │  ✅ Done:           obsidian_vault/Done/                  │")
-    print(f"    │  ⏳ Pending:        obsidian_vault/Pending_Approval/      │")
-    print(f"    │  📝 Briefings:      obsidian_vault/Briefings/             │")
-    print(f"    │  🔐 Audit Logs:     obsidian_vault/Logs/                  │")
-    print(f"    └────────────────────────────────────────────────────────────┘")
+    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[ACCESS POINTS]:{Colors.ENDC}")
+    print(f"    +------------------------------------------------------------+")
+    print(f"    |  [Dashboard]    obsidian_vault/Dashboard.md                |")
+    print(f"    |  [Handbook]     obsidian_vault/Company_Handbook.md         |")
+    print(f"    |  [Tasks]        obsidian_vault/Needs_Action/               |")
+    print(f"    |  [Done]         obsidian_vault/Done/                       |")
+    print(f"    |  [Pending]      obsidian_vault/Pending_Approval/           |")
+    print(f"    |  [Briefings]    obsidian_vault/Briefings/                  |")
+    print(f"    |  [Audit Logs]   obsidian_vault/Logs/                       |")
+    print(f"    +------------------------------------------------------------+")
     
     # Chrome Profile
     chrome_profile = os.getenv('CHROME_USER_DATA_DIR', 'Not configured')
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}✓ CHROME PROFILE:{Colors.ENDC}")
-    print(f"    • Path: {chrome_profile}")
-    print(f"    • Auto-Launch: {'✅ Enabled' if chrome_profile else '❌ Disabled'}")
-    print(f"    • Health Check: Every 5 minutes")
-    print(f"    • Session Preservation: ✅ Active")
+    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[CHROME PROFILE]:{Colors.ENDC}")
+    print(f"    - Path: {chrome_profile}")
+    print(f"    - Auto-Launch: {'[OK] Enabled' if chrome_profile else '[--] Disabled'}")
+    print(f"    - Health Check: Every 5 minutes")
+    print(f"    - Session Preservation: [OK] Active")
 
 def print_shutdown_message():
     """Print graceful shutdown message"""
@@ -119,7 +123,7 @@ def print_shutdown_message():
     print(f"  [OK] Closing database connections...")
     print(f"  [OK] Saving audit logs...")
     print(f"\n  {Colors.OKGREEN}[COMPLETE] ELYX shutdown complete.{Colors.ENDC}")
-    print(f"  {Colors.BOLD}All systems preserved. Goodbye! 👋{Colors.ENDC}\n")
+    print(f"  {Colors.BOLD}All systems preserved. Goodbye!{Colors.ENDC}\n")
 
 def main():
     """Main ELYX startup function"""
