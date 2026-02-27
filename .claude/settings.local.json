@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(qwen:*)",
+      "Bash(gemini:*)"
+    ]
+  }
+}

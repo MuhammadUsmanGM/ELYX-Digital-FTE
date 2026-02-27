@@ -31,7 +31,7 @@ class TwitterWatcher(BaseWatcher):
             args=['--disable-blink-features=AutomationControlled'],
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
-        self._page.goto('https://x.com/home', timeout=30000)
+        self._page.goto('https://x.com/home', timeout=60000)
         self._ensure_logged_in()
 
     def _ensure_logged_in(self):
@@ -73,7 +73,7 @@ class TwitterWatcher(BaseWatcher):
                 self._open_browser()
 
             page = self._page
-            page.goto('https://x.com/notifications', timeout=30000)
+            page.goto('https://x.com/notifications', timeout=60000)
             page.wait_for_timeout(3000)
 
             notifications = page.query_selector_all('[data-testid="cellInnerDiv"]')

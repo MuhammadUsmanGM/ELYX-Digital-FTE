@@ -97,7 +97,7 @@ class BrainFactory:
         },
         "qwen": {
             "command": "qwen",
-            "args": ["-p"],
+            "args": ["--yolo"],
             "description": "Alibaba Qwen Coder - Fast local coding tasks"
         },
         "gemini": {
@@ -107,7 +107,7 @@ class BrainFactory:
         },
         "codex": {
             "command": "codex",
-            "args": ["-p"],
+            "args": ["exec"],
             "description": "OpenAI Codex CLI - Code generation and refactoring"
         }
     }
