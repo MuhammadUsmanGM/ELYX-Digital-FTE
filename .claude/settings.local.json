@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(qwen:*)",
-      "Bash(gemini:*)"
+      "Bash(gemini:*)",
+      "Bash(python:*)",
+      "Bash(where:*)",
+      "Bash(cmd.exe:*)"
     ]
   }
 }

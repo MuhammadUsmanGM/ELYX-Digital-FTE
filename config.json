@@ -18,15 +18,29 @@
   },
   "gmail": {
     "credentials_path": "gmail_credentials.json",
-    "monitor_filters": ["is:unread is:important"]
+    "monitor_filters": [
+      "is:unread is:important"
+    ]
   },
   "whatsapp": {
     "session_path": "~/.whatsapp_session",
-    "keywords": ["urgent", "asap", "invoice", "payment", "help", "emergency", "critical", "important"]
+    "keywords": [
+      "urgent",
+      "asap",
+      "invoice",
+      "payment",
+      "help",
+      "emergency",
+      "critical",
+      "important"
+    ]
   },
   "calendar": {
     "sync_enabled": false,
-    "providers": ["google", "outlook"],
+    "providers": [
+      "google",
+      "outlook"
+    ],
     "default_provider": "google",
     "sync_frequency_minutes": 15,
     "create_tasks_for_events": true
@@ -42,7 +56,9 @@
     "host": "localhost",
     "port": 8000,
     "workers": 4,
-    "cors_origins": ["*"]
+    "cors_origins": [
+      "*"
+    ]
   },
   "database": {
     "url": "sqlite:///silver_tier.db",
@@ -115,22 +131,30 @@
     "brains": {
       "claude": {
         "command": "claude",
-        "args": ["-p"],
+        "args": [
+          "-p"
+        ],
         "description": "Anthropic Claude Code - PRIMARY BRAIN per hackathon spec. Strategic reasoning, autonomous operation via Ralph Wiggum loop."
       },
       "qwen": {
         "command": "qwen",
-        "args": ["-p"],
+        "args": [
+          "--yolo"
+        ],
         "description": "Alibaba Qwen Coder - Alternative brain. Fast coding tasks. (Optional)"
       },
       "gemini": {
         "command": "gemini",
-        "args": ["-p"],
-        "description": "Google Gemini CLI - Alternative brain. High-volume triage. (Optional)"
+        "args": [
+          "-p"
+        ],
+        "description": "Google Gemini CLI - NOT INSTALLED. Run: npm i -g @google/gemini-cli"
       },
       "codex": {
         "command": "codex",
-        "args": ["-p"],
+        "args": [
+          "exec"
+        ],
         "description": "OpenAI Codex CLI - Alternative brain. Code generation. (Optional)"
       }
     }
