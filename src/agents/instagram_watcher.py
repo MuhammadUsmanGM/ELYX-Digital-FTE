@@ -1,4 +1,4 @@
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
 import os
@@ -6,100 +6,97 @@ import os
 
 class InstagramWatcher(BaseWatcher):
     """
-    Monitors Instagram for DMs using auto-login
+    Monitors Instagram for direct messages.
+    Keeps a single Playwright browser open across all check cycles.
+    Run setup_sessions.py once to log in before starting ELYX.
     """
+
     def __init__(self, vault_path: str, session_path: str = None):
         interval = int(os.getenv('INSTAGRAM_CHECK_INTERVAL', 7200))
         super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path('./sessions/instagram_session')
-        self.username = os.getenv('INSTAGRAM_USERNAME', '')
-        self.password = os.getenv('INSTAGRAM_PASSWORD', '')
-        self.processed_ids = set()
+        self.processed_ids: set = set()
+
+        self._playwright: Playwright | None = None
+        self._browser: BrowserContext | None = None
+        self._page: Page | None = None
+
+    def _open_browser(self):
+        self._playwright = sync_playwright().start()
+        self.session_path.mkdir(parents=True, exist_ok=True)
+        self._browser = self._playwright.chromium.launch_persistent_context(
+            str(self.session_path),
+            headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
+            viewport={'width': 1280, 'height': 800},
+            args=['--disable-blink-features=AutomationControlled'],
+        )
+        self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
+        self._page.goto('https://www.instagram.com/', timeout=30000)
+        self._page.wait_for_timeout(3000)
+        self._ensure_logged_in()
+
+    def _ensure_logged_in(self):
+        try:
+            self._page.wait_for_selector('a[href="/direct/inbox/"]', timeout=10000)
+            self.logger.info("Instagram: already logged in")
+        except Exception:
+            self.logger.error(
+                "Instagram: not logged in. Run: python setup_sessions.py instagram"
+            )
+            self._close_browser()
+            raise RuntimeError("Instagram session missing — run setup_sessions.py instagram")
+
+    def _is_browser_alive(self) -> bool:
+        try:
+            return self._page is not None and not self._page.is_closed()
+        except Exception:
+            return False
+
+    def _close_browser(self):
+        try:
+            if self._browser:
+                self._browser.close()
+        except Exception:
+            pass
+        try:
+            if self._playwright:
+                self._playwright.stop()
+        except Exception:
+            pass
+        self._playwright = None
+        self._browser = None
+        self._page = None
 
     def check_for_updates(self) -> list:
-        """Check Instagram for DMs"""
         updates = []
-        
-        if not self.username or not self.password:
-            self.logger.warning("Instagram credentials not set")
-            return updates
-
         try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch_persistent_context(
-                    str(self.session_path),
-                    headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
-                    viewport={'width': 1280, 'height': 800}
-                )
+            if not self._is_browser_alive():
+                self._open_browser()
 
-                page = browser.new_page()
-                
-                # Go to Instagram login
-                page.goto('https://www.instagram.com/accounts/login/', timeout=30000)
-                page.wait_for_timeout(3000)
-                
-                # Check if already logged in
-                try:
-                    page.wait_for_selector('main', timeout=5000)
-                    self.logger.info("Already logged in to Instagram")
-                except:
-                    # Need to login
-                    self.logger.info("Logging in to Instagram...")
-                    
-                    try:
-                        # Wait for login form
-                        page.wait_for_selector('input[type="text"]', timeout=10000)
-                        
-                        # Fill username
-                        username_field = page.locator('input[type="text"]').first
-                        username_field.fill(self.username)
-                        
-                        # Fill password
-                        password_field = page.locator('input[type="password"]').first
-                        password_field.fill(self.password)
-                        
-                        # Click login
-                        login_button = page.locator('button[type="submit"]').first
-                        login_button.click()
-                        page.wait_for_timeout(5000)
-                        
-                        self.logger.info("Instagram login successful")
-                    except Exception as e:
-                        self.logger.error(f"Instagram login failed: {e}")
-                        browser.close()
-                        return updates
-                
-                # Check DMs
-                try:
-                    page.goto('https://www.instagram.com/direct/inbox/', timeout=30000)
-                    page.wait_for_timeout(3000)
-                    
-                    # Get unread indicators
-                    unread = page.query_selector_all('[aria-label="Unread"]')
-                    
-                    for u in unread[:5]:
-                        u_id = hash(u.inner_html())
-                        
-                        if u_id not in self.processed_ids:
-                            updates.append({
-                                'type': 'instagram_dm',
-                                'text': 'Unread message in thread',
-                                'timestamp': str(page.evaluate("new Date().toISOString()"))
-                            })
-                            self.processed_ids.add(u_id)
-                
-                except Exception as e:
-                    self.logger.error(f"Error checking Instagram DMs: {e}")
-                
-                browser.close()
-                
+            page = self._page
+            page.goto('https://www.instagram.com/direct/inbox/', timeout=30000)
+            page.wait_for_timeout(3000)
+
+            unread = page.query_selector_all('[aria-label="Unread"]')
+            self.logger.info(f"Instagram: found {len(unread)} unread DMs")
+
+            for u in unread[:5]:
+                u_id = hash(u.inner_html())
+                if u_id not in self.processed_ids:
+                    updates.append({
+                        'type': 'instagram_dm',
+                        'text': 'Unread message in thread',
+                        'timestamp': str(page.evaluate("new Date().toISOString()")),
+                    })
+                    self.processed_ids.add(u_id)
+
         except Exception as e:
-            self.logger.error(f"Error in Instagram watcher: {e}")
-        
+            self.logger.error(f"Instagram watcher error: {e}")
+            self._close_browser()
+
         return updates
 
     def create_action_file(self, item) -> Path:
-        """Create action file for Instagram DM"""
         content = f'''---
 type: {item['type']}
 from: Instagram
@@ -122,3 +119,6 @@ received: {item["timestamp"]}
         filepath = self.needs_action / f'INSTAGRAM_{hash(item["text"])}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
+
+    def cleanup(self):
+        self._close_browser()
