@@ -101,14 +101,17 @@
     "enable_dataview_queries": true
   },
   "integrations": {
+    "gmail_enabled": true,
+    "whatsapp_enabled": true,
+    "linkedin_enabled": false,
+    "facebook_enabled": false,
+    "twitter_enabled": false,
+    "instagram_enabled": false,
     "calendar_enabled": false,
     "crm_enabled": false,
     "project_management_enabled": false,
     "use_claude_cli": true,
     "ralph_loop_enabled": true,
-    "facebook_enabled": true,
-    "twitter_enabled": true,
-    "instagram_enabled": true,
     "odoo_enabled": true
   },
   "audit": {
@@ -137,14 +140,14 @@
         "description": "Anthropic Claude Code - PRIMARY BRAIN per hackathon spec. Strategic reasoning, autonomous operation via Ralph Wiggum loop."
       },
       "qwen": {
-        "command": "qwen",
+        "command": "C:\\Users\\Usman Mustafa\\AppData\\Roaming\\npm\\qwen.cmd",
         "args": [
           "--yolo"
         ],
         "description": "Alibaba Qwen Coder - Alternative brain. Fast coding tasks. (Optional)"
       },
       "gemini": {
-        "command": "gemini",
+        "command": "C:\\Users\\Usman Mustafa\\AppData\\Roaming\\npm\\gemini.cmd",
         "args": [
           "-p"
         ],

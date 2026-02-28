@@ -22,7 +22,7 @@ PLATFORMS = {
     "whatsapp": {
         "url": "https://web.whatsapp.com",
         "session_dir": "whatsapp_session",
-        "logged_in_selector": '[data-testid="chat-list"]',
+        "logged_in_selector": '[data-testid="chat-list"], #pane-side, [aria-label="Chat list"], [aria-label="Chats"], div[data-tab="3"]',
         "instructions": (
             "1. Open WhatsApp on your phone\n"
             "2. Tap Settings > Linked Devices > Link a Device\n"

@@ -173,14 +173,6 @@ class HandbookParser:
         content_lower = content.lower()
         sender_lower = sender.lower()
 
-        # 🛡️ TRUSTED CONTACTS CHECK (Whitelisting)
-        # Load trusted contacts from the vault
-        is_trusted = self._is_sender_whitelisted(sender_lower)
-        
-        # If sender is not trusted, all tasks must be flagged for approval
-        if not is_trusted:
-            return True, f"Unknown sender ({sender}): All requests from non-whitelisted contacts require manual review."
-
         # Check financial terms
         if content_type == "email":
             financial_rules = self.rules.get('email_processing', {}).get('flag_keywords', [])
@@ -193,6 +185,13 @@ class HandbookParser:
         for requirement in approval_requirements:
             if requirement in content_lower:
                 return True, f"Matches approval requirement: {requirement}"
+
+        # Only flag unknown senders for truly sensitive actions (payments, sharing)
+        sensitive_keywords = ['payment', 'invoice', 'transfer', 'wire', 'confidential', 'access']
+        if not self._is_sender_whitelisted(sender_lower):
+            for keyword in sensitive_keywords:
+                if keyword in content_lower:
+                    return True, f"Sensitive content from non-whitelisted sender ({sender}): contains '{keyword}'"
 
         return False, "No approval required"
 

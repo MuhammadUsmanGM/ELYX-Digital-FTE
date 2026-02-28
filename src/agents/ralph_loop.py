@@ -49,15 +49,19 @@ class RalphLoop:
 
     def run_iteration(self):
         """Run one iteration of the active AI brain to process tasks"""
+        vault_abs = str(self.vault_path.resolve())
         prompt = (
-            "You are ELYX, an autonomous AI Employee. "
-            "Please check the /Needs_Action folder in my Obsidian vault. "
-            "For each task: "
-            "1. Read the task file. "
-            "2. Cross-reference with Company_Handbook.md for rules. "
-            "3. Execute the task (draft email, post to LinkedIn, etc.) using available MCP tools. "
-            "4. Move the task file to /Done when finished. "
-            "Do not stop until you have processed all pending files in /Needs_Action."
+            f"You are ELYX, an autonomous AI Employee. "
+            f"Your Obsidian vault is at: {vault_abs}\n"
+            f"1. Read all .md files in {vault_abs}/Needs_Action/\n"
+            f"2. Read {vault_abs}/Company_Handbook.md for business rules.\n"
+            f"3. For each task:\n"
+            f"   - If it requires approval (payments, new contacts, sensitive actions): "
+            f"create an approval file in {vault_abs}/Pending_Approval/ and do NOT execute.\n"
+            f"   - If it's safe to auto-process: execute it, then move the task file to {vault_abs}/Done/\n"
+            f"4. Create a plan file in {vault_abs}/Plans/ for each task.\n"
+            f"5. Update {vault_abs}/Dashboard.md with what you did.\n"
+            f"Do not stop until all files in Needs_Action are processed or moved."
         )
 
         brain_name = self.active_brain.name if self.active_brain else "claude (fallback)"
@@ -70,7 +74,8 @@ class RalphLoop:
                 cmd,
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                cwd=str(self.vault_path.resolve().parent)
             )
             self.logger.info(f"Brain '{brain_name}' finished iteration successfully.")
             self.logger.debug(f"Output: {process.stdout}")

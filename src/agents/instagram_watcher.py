@@ -31,7 +31,7 @@ class InstagramWatcher(BaseWatcher):
             args=['--disable-blink-features=AutomationControlled'],
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
-        self._page.goto('https://www.instagram.com/', timeout=60000)
+        self._page.goto('https://www.instagram.com/', wait_until='domcontentloaded', timeout=90000)
         self._page.wait_for_timeout(3000)
         self._ensure_logged_in()
 
@@ -74,7 +74,7 @@ class InstagramWatcher(BaseWatcher):
                 self._open_browser()
 
             page = self._page
-            page.goto('https://www.instagram.com/direct/inbox/', timeout=60000)
+            page.goto('https://www.instagram.com/direct/inbox/', wait_until='domcontentloaded', timeout=90000)
             page.wait_for_timeout(3000)
 
             unread = page.query_selector_all('[aria-label="Unread"]')

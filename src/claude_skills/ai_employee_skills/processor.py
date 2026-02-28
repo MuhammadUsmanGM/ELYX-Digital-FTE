@@ -53,6 +53,18 @@ class TaskProcessor:
         """
         log_activity("PROCESS", f"Processing task: {task.filename}", self.vault_path)
 
+        # Skip approval check if task was already approved
+        if task.frontmatter.get('approved', False):
+            self.execute_automated_task(task)
+            task.update_status("completed")
+            move_file_to_folder(
+                Path(task.filepath),
+                "Done",
+                self.vault_path
+            )
+            log_activity("COMPLETED", f"Executed approved task: {task.filename}", self.vault_path)
+            return
+
         # Determine if task needs approval
         sender = task.frontmatter.get('from', 'unknown')
         needs_approval, reason = self.handbook_parser.should_flag_for_approval(
@@ -425,6 +437,15 @@ subject: Response to your request
             original_task_path = self.vault_path / "Pending_Approval" / original_task_name
 
             if original_task_path.exists():
+                # Mark task as approved so it won't be re-flagged
+                task_content = original_task_path.read_text(encoding='utf-8')
+                if task_content.startswith('---'):
+                    # Insert approved: true into existing frontmatter
+                    task_content = task_content.replace('---\n', '---\napproved: true\n', 1)
+                else:
+                    task_content = '---\napproved: true\n---\n' + task_content
+                original_task_path.write_text(task_content, encoding='utf-8')
+
                 # Move the original task to needs action for processing
                 move_file_to_folder(
                     original_task_path,

@@ -949,11 +949,16 @@ class Orchestrator:
 
     def check_for_scheduled_tasks(self):
         """Check for and run scheduled system tasks like weekly briefings"""
+        if not hasattr(self, 'briefing_service') or not self.briefing_service:
+            return
+
         now = datetime.now()
         current_date = now.strftime('%Y-%m-%d')
-        
+
         # Weekly Briefing - Every Friday at 5 PM
         if now.weekday() == 4 and now.hour >= 17:
+            if not hasattr(self, 'last_briefing_date'):
+                self.last_briefing_date = None
             if self.last_briefing_date != current_date:
                 try:
                     self.logger.info("Scheduled task: Generating Weekly CEO Briefing")
