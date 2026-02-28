@@ -77,21 +77,44 @@ class LinkedInWatcher(BaseWatcher):
             page.goto('https://www.linkedin.com/messaging/', wait_until='domcontentloaded', timeout=90000)
             page.wait_for_timeout(3000)
 
-            unread_threads = page.query_selector_all('[data-test-id="messaging-thread"]')
-            self.logger.info(f"LinkedIn: found {len(unread_threads)} threads")
+            # Find threads with unread indicators
+            unread_threads = page.query_selector_all('[data-test-id="messaging-thread"]:has([aria-label*="unread"]), [data-test-id="messaging-thread"]:has(.msg-conversation-card__unread-count)')
+            
+            if not unread_threads:
+                # Fallback: check all recent threads if unread selector fails
+                unread_threads = page.query_selector_all('[data-test-id="messaging-thread"]')[:3]
 
-            for thread in unread_threads[:5]:
-                text = thread.text_content()[:200]
-                if any(kw in text.lower() for kw in self.keywords):
-                    t_id = hash(text)
+            self.logger.info(f"LinkedIn: evaluating {len(unread_threads)} threads")
+
+            for thread in unread_threads:
+                try:
+                    # Extract sender name from the thread card
+                    sender_elem = thread.query_selector('.msg-conversation-card__participant-names')
+                    sender_name = sender_elem.inner_text().strip() if sender_elem else "LinkedIn Contact"
+                    
+                    text = thread.text_content()[:500]
+                    text_lower = text.lower()
+                    
+                    # Process if it contains keywords OR if it's explicitly unread
+                    is_urgent = any(kw in text_lower for kw in self.keywords)
+                    
+                    t_id = hash(f"{sender_name}_{text[:100]}")
                     if t_id not in self.processed_messages:
                         messages.append({
                             'type': 'linkedin_message',
+                            'sender': sender_name,
                             'text': text,
-                            'keywords_found': [kw for kw in self.keywords if kw in text.lower()],
-                            'timestamp': str(page.evaluate("new Date().toISOString()")),
+                            'is_urgent': is_urgent,
+                            'keywords_found': [kw for kw in self.keywords if kw in text_lower],
+                            'timestamp': datetime.now().isoformat(),
                         })
                         self.processed_messages.add(t_id)
+                        
+                        # Add stealth interaction: hover over thread
+                        thread.hover()
+                        self.human_delay(0.5, 1.5)
+                except Exception as e:
+                    self.logger.error(f"Error processing LinkedIn thread: {e}")
 
         except Exception as e:
             self.logger.error(f"LinkedIn watcher error: {e}")
@@ -100,29 +123,33 @@ class LinkedInWatcher(BaseWatcher):
         return messages
 
     def create_action_file(self, item) -> Path:
+        priority = "high" if item.get('is_urgent') else "medium"
         content = f'''---
 type: {item['type']}
-from: LinkedIn
-priority: high
+from: "{item['sender']}"
+platform: LinkedIn
+priority: {priority}
 status: pending
-received: {item["timestamp"]}
-keywords: {", ".join(item["keywords_found"])}
+received: "{item["timestamp"]}"
+keywords: [{", ".join([f'"{kw}"' for kw in item["keywords_found"]])}]
 ---
 
-## Urgent LinkedIn Message
+# LinkedIn Message from {item["sender"]}
 
-**Content**: {item["text"]}
-
-**Keywords Found**: {", ".join(item["keywords_found"])}
-
+**Priority**: {priority.upper()}
 **Received**: {item["timestamp"]}
 
+**Content Preview**: 
+{item["text"]}
+
 ## Suggested Actions
-- [ ] Review message
-- [ ] Respond professionally
+- [ ] Review full message on LinkedIn
+- [ ] Draft a professional response
 - [ ] Archive after processing
 '''
-        filepath = self.needs_action / f'LINKEDIN_{hash(item["text"])}.md'
+        # Create a unique filename based on sender
+        safe_sender = "".join([c if c.isalnum() else "_" for c in item['sender'][:15]])
+        filepath = self.needs_action / f'LINKEDIN_{safe_sender}_{hash(item["text"]) % 10000}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

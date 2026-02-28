@@ -131,7 +131,12 @@ class WhatsAppWatcher(BaseWatcher):
             for chat in unread_chats[:5]:
                 try:
                     chat.click()
-                    page.wait_for_timeout(1000)
+                    self.human_delay(1, 2)
+                    self.stealth_move_mouse(page)
+
+                    # Extract sender name
+                    sender_elem = page.query_selector('header [title]')
+                    sender_name = sender_elem.get_attribute('title') if sender_elem else "Unknown Contact"
 
                     message_elements = page.query_selector_all(
                         '[data-testid="conversation"] [dir="ltr"]'
@@ -144,13 +149,14 @@ class WhatsAppWatcher(BaseWatcher):
                         text_lower = text.lower()
 
                         if any(kw in text_lower for kw in self.keywords):
-                            msg_id = hash(text.strip())
+                            msg_id = hash(f"{sender_name}_{text}")
                             if msg_id not in self.processed_messages:
                                 messages.append({
                                     'type': 'whatsapp_urgent',
-                                    'text': text[:200],
+                                    'sender': sender_name,
+                                    'text': text[:500],
                                     'keywords_found': [kw for kw in self.keywords if kw in text_lower],
-                                    'timestamp': str(page.evaluate("new Date().toISOString()")),
+                                    'timestamp': datetime.now().isoformat(),
                                 })
                                 self.processed_messages.add(msg_id)
 
@@ -167,7 +173,8 @@ class WhatsAppWatcher(BaseWatcher):
     def create_action_file(self, item) -> Path:
         content = f'''---
 type: {item['type']}
-from: WhatsApp
+from: {item['sender']}
+platform: WhatsApp
 priority: high
 status: pending
 received: {item["timestamp"]}
@@ -176,6 +183,8 @@ keywords: {", ".join(item["keywords_found"])}
 
 # URGENT WhatsApp Message
 
+**From**: {item["sender"]}
+
 **Message**: {item["text"]}
 
 **Keywords Found**: {", ".join(item["keywords_found"])}
@@ -183,11 +192,13 @@ keywords: {", ".join(item["keywords_found"])}
 **Received**: {item["timestamp"]}
 
 ## Suggested Actions
-- [ ] Respond urgently via WhatsApp
+- [ ] Respond urgently via WhatsApp to {item["sender"]}
 - [ ] Forward to relevant party
 - [ ] Archive after processing
 '''
-        filepath = self.needs_action / f'WHATSAPP_{hash(item["text"])}.md'
+        # Create a unique but readable filename
+        safe_name = "".join([c if c.isalnum() else "_" for c in item['sender'][:15]])
+        filepath = self.needs_action / f'WHATSAPP_{safe_name}_{hash(item["text"]) % 10000}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

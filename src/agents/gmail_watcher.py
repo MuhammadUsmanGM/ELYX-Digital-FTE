@@ -60,27 +60,36 @@ class GmailWatcher(BaseWatcher):
             ).execute()
 
             # Extract headers
-            headers = {h['name']: h['value'] for h in msg['payload']['headers']}
-            sender = headers.get('From', 'Unknown')
+            headers = {h['name']: h['value'] for h in msg['payload'].get('headers', [])}
+            sender = headers.get('From', 'Unknown Sender')
             subject = headers.get('Subject', 'No Subject')
+            date_sent = headers.get('Date', datetime.now().isoformat())
             snippet = msg.get('snippet', '')
+            thread_id = msg.get('threadId', 'unknown')
 
             content = f'''---
 type: email
 from: "{sender}"
 subject: "{subject}"
-received: "{datetime.now().isoformat()}"
+received: "{date_sent}"
+detected_at: "{datetime.now().isoformat()}"
 priority: high
 status: pending
 message_id: "{message['id']}"
+thread_id: "{thread_id}"
 ---
 
-## Email Content
+# New Email from {sender}
+
+**Subject**: {subject}
+**Date**: {date_sent}
+
+## Content Snippet
 {snippet}
 
 ## Suggested Actions
 - [ ] Reply to sender
-- [ ] Forward to relevant party
+- [ ] View full thread {thread_id}
 - [ ] Archive after processing
 '''
             filepath = self.needs_action / f'EMAIL_{message["id"]}.md'

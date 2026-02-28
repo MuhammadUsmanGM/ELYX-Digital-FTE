@@ -2,8 +2,11 @@ import time
 import logging
 import os
 import subprocess
+import random
+import json
 from pathlib import Path
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 class BaseWatcher(ABC):
     def __init__(self, vault_path: str, check_interval: int = 60, use_chrome_profile: bool = True):
@@ -23,6 +26,13 @@ class BaseWatcher(ABC):
         self.retry_delay = 5  # seconds
         self.consecutive_errors = 0
         self.max_consecutive_errors = 10
+        
+        # Telemetry & Status
+        self.status_file = self.vault_path / "Logs" / f"{self.__class__.__name__}_status.json"
+        self.status_file.parent.mkdir(parents=True, exist_ok=True)
+        self.start_time = datetime.now()
+        self.last_check_time = None
+        self.items_processed = 0
         
     def ensure_chrome_running(self):
         """Ensure Chrome is running with the ELYX profile."""
@@ -88,10 +98,50 @@ class BaseWatcher(ABC):
                 'headless': self.browser_headless,
                 'viewport': {'width': 1280, 'height': 800},
                 'locale': 'en-US',
-                'args': ['--disable-gpu', '--no-sandbox', '--disable-dev-shm-usage', '--disable-blink-features=AutomationControlled']
+                'args': [
+                    '--disable-gpu', 
+                    '--no-sandbox', 
+                    '--disable-dev-shm-usage', 
+                    '--disable-blink-features=AutomationControlled',
+                    '--excludeSwitches=enable-automation',
+                    '--use-fake-ui-for-media-stream'
+                ]
             }
         else:
             return {'headless': self.browser_headless, 'viewport': {'width': 1280, 'height': 800}}
+
+    def human_delay(self, min_sec=1, max_sec=3):
+        """Sleep for a random human-like duration"""
+        time.sleep(random.uniform(min_sec, max_sec))
+
+    def stealth_move_mouse(self, page):
+        """Simulate random mouse movements for anti-bot detection"""
+        if not page: return
+        try:
+            viewport = page.viewport_size
+            if viewport:
+                x = random.randint(0, viewport['width'])
+                y = random.randint(0, viewport['height'])
+                page.mouse.move(x, y, steps=random.randint(5, 15))
+        except Exception:
+            pass
+
+    def report_status(self, items_found=0):
+        """Report watcher status for telemetry"""
+        self.last_check_time = datetime.now()
+        status = {
+            "watcher": self.__class__.__name__,
+            "status": "online",
+            "last_check": self.last_check_time.isoformat(),
+            "items_processed": self.items_processed,
+            "consecutive_errors": self.consecutive_errors,
+            "uptime_seconds": (self.last_check_time - self.start_time).total_seconds()
+        }
+        try:
+            with open(self.status_file, 'w') as f:
+                json.dump(status, f, indent=2)
+        except Exception as e:
+            self.logger.error(f"Failed to write status: {e}")
     
     def execute_with_retry(self, func, *args, **kwargs):
         """Execute a function with retry logic and exponential backoff"""
@@ -158,8 +208,14 @@ class BaseWatcher(ABC):
                     for item in items:
                         action_file = self.create_action_file(item)
                         self.logger.info(f'Created action file: {action_file}')
+                        self.items_processed += 1
+                
+                self.report_status(len(items) if items else 0)
                 
             except Exception as e:
                 self.logger.error(f'Error in {self.__class__.__name__}: {e}')
+                self.report_status()
             
-            time.sleep(self.check_interval)
+            # Add random jitter to check interval
+            jitter = random.uniform(0.8, 1.2)
+            time.sleep(self.check_interval * jitter)
