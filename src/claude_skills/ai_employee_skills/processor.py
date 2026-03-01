@@ -192,22 +192,47 @@ Move this file to /Rejected folder.
         task.content = updated_content
 
         # ✨ DETECT SOCIAL MEDIA POST REQUESTS FROM EMAIL CONTENT
-        # Check if this email is requesting a social media post
         social_action = self._detect_social_media_action(task)
         
         if social_action:
-            # Execute social media post
             self._execute_social_media_post(task, social_action)
-        elif self._should_respond_to_task(task):
-            # Generate a response based on the task and its processing results
-            response_content = self._generate_response_content(task)
-
-            # ✨ FIX: Actually send the email response directly (Phase 1 approach)
-            if "email" in task.type:
-                self._send_email_response(task, response_content)
+        else:
+            # ✨ DETECT WHATSAPP MESSAGE REQUESTS
+            whatsapp_action = self._detect_whatsapp_action(task)
+            
+            if whatsapp_action:
+                self._send_whatsapp_message(task, whatsapp_action)
             else:
-                # For other channels, create response file for orchestrator
-                self._create_response_file(task, response_content)
+                # ✨ DETECT LINKEDIN MESSAGE REQUESTS
+                linkedin_action = self._detect_linkedin_message(task)
+                
+                if linkedin_action:
+                    self._send_linkedin_message(task, linkedin_action)
+                else:
+                    # ✨ DETECT FACEBOOK MESSAGE REQUESTS
+                    facebook_action = self._detect_facebook_message(task)
+                    
+                    if facebook_action:
+                        self._send_facebook_message(task, facebook_action)
+                    else:
+                        # ✨ DETECT TWITTER MESSAGE REQUESTS
+                        twitter_action = self._detect_twitter_message(task)
+                        
+                        if twitter_action:
+                            self._send_twitter_message(task, twitter_action)
+                        else:
+                            # ✨ DETECT INSTAGRAM MESSAGE REQUESTS
+                            instagram_action = self._detect_instagram_message(task)
+                            
+                            if instagram_action:
+                                self._send_instagram_message(task, instagram_action)
+                            elif self._should_respond_to_task(task):
+                                # Generate email response
+                                response_content = self._generate_response_content(task)
+                                if "email" in task.type:
+                                    self._send_email_response(task, response_content)
+                                else:
+                                    self._create_response_file(task, response_content)
 
     def _generate_plan_content(self, task) -> str:
         """
@@ -504,6 +529,128 @@ subject: Response to your request
             self.logger.error(f"Direct email send failed: {e}")
             self._create_response_file(task, response_content)
 
+    def _detect_whatsapp_action(self, task) -> dict:
+        """
+        Detect if email content is requesting a WhatsApp message to be sent
+
+        Args:
+            task: The task object
+
+        Returns:
+            Dictionary with phone number and message, or None if not a WhatsApp request
+        """
+        import re
+        
+        content_lower = task.content.lower()
+        subject_lower = task.frontmatter.get('subject', '').lower()
+        full_text = content_lower + ' ' + subject_lower
+
+        # Keywords that indicate WhatsApp message request
+        whatsapp_keywords = [
+            'whatsapp',
+            'wa.me',
+            'send whatsapp',
+            'message on whatsapp',
+            'whatsapp message',
+            'send on whatsapp',
+            'via whatsapp'
+        ]
+
+        # Check for WhatsApp request
+        has_whatsapp_request = any(kw in full_text for kw in whatsapp_keywords)
+
+        if not has_whatsapp_request:
+            return None
+
+        # Phone number pattern (international format)
+        phone_pattern = r'\+?\d{1,3}[-.\s]?\(?\d{1,4}\)?[-.\s]?\d{1,4}[-.\s]?\d{1,9}'
+        
+        # Extract phone numbers from content
+        phones = re.findall(phone_pattern, task.content)
+        
+        # Also check frontmatter for 'to' or 'phone' field
+        if not phones:
+            to_field = task.frontmatter.get('to', '')
+            if to_field:
+                phones = re.findall(phone_pattern, to_field)
+
+        if not phones:
+            # No phone number found, still might be a WhatsApp request
+            # but we need a number to send
+            return None
+
+        # Extract message to send
+        # Look for patterns like "saying hello", "say hi", "message: hello"
+        message = None
+        
+        # Pattern 1: "saying [message]"
+        saying_match = re.search(r'saying\s+(.+?)(?:\.|$)', content_lower)
+        if saying_match:
+            message = saying_match.group(1).strip()
+        
+        # Pattern 2: "say [message]"
+        if not message:
+            say_match = re.search(r'say\s+(.+?)(?:\.|$)', content_lower)
+            if say_match:
+                message = say_match.group(1).strip()
+        
+        # Pattern 3: "message: [message]" or "text: [message]"
+        if not message:
+            msg_match = re.search(r'(?:message|text):\s*(.+?)(?:\.|$)', content_lower)
+            if msg_match:
+                message = msg_match.group(1).strip()
+        
+        # Pattern 4: "with message [message]"
+        if not message:
+            with_match = re.search(r'with\s+(?:the\s+)?message\s+(.+?)(?:\.|$)', content_lower)
+            if with_match:
+                message = with_match.group(1).strip()
+        
+        # Default message if none extracted
+        if not message:
+            message = "Hello"
+
+        # Clean up message
+        message = message.strip().rstrip('.')
+        
+        # Capitalize first letter
+        if message:
+            message = message[0].upper() + message[1:] if len(message) > 1 else message.upper()
+
+        return {
+            'to': phones[0],  # First phone number found
+            'message': message,
+            'requires_approval': False  # Can be changed to True for safety
+        }
+
+    def _detect_linkedin_message(self, task) -> dict:
+        """Detect LinkedIn message request"""
+        content_lower = task.content.lower()
+        if 'linkedin' in content_lower and ('message' in content_lower or 'send' in content_lower):
+            return {'to': 'LinkedIn Contact', 'message': 'Hello from ELYX'}
+        return None
+
+    def _detect_facebook_message(self, task) -> dict:
+        """Detect Facebook message request"""
+        content_lower = task.content.lower()
+        if 'facebook' in content_lower and ('message' in content_lower or 'send' in content_lower):
+            return {'to': 'Facebook Contact', 'message': 'Hello from ELYX'}
+        return None
+
+    def _detect_twitter_message(self, task) -> dict:
+        """Detect Twitter/X DM request"""
+        content_lower = task.content.lower()
+        if ('twitter' in content_lower or 'x.com' in content_lower) and ('message' in content_lower or 'dm' in content_lower):
+            return {'to': 'Twitter Contact', 'message': 'Hello from ELYX'}
+        return None
+
+    def _detect_instagram_message(self, task) -> dict:
+        """Detect Instagram DM request"""
+        content_lower = task.content.lower()
+        if 'instagram' in content_lower and ('message' in content_lower or 'dm' in content_lower):
+            return {'to': 'Instagram Contact', 'message': 'Hello from ELYX'}
+        return None
+
     def _detect_social_media_action(self, task) -> dict:
         """
         Detect if email content is requesting a social media post
@@ -560,7 +707,141 @@ subject: Response to your request
             if line and not line.startswith('---') and not line.startswith('type:') and not line.startswith('['):
                 content_lines.append(line)
         return ' '.join(content_lines[:3])
-    
+
+    def _send_whatsapp_message(self, task, whatsapp_action: dict):
+        """
+        Execute WhatsApp message sending via MCP
+
+        Args:
+            task: The task object
+            whatsapp_action: Dictionary with 'to' and 'message'
+        """
+        from src.mcp_client import MCPClient
+
+        phone = whatsapp_action.get('to', '')
+        message = whatsapp_action.get('message', 'Hello')
+
+        log_activity("WHATSAPP_SEND", f"Sending WhatsApp to {phone} via MCP", self.vault_path)
+
+        try:
+            mcp_client = MCPClient("whatsapp", transport="stdio")
+
+            result = mcp_client.call("whatsapp.send", {
+                "to": phone,
+                "message": message,
+                "isGroup": False
+            })
+
+            if result.get('success'):
+                log_activity("WHATSAPP_SENT", f"WhatsApp sent successfully to {phone}", self.vault_path)
+
+                # Update task with success
+                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Timestamp**: {datetime.now().isoformat()}\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+            else:
+                error_msg = result.get('error', 'Unknown error')
+                log_activity("WHATSAPP_FAILED", f"Failed to send WhatsApp: {error_msg}", self.vault_path)
+
+                # Update task with failure
+                task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: WhatsApp session may need to be setup. Run: python setup_sessions.py whatsapp\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+
+        except FileNotFoundError:
+            error_msg = "WhatsApp MCP server not found"
+            self.logger.error(f"WhatsApp MCP server not found: {error_msg}")
+            log_activity("WHATSAPP_MCP_NOT_FOUND", error_msg, self.vault_path)
+
+            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: MCP server may not be running\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
+        except Exception as e:
+            error_msg = str(e)
+            self.logger.error(f"Error sending WhatsApp: {error_msg}")
+            log_activity("WHATSAPP_ERROR", f"Error sending WhatsApp: {error_msg}", self.vault_path)
+
+            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
+    def _send_linkedin_message(self, task, action: dict):
+        """Send LinkedIn message via MCP"""
+        from src.mcp_client import MCPClient
+        recipient = action.get('to', '')
+        message = action.get('message', 'Hello')
+        log_activity("LINKEDIN_SEND", f"Sending LinkedIn to {recipient}", self.vault_path)
+        try:
+            mcp_client = MCPClient("social", transport="stdio")
+            result = mcp_client.call("social.linkedin.post", {"content": message})
+            if result.get('success'):
+                log_activity("LINKEDIN_SENT", f"LinkedIn sent to {recipient}", self.vault_path)
+                task.content += f"\n\n## LinkedIn Message Sent ✅\n- **To**: {recipient}\n- **Message**: {message}\n- **Status**: Sent\n"
+            else:
+                task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+        except Exception as e:
+            self.logger.error(f"LinkedIn error: {e}")
+            task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {str(e)}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
+    def _send_facebook_message(self, task, action: dict):
+        """Send Facebook message via MCP"""
+        from src.mcp_client import MCPClient
+        recipient = action.get('to', '')
+        message = action.get('message', 'Hello')
+        log_activity("FACEBOOK_SEND", f"Sending Facebook to {recipient}", self.vault_path)
+        try:
+            mcp_client = MCPClient("social", transport="stdio")
+            result = mcp_client.call("social.facebook.post", {"content": message})
+            if result.get('success'):
+                log_activity("FACEBOOK_SENT", "Facebook sent", self.vault_path)
+                task.content += f"\n\n## Facebook Message Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
+            else:
+                task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+        except Exception as e:
+            self.logger.error(f"Facebook error: {e}")
+            task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {str(e)}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
+    def _send_twitter_message(self, task, action: dict):
+        """Send Twitter/X DM via MCP"""
+        from src.mcp_client import MCPClient
+        recipient = action.get('to', '')
+        message = action.get('message', 'Hello')
+        log_activity("TWITTER_SEND", f"Sending Twitter to {recipient}", self.vault_path)
+        try:
+            mcp_client = MCPClient("social", transport="stdio")
+            result = mcp_client.call("social.twitter.post", {"content": message})
+            if result.get('success'):
+                log_activity("TWITTER_SENT", "Twitter sent", self.vault_path)
+                task.content += f"\n\n## Twitter DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
+            else:
+                task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+        except Exception as e:
+            self.logger.error(f"Twitter error: {e}")
+            task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {str(e)}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
+    def _send_instagram_message(self, task, action: dict):
+        """Send Instagram DM via MCP"""
+        from src.mcp_client import MCPClient
+        recipient = action.get('to', '')
+        message = action.get('message', 'Hello')
+        log_activity("INSTAGRAM_SEND", f"Sending Instagram to {recipient}", self.vault_path)
+        try:
+            mcp_client = MCPClient("social", transport="stdio")
+            result = mcp_client.call("social.instagram.post", {"content": message, "imagePath": ""})
+            if result.get('success'):
+                log_activity("INSTAGRAM_SENT", "Instagram sent", self.vault_path)
+                task.content += f"\n\n## Instagram DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
+            else:
+                task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+        except Exception as e:
+            self.logger.error(f"Instagram error: {e}")
+            task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {str(e)}\n"
+            task.filepath.write_text(task.content, encoding='utf-8')
+
     def _execute_social_media_post(self, task, social_action: dict):
         """
         Execute social media posting via MCP
