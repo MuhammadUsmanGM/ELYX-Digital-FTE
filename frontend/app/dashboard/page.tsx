@@ -184,11 +184,11 @@ export default function DashboardPage() {
         </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-          
+
           {/* Main Content: Activity & Timeline */}
           <div className="lg:col-span-8 space-y-10">
-            
-            {/* Consciousness Pulse visualizer (Central Dashboard Piece) */}
+
+            {/* Operational Pulse visualizer (Central Dashboard Piece) */}
             <motion.div variants={itemVariants} className="glass-panel rounded-[3rem] p-12 relative overflow-hidden group border border-white/5 shadow-2xl">
                <div className="absolute inset-0 bg-gradient-to-br from-primary/[0.02] via-transparent to-accent/[0.02] pointer-events-none" />
                <div className="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity">

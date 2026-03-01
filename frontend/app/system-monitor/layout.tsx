@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Consciousness Stream | Core Processing Feed",
-  description: "Monitor the real-time reasoning and consciousness stream of your ELYX AI employee.",
+  title: "System Monitor | Core Processing Feed",
+  description: "Monitor the real-time reasoning and processing stream of your ELYX AI employee.",
 };
 
-export default function ConsciousnessLayout({
+export default function SystemMonitorLayout({
   children,
 }: {
   children: React.ReactNode;
