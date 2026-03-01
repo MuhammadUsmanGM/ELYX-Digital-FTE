@@ -1,18 +1,22 @@
 """
-setup_sessions.py - One-time login script for all social media platforms.
+setup_sessions.py - One-time login script for all social media platforms and Odoo.
 
 Run this ONCE before starting ELYX. It opens each platform in a visible
 Playwright browser so you can log in manually. Sessions are saved to
 the sessions/ directory and reused automatically afterward.
 
+For Odoo, it will guide you through API credential setup.
+
 Usage:
     python setup_sessions.py                    # All platforms
     python setup_sessions.py whatsapp           # Single platform
     python setup_sessions.py linkedin twitter   # Multiple platforms
+    python setup_sessions.py odoo               # Odoo setup only
 """
 
 import sys
 import time
+import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 
@@ -71,6 +75,18 @@ PLATFORMS = {
         ),
         "wait_seconds": 60,
     },
+    "odoo": {
+        "url": "https://elyx-ai.odoo.com",
+        "session_dir": "odoo_session",
+        "logged_in_selector": '.o_menu_systray, .o_dropdown_menu',
+        "instructions": (
+            "Log in to Odoo with your email and password.\n"
+            "Once the Odoo dashboard loads — press Enter here.\n"
+            "After login, you'll be prompted to enter Odoo URL, Database, and API credentials."
+        ),
+        "wait_seconds": 60,
+        "requires_api_setup": True,
+    },
 }
 
 
@@ -106,11 +122,91 @@ def setup_platform(name: str, config: dict):
             print(f"⚠ Could not auto-verify {name.upper()} login, but session was saved anyway.")
             print("  If the watcher fails, run this script again for this platform.")
 
+        # For Odoo, also setup API credentials
+        if config.get("requires_api_setup"):
+            setup_odoo_credentials(page)
+
         # Give browser a moment to flush cookies/storage to disk
         time.sleep(2)
         browser.close()
 
     print(f"✓ {name.upper()} session saved to {session_dir}\n")
+
+
+def setup_odoo_credentials(page):
+    """Guide user through Odoo API credential setup"""
+    print("\n" + "="*60)
+    print("  ODOO API CREDENTIALS SETUP")
+    print("="*60)
+    print("\nNow we'll configure Odoo API access for ELYX.\n")
+    
+    # Get Odoo URL
+    default_url = "https://elyx-ai.odoo.com"
+    odoo_url = input(f"Odoo URL [{default_url}]: ").strip() or default_url
+    
+    # Get Database name
+    default_db = "elyx-ai"
+    odoo_db = input(f"Database name [{default_db}]: ").strip() or default_db
+    
+    # Get Username
+    default_user = "elyx.ai.employ@gmail.com"
+    odoo_username = input(f"Username [{default_user}]: ").strip() or default_user
+    
+    # Get Password
+    import getpass
+    print("\nNote: Password will not be displayed as you type")
+    odoo_password = getpass.getpass("Odoo password: ").strip()
+    
+    if not odoo_password:
+        print("⚠ Password is required for Odoo integration")
+        retry = input("Do you want to try again? (y/n): ").lower()
+        if retry == 'y':
+            setup_odoo_credentials(page)
+        return
+    
+    # Save to .env file
+    env_path = Path(".env")
+    content = ""
+    
+    if env_path.exists():
+        content = env_path.read_text(encoding='utf-8')
+    
+    # Remove existing Odoo credentials
+    lines = content.split('\n')
+    filtered_lines = []
+    skip_odoo = False
+    
+    for line in lines:
+        if line.startswith('# Odoo Configuration'):
+            skip_odoo = True
+            continue
+        if skip_odoo and line.strip() == '' and not line.startswith('ODOO_'):
+            skip_odoo = False
+            continue
+        if not skip_odoo or not line.startswith('ODOO_'):
+            filtered_lines.append(line)
+    
+    content = '\n'.join(filtered_lines)
+    
+    # Add new credentials
+    odoo_config = f"""
+# Odoo Configuration
+ODOO_URL={odoo_url}
+ODOO_DB={odoo_db}
+ODOO_USERNAME={odoo_username}
+ODOO_PASSWORD={odoo_password}
+ODOO_API_KEY=
+ODOO_COMPANY_ID=1
+ODOO_CURRENCY_ID=2
+"""
+    
+    content += odoo_config
+    env_path.write_text(content, encoding='utf-8')
+    
+    print("\n✓ Odoo credentials saved to .env")
+    print(f"  URL: {odoo_url}")
+    print(f"  Database: {odoo_db}")
+    print(f"  Username: {odoo_username}")
 
 
 def main():
@@ -131,7 +227,8 @@ def main():
     print("==================")
     print(f"Will set up: {list(platforms_to_setup.keys())}")
     print("\nA browser window will open for each platform.")
-    print("Log in manually — your session will be saved automatically.\n")
+    print("Log in manually — your session will be saved automatically.")
+    print("\nFor Odoo: You'll also configure API credentials after login.\n")
 
     for name, config in platforms_to_setup.items():
         try:
