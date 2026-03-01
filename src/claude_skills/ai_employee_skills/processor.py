@@ -10,7 +10,7 @@ sys.path.insert(0, str(project_root))
 from src.utils.vault import VaultEntry, create_vault_entry, move_file_to_folder, get_pending_tasks
 from src.utils.handbook_parser import HandbookParser
 from src.utils.dashboard import update_dashboard, get_dashboard_summary
-from src.utils.logger import log_activity
+from src.utils.logger import log_activity, setup_logger
 
 class TaskProcessor:
     """
@@ -25,6 +25,7 @@ class TaskProcessor:
         self.done_path = self.vault_path / "Done"
         self.plans_path = self.vault_path / "Plans"
         self.ai_service = ai_service
+        self.logger = setup_logger("TaskProcessor")
 
     def process_pending_tasks(self):
         """
@@ -195,8 +196,12 @@ Move this file to /Rejected folder.
             # Generate a response based on the task and its processing results
             response_content = self._generate_response_content(task)
 
-            # Create a response file that the orchestrator will pick up
-            self._create_response_file(task, response_content)
+            # ✨ FIX: Actually send the email response directly (Phase 1 approach)
+            if "email" in task.type:
+                self._send_email_response(task, response_content)
+            else:
+                # For other channels, create response file for orchestrator
+                self._create_response_file(task, response_content)
 
     def _generate_plan_content(self, task) -> str:
         """
@@ -213,8 +218,8 @@ Move this file to /Rejected folder.
             plan += "1. Parse original email content for key request points.\n"
             plan += "2. Reference Company Handbook for response guidelines.\n"
             plan += "3. Draft a professional response incorporating requested data.\n"
-            plan += "4. Format response for the target communication channel.\n"
-            plan += "5. Queue response for delivery via Orchestrator.\n"
+            plan += "4. Send response directly via Gmail API.\n"
+            plan += "5. Move task to Done/ and update Dashboard.md.\n"
         elif "linkedin" in task.type:
             plan += "1. Analyze LinkedIn message context and sender profile.\n"
             plan += "2. Cross-reference with internal conversation history.\n"
@@ -403,6 +408,95 @@ subject: Response to your request
         response_filepath.write_text(response_content_full)
 
         log_activity("RESPONSE_CREATED", f"Created response file: {response_filename}", self.vault_path)
+
+    def _send_email_response(self, task, response_content: str):
+        """
+        Actually send an email response using MCP (Universal Protocol)
+        Works with any AI agent: Claude, Qwen, Gemini, Codex
+        
+        Args:
+            task: The original task that was processed
+            response_content: Content of the response to send
+        """
+        from src.mcp_client import MCPClient
+        
+        try:
+            # Extract recipient and subject from task
+            recipient = task.frontmatter.get('from', '')
+            original_subject = task.frontmatter.get('subject', 'Your Request')
+            
+            # Validate recipient is an email address
+            import re
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if not re.match(email_pattern, recipient):
+                self.logger.warning(f"Invalid email recipient: {recipient}. Creating response file instead.")
+                self._create_response_file(task, response_content)
+                return
+            
+            # Initialize MCP client (universal protocol)
+            mcp_client = MCPClient("email", transport="stdio")
+            
+            # Send the email via MCP
+            log_activity("EMAIL_SENDING_MCP", f"Sending email response to {recipient} via MCP", self.vault_path)
+            
+            result = mcp_client.call("email.send", {
+                "to": recipient,
+                "subject": f"Re: {original_subject}",
+                "body": response_content
+            })
+            
+            if result.get('success'):
+                log_activity("EMAIL_SENT_MCP", f"Email sent successfully to {recipient}. Message ID: {result.get('message_id')}", self.vault_path)
+                
+                # Update task with success
+                task.content += f"\n\n## Email Sent via MCP ✅\n- **To**: {recipient}\n- **Subject**: Re: {original_subject}\n- **Status**: Sent successfully\n- **Message ID**: {result.get('message_id')}\n- **Protocol**: Universal MCP (JSON-RPC 2.0)\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+            else:
+                log_activity("EMAIL_FAILED_MCP", f"Failed to send email via MCP: {result.get('error', 'Unknown error')}", self.vault_path)
+                # Create response file as fallback
+                self._create_response_file(task, response_content)
+                
+        except FileNotFoundError as e:
+            # MCP server not found - fallback to direct Python
+            self.logger.warning(f"MCP server not found: {e}. Falling back to direct Python.")
+            log_activity("EMAIL_MCP_FALLBACK", f"MCP not available, using direct Python", self.vault_path)
+            self._send_email_response_direct(task, response_content)
+        except Exception as e:
+            self.logger.error(f"Error sending email via MCP: {e}")
+            log_activity("EMAIL_MCP_ERROR", f"Error sending email via MCP: {str(e)}", self.vault_path)
+            # Fallback: create response file
+            self._create_response_file(task, response_content)
+    
+    def _send_email_response_direct(self, task, response_content: str):
+        """
+        Fallback: Send email directly via Python (Phase 1 approach)
+        """
+        import asyncio
+        from src.response_handlers.email_response_handler import EmailResponseHandler
+        
+        try:
+            recipient = task.frontmatter.get('from', '')
+            original_subject = task.frontmatter.get('subject', 'Your Request')
+            
+            handler = EmailResponseHandler()
+            result = asyncio.run(
+                handler.send_response(
+                    recipient_identifier=recipient,
+                    content=response_content,
+                    subject=f"Re: {original_subject}"
+                )
+            )
+            
+            if result.get('status') == 'sent':
+                log_activity("EMAIL_SENT_DIRECT", f"Email sent successfully (direct Python) to {recipient}", self.vault_path)
+                task.content += f"\n\n## Email Sent (Direct Python) ✅\n- **To**: {recipient}\n- **Message ID**: {result.get('message_id')}\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+            else:
+                self._create_response_file(task, response_content)
+                
+        except Exception as e:
+            self.logger.error(f"Direct email send failed: {e}")
+            self._create_response_file(task, response_content)
 
     def process_approval_requests(self):
         """
