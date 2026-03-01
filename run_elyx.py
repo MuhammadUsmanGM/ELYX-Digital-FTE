@@ -28,19 +28,20 @@ class Colors:
     ENDC = '\033[0m'
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
+    
+    # RGB Colors for gradient
+    ELYX_GRADIENT = '\033[38;2;0;201;167m'  # Cyan/teal color
 
 def print_banner():
     """Print ELYX startup banner with ASCII art"""
-    # ELYX ASCII Art - Pure ASCII (no Unicode)
-    print(f"\n{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  [E]____[L]____[Y]____[X]____{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  | ___| | ___| | ___| | ___|{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  | |__  | |__  | |__  | |__  {Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  |  __| |  __| |  __| |  __| {Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  | |___ | |___ | |___ | |___ {Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKCYAN}  |____| |____| |____| |____| {Colors.ENDC}")
-    print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}  Autonomous AI Employee - Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
+    # ELYX ASCII Art with gradient color
+    print(f"\n{Colors.ELYX_GRADIENT}███████╗██╗     ██╗   ██╗██╗  ██╗{Colors.ENDC}")
+    print(f"{Colors.ELYX_GRADIENT}██╔════╝██║     ╚██╗ ██╔╝╚██╗██╔╝{Colors.ENDC}")
+    print(f"{Colors.ELYX_GRADIENT}█████╗  ██║      ╚████╔╝  ╚███╔╝ {Colors.ENDC}")
+    print(f"{Colors.ELYX_GRADIENT}██╔══╝  ██║       ╚██╔╝   ██╔██╗ {Colors.ENDC}")
+    print(f"{Colors.ELYX_GRADIENT}███████╗███████╗   ██║   ██╔╝ ██╗{Colors.ENDC}")
+    print(f"{Colors.ELYX_GRADIENT}╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}{Colors.OKCYAN}  Autonomous AI Employee - Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
     print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
 
 def print_section(title: str):
