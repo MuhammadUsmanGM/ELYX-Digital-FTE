@@ -1,7 +1,13 @@
 #!/usr/bin/env python3
 """
 ELYX - Autonomous AI Employee
-Main Startup Script
+Main Startup Script - ALL-IN-ONE
+
+Starts:
+1. Vault API (Port 8080)
+2. Settings API (Port 8081)
+3. Next.js Frontend (Port 3000)
+4. ELYX Orchestrator & Watchers
 
 Local-First | Multi-Platform | Human-in-the-Loop
 """
@@ -10,6 +16,8 @@ import os
 import sys
 import time
 import threading
+import subprocess
+import signal
 from pathlib import Path
 from datetime import datetime
 
@@ -31,6 +39,92 @@ class Colors:
     
     # RGB Colors for gradient
     ELYX_GRADIENT = '\033[38;2;0;201;167m'  # Cyan/teal color
+
+# Global process tracking
+processes = []
+
+def start_vault_api():
+    """Start Vault API server"""
+    print(f"\n{Colors.BOLD}Starting Vault API (Port 8080)...{Colors.ENDC}")
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, str(project_root / "src" / "api" / "vault_api.py"), "--port", "8080"],
+            cwd=str(project_root)
+        )
+        processes.append(proc)
+        time.sleep(2)
+        print(f"  {Colors.OKGREEN}✓ Vault API running at http://localhost:8080{Colors.ENDC}")
+        return True
+    except Exception as e:
+        print(f"  {Colors.FAIL}✗ Failed to start Vault API: {e}{Colors.ENDC}")
+        return False
+
+def start_settings_api():
+    """Start Settings API server"""
+    print(f"\n{Colors.BOLD}Starting Settings API (Port 8081)...{Colors.ENDC}")
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, str(project_root / "src" / "api" / "settings_api.py"), "--port", "8081"],
+            cwd=str(project_root)
+        )
+        processes.append(proc)
+        time.sleep(2)
+        print(f"  {Colors.OKGREEN}✓ Settings API running at http://localhost:8081{Colors.ENDC}")
+        return True
+    except Exception as e:
+        print(f"  {Colors.FAIL}✗ Failed to start Settings API: {e}{Colors.ENDC}")
+        return False
+
+def start_frontend():
+    """Start Next.js frontend"""
+    print(f"\n{Colors.BOLD}Starting Frontend (Port 3000)...{Colors.ENDC}")
+    frontend_dir = project_root / "frontend"
+    
+    if not (frontend_dir / "node_modules").exists():
+        print(f"  {Colors.WARNING}⚠ Frontend not installed. Run: cd frontend && npm install{Colors.ENDC}")
+        return False
+    
+    try:
+        # Check if npm is available
+        npm_cmd = "npm"
+        if sys.platform == "win32":
+            npm_cmd = "npm.cmd"
+        
+        proc = subprocess.Popen(
+            [npm_cmd, "run", "dev"],
+            cwd=str(frontend_dir)
+        )
+        processes.append(proc)
+        time.sleep(5)
+        print(f"  {Colors.OKGREEN}✓ Frontend running at http://localhost:3000{Colors.ENDC}")
+        return True
+    except Exception as e:
+        print(f"  {Colors.FAIL}✗ Failed to start frontend: {e}{Colors.ENDC}")
+        return False
+
+def cleanup(signum=0, frame=None):
+    """Clean shutdown of all processes"""
+    print(f"\n\n{Colors.WARNING}{'='*80}{Colors.ENDC}")
+    print(f"{Colors.BOLD}Shutting Down ELYX...{Colors.ENDC}")
+    print(f"{Colors.WARNING}{'='*80}{Colors.ENDC}")
+    
+    print(f"\n  Stopping services...")
+    
+    for proc in processes:
+        try:
+            proc.terminate()
+            proc.wait(timeout=5)
+            print(f"    ✓ Service stopped")
+        except:
+            try:
+                proc.kill()
+                print(f"    ✓ Service killed")
+            except:
+                print(f"    ⚠ Service force closed")
+    
+    print(f"\n  {Colors.OKGREEN}✓ All services stopped{Colors.ENDC}")
+    print(f"  {Colors.BOLD}ELYX shutdown complete. Goodbye!{Colors.ENDC}\n")
+    sys.exit(0)
 
 def print_banner():
     """Print ELYX startup banner with ASCII art"""
@@ -127,51 +221,74 @@ def print_shutdown_message():
     print(f"  {Colors.BOLD}All systems preserved. Goodbye!{Colors.ENDC}\n")
 
 def main():
-    """Main ELYX startup function"""
+    """Main ELYX startup function - ALL-IN-ONE"""
     print_banner()
-    
-    print(f"{Colors.BOLD}[START]{Colors.ENDC} ELYX Autonomous AI Employee")
+
+    print(f"{Colors.BOLD}[START]{Colors.ENDC} ELYX Autonomous AI Employee (All-in-One)")
     print(f"{Colors.BOLD}[TIME]{Colors.ENDC}  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
+
+    # Register signal handlers for clean shutdown
+    signal.signal(signal.SIGINT, cleanup)
+    signal.signal(signal.SIGTERM, cleanup)
+
     # Initialize vault
     vault_path = Path("obsidian_vault")
     vault_path.mkdir(exist_ok=True)
     print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Vault path: {vault_path}")
+
+    # Start APIs and Frontend
+    print_section("Starting Web Services")
     
+    start_vault_api()
+    start_settings_api()
+    start_frontend()
+
     # Start Orchestrator
     print(f"\n{Colors.BOLD}[INIT]{Colors.ENDC} Starting Orchestrator...")
     try:
         from src.agents.orchestrator import Orchestrator
         orchestrator = Orchestrator(vault_path=str(vault_path))
         print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator initialized")
-        
+
         # Run orchestrator in background thread
         orch_thread = threading.Thread(target=orchestrator.run, daemon=True)
         orch_thread.start()
         print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator started (monitoring active)")
-        
+
     except Exception as e:
         print(f"{Colors.FAIL}[ERROR]{Colors.ENDC} Failed to start Orchestrator: {e}")
         import traceback
         traceback.print_exc()
-        sys.exit(1)
-    
+        cleanup()
+
     # Print comprehensive status
     print_system_status()
-    
-    print(f"\n{Colors.OKGREEN}{'=' * 80}{Colors.ENDC}")
+
+    # Print access URLs
+    print(f"\n{Colors.OKCYAN}{'='*80}{Colors.ENDC}")
     print(f"{Colors.BOLD}{Colors.OKGREEN}  ✓ SYSTEM READY - AI EMPLOYEE OPERATIONAL{Colors.ENDC}")
-    print(f"{Colors.OKGREEN}{'=' * 80}{Colors.ENDC}")
+    print(f"{Colors.OKCYAN}{'='*80}{Colors.ENDC}")
     
-    print(f"\n{Colors.WARNING}Press Ctrl+C to shut down gracefully.{Colors.ENDC}\n")
-    
+    print(f"\n{Colors.BOLD}[ACCESS POINTS]:{Colors.ENDC}")
+    print(f"  Dashboard:     http://localhost:3000")
+    print(f"  Tasks:         http://localhost:3000/tasks")
+    print(f"  Approvals:     http://localhost:3000/approvals")
+    print(f"  Settings:      http://localhost:3000/settings")
+    print(f"  Feature Flags: http://localhost:3000/settings → Feature Flags tab")
+    print()
+    print(f"  Vault API:     http://localhost:8080")
+    print(f"  Settings API:  http://localhost:8081")
+    print()
+
+    print(f"\n{Colors.WARNING}Press Ctrl+C to shut down all services gracefully.{Colors.ENDC}\n")
+
     # Keep alive
     try:
         while True:
             time.sleep(10)
     except KeyboardInterrupt:
-        print_shutdown_message()
+        cleanup()
 
 if __name__ == "__main__":
     main()
