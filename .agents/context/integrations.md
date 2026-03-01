@@ -39,9 +39,20 @@ Each platform uses a headless browser via Playwright:
 - **Twitter**: `src/agents/twitter_watcher.py`
 - **Session setup**: `setup_sessions.py`, `add_social_credentials.py`
 
-## MCP Servers (config.json > mcp_servers)
-- **Email MCP**: localhost:8080 - Send, draft, search emails
-- **Browser MCP**: localhost:8081 - Web navigation, form filling
+## MCP Servers (.claude/settings.local.json > mcpServers)
+All MCP servers use stdio transport via `@modelcontextprotocol/sdk`.
+
+| Server | Command | Tools |
+|--------|---------|-------|
+| `email-mcp` | `node src/mcp-servers/email-mcp/index.js` | send_email, draft_email, search_emails |
+| `odoo-mcp` | `node src/mcp-servers/odoo-mcp/index.js` | create_invoice, register_payment, search_invoices, get_revenue, get_overdue_invoices |
+| `social-mcp` | `node src/mcp-servers/social-mcp/index.js` | linkedin_post, facebook_post, twitter_post, instagram_post, schedule_post |
+| `whatsapp-mcp` | `node src/mcp-servers/whatsapp-mcp/index.js` | send_message, send_bulk_message, get_recent_chats, mark_as_read |
+| `filesystem-mcp` | `npx @anthropic/mcp-filesystem obsidian_vault` | read_file, write_file, list_directory |
+
+Config locations:
+- **Claude Code**: `.claude/settings.local.json` (primary)
+- **Other brains**: `mcp.json` (root, same format)
 
 ## Database
 - **Engine**: SQLite
