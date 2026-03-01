@@ -26,7 +26,9 @@ import {
   LogOut,
   ChevronRight,
   Sparkles,
-  Calendar
+  Calendar,
+  Inbox,
+  FileCheck
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { DashboardData } from "@/lib/types";
@@ -50,6 +52,8 @@ export default function SidebarLayout({
 
   const sidebarItems = [
     { icon: <LayoutDashboard size={18} />, label: "Mission Control", href: "/dashboard" },
+    { icon: <Inbox size={18} />, label: "Tasks", href: "/tasks" },
+    { icon: <FileCheck size={18} />, label: "Approvals", href: "/approvals" },
     { icon: <BarChart3 size={18} />, label: "Decision Matrix", href: "/analytics" },
     { icon: <Users size={18} />, label: "Team Directory", href: "/users" },
     { icon: <Briefcase size={18} />, label: "Business Operations", href: "/business" },

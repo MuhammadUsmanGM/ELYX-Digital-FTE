@@ -363,3 +363,83 @@ export async function fetchOnboardingStatus(userId: string): Promise<boolean> {
     return true; // Fallback to true if backend is down to avoid blocking user
   }
 }
+
+// Vault API Functions (for Tasks and Approvals pages)
+const VAULT_API_BASE = "http://localhost:8080/api/vault";
+
+export async function fetchVaultTasks(folder: string = "Needs_Action"): Promise<Task[]> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/tasks?folder=${folder}`);
+    if (!response.ok) throw new Error("Vault API offline");
+    const data = await response.json();
+    
+    return (data.tasks || []).map((t: any) => ({
+      id: t.id,
+      type: t.type || "unknown",
+      from: t.from || "Unknown",
+      priority: t.priority || "medium",
+      status: t.status || "pending",
+      created: t.created || t.frontmatter?.created,
+      subject: t.subject || "No Subject",
+      content: t.content || "",
+      suggested_actions: ["View Details"]
+    }));
+  } catch (error) {
+    console.warn("Using mock vault tasks");
+    return [] as Task[];
+  }
+}
+
+export async function approveVaultTask(filename: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/approve`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename })
+    });
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Approve task failed:", error);
+    return false;
+  }
+}
+
+export async function rejectVaultTask(filename: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/reject`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename })
+    });
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Reject task failed:", error);
+    return false;
+  }
+}
+
+export async function fetchVaultApprovals(): Promise<ApprovalRequest[]> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/approvals`);
+    if (!response.ok) throw new Error("Vault API offline");
+    const data = await response.json();
+    
+    return (data.approvals || []).map((a: any) => ({
+      id: a.id,
+      type: "approval_request",
+      action: a.frontmatter?.action || "Action Required",
+      recipient: a.from || a.frontmatter?.recipient || "N/A",
+      reason: a.content || a.frontmatter?.reason || "Review required",
+      created: a.created || a.frontmatter?.created,
+      expires: new Date(Date.now() + 86400000).toISOString(),
+      status: "pending",
+      details: a.content,
+      filename: a.filename
+    }));
+  } catch (error) {
+    console.warn("Using mock vault approvals");
+    return [] as ApprovalRequest[];
+  }
+}
