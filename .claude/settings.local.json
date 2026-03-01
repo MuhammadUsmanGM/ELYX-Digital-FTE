@@ -5,7 +5,8 @@
       "Bash(gemini:*)",
       "Bash(python:*)",
       "Bash(where:*)",
-      "Bash(cmd.exe:*)"
+      "Bash(cmd.exe:*)",
+      "Bash(rm:*)"
     ]
   }
 }

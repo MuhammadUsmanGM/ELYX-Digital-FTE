@@ -117,17 +117,11 @@
   "audit": {
     "enable_action_signing": true,
     "enable_audit_logging": true,
-    "log_path": "obsidian_vault/Blockchain_Integration/audit_trail.json"
+    "log_path": "obsidian_vault/Logs/audit_trail.json"
   },
   "backup": {
     "enabled": false,
     "sync_targets": []
-  },
-  "experimental": {
-    "enable_consciousness_emergence": false,
-    "enable_reality_simulation": false,
-    "enable_existential_reasoning": false,
-    "note": "These modules are research prototypes and not recommended for production use"
   },
   "brain_selection": {
     "active_brain": "claude",

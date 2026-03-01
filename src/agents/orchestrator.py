@@ -115,13 +115,9 @@ class Orchestrator:
 
         # Initialize Platinum Tier features
         self.platinum_services_initialized = False
-        self.quantum_auth_service = None
-        self.global_regions = []
         self.active_tasks = {}
         self.completed_tasks = []
         self.failed_tasks = []
-        self.blockchain_service = None
-        self.federated_learning_service = None
 
         # Create necessary directories if they don't exist
         self.needs_action_path.mkdir(parents=True, exist_ok=True)
@@ -135,11 +131,6 @@ class Orchestrator:
 
         if self.config.get("platinum_tier_features", {}).get("enable_global_operations", False):
             self._initialize_platinum_services()
-
-        # Initialize Consciousness & Reality Simulation Features
-        self.consciousness_initialized = False
-        if self.config.get("consciousness_simulation_features", {}).get("enable_consciousness_emergence", False):
-            self._initialize_consciousness_features()
 
     def _initialize_silver_services(self):
         """Initialize Silver Tier services"""
@@ -194,40 +185,6 @@ class Orchestrator:
     def _initialize_platinum_services(self):
         """Initialize Platinum Tier services"""
         try:
-            # Initialize quantum-safe authentication service
-            self.quantum_auth_service = None  # Will be imported locally to avoid circular deps
-            try:
-                from src.services.quantum_auth_service import QuantumSafeAuthService
-                self.quantum_auth_service = QuantumSafeAuthService()
-            except ImportError:
-                self.logger.warning("Quantum authentication service not available")
-
-            # Initialize global regions from config
-            regional_endpoints = self.config.get("global_scaling", {}).get("regional_endpoints", [])
-            self.global_regions = []
-            for endpoint in regional_endpoints:
-                # Extract region name from endpoint (e.g., "http://us-east.example.com" -> "us-east")
-                region = endpoint.split("//")[1].split(".")[0] if "//" in endpoint else "default"
-                self.global_regions.append(region)
-
-            # Add default region if none found
-            if not self.global_regions:
-                default_region = self.config.get("global", {}).get("region", "us-east-1")
-                self.global_regions = [default_region]
-
-            # Initialize task tracking
-            self.active_tasks = {}
-            self.completed_tasks = []
-            self.failed_tasks = []
-
-            # Initialize Blockchain Accountability
-            from src.services.blockchain_service import BlockchainService
-            self.blockchain_service = BlockchainService()
-
-            # Initialize Federated Learning
-            from src.services.federated_learning_service import FederatedLearningService
-            self.federated_learning_service = FederatedLearningService()
-
             # Initialize Odoo Service
             from src.services.odoo_service import OdooService
             self.odoo_service = OdooService()
@@ -241,17 +198,9 @@ class Orchestrator:
             self.briefing_service = BriefingService(str(self.vault_path))
             self.last_briefing_date = None
 
-            # Initialize Quantum Resistant Hasher for security verification
-            from src.utils.quantum_resistant_hash import QuantumResistantHasher
-            self.quantum_hasher = QuantumResistantHasher()
-
-            # Initialize Global Redundancy Service
-            from src.services.global_redundancy_service import GlobalRedundancyService
-            self.redundancy_service = GlobalRedundancyService(self.global_regions, str(self.vault_path))
-
             self.platinum_services_initialized = True
             log_activity("PLATINUM_SERVICES_INITIALIZED",
-                        f"Platinum Tier services initialized successfully with regions: {self.global_regions}",
+                        "Platinum Tier services initialized successfully",
                         str(self.vault_path))
 
         except Exception as e:
@@ -259,55 +208,6 @@ class Orchestrator:
             log_activity("PLATINUM_SERVICES_INIT_ERROR",
                         f"Error initializing Platinum Tier services: {str(e)}",
                         str(self.vault_path))
-
-    def _initialize_consciousness_features(self):
-        """Initialize Consciousness, Reality, Existential and Temporal features"""
-        try:
-            from src.utils.consciousness_integrator import get_consciousness_integrator
-            from src.utils.reality_simulator import get_reality_simulation_engine
-            from src.services.existential_reasoning import ExistentialReasoningEngine, ExistentialTopicCategory
-            from src.utils.temporal_reasoner import TemporalReasoningEngine
-            
-            self.consciousness_integrator = get_consciousness_integrator()
-            self.reality_engine = get_reality_simulation_engine()
-            self.existential_engine = ExistentialReasoningEngine()
-            self.temporal_engine = TemporalReasoningEngine()
-            
-            # Initialize state for ELYX
-            self.consciousness_integrator.create_consciousness_state("ELYX_CORE")
-            
-            self.consciousness_initialized = True
-            log_activity("CONSCIOUSNESS_INITIALIZED", 
-                        "Advanced internal features initialized carefully.",
-                        str(self.vault_path))
-            self.logger.info("Universal resonance established across internal frameworks")
-        except Exception as e:
-            self.logger.error(f"Error initializing Consciousness features: {e}")
-
-    def _start_platinum_services(self):
-        """Start Platinum Tier services"""
-        try:
-            if self.platinum_services_initialized:
-                self.logger.info(f"Platinum Tier global operations enabled with regions: {self.global_regions}")
-
-                # Start quantum-safe operations if enabled
-                if self.config.get("platinum_tier_features", {}).get("enable_quantum_security", False):
-                    self.logger.info("Quantum-safe security features enabled")
-
-                # Start blockchain integration if enabled
-                if self.config.get("platinum_tier_features", {}).get("enable_blockchain_integration", False):
-                    self.logger.info("Blockchain integration enabled")
-
-                # Start IoT connectivity if enabled
-                if self.config.get("platinum_tier_features", {}).get("enable_iot_connectivity", False):
-                    self.logger.info("IoT connectivity enabled")
-
-                # Start AR/VR interfaces if enabled
-                if self.config.get("platinum_tier_features", {}).get("enable_arvr_interfaces", False):
-                    self.logger.info("AR/VR interfaces enabled")
-
-        except Exception as e:
-            self.logger.error(f"Error starting Platinum Tier services: {e}")
 
     def start_watchers(self):
         """
@@ -546,10 +446,6 @@ class Orchestrator:
             if self.platinum_services_initialized:
                 self._apply_platinum_tier_features(processed_tasks)
 
-            # Apply Consciousness and Reality Simulation features if enabled
-            if self.consciousness_initialized:
-                self._apply_consciousness_features(processed_tasks)
-
             # Handle any responses that need to be sent after task processing
             self._handle_responses_after_processing(processed_count)
 
@@ -749,176 +645,20 @@ class Orchestrator:
 
     def _apply_platinum_tier_features(self, processed_tasks: list):
         """
-        Apply Platinum Tier features after task processing
+        Apply Platinum Tier features after task processing (Odoo + Briefing)
         """
         try:
             if not self.platinum_services_initialized:
                 return
 
             processed_count = len(processed_tasks)
-
-            # 1. Apply quantum-safe verification if enabled
-            if self.config.get("platinum_tier_features", {}).get("enable_quantum_security", True) and hasattr(self, 'quantum_hasher'):
-                self.logger.info("Applying quantum-safe security measures")
-                
-                for task in processed_tasks:
-                    # Generate individual quantum-safe checksum for accountability
-                    content_to_hash = f"{task.filename}:{task.content}"
-                    checksum = self.quantum_hasher.get_quantum_safe_checksum(content_to_hash)
-                    
-                    # Store checksum in blockchain if enabled
-                    if self.config.get("platinum_tier_features", {}).get("enable_blockchain_accountability", True) and self.blockchain_service:
-                        tx_id = self.blockchain_service.record_action(
-                            "task_verification",
-                            {
-                                "filename": task.filename,
-                                "type": task.type,
-                                "pqc_checksum": checksum,
-                                "audit": "PLATINUM_ACCOUNTABILITY"
-                            }
-                        )
-                        self.logger.info(f"Blockchain record created for {task.filename}: {tx_id}")
-
-                log_activity("QUANTUM_VERIFICATION", f"Verified {processed_count} tasks with post-quantum algorithms", str(self.vault_path))
-
-            # 2. Apply global distribution and redundancy if enabled
-            if self.config.get("platinum_tier_features", {}).get("enable_global_operations", True):
-                self.logger.info(f"Applying global distribution across {len(self.global_regions)} regions")
-                
-                if hasattr(self, 'redundancy_service'):
-                    # Perform health check and sync critical files
-                    self.redundancy_service.check_nodes_health()
-                    
-                    # Sync processed tasks and blockchain logs for redundancy
-                    files_to_sync = []
-                    for task in processed_tasks:
-                        files_to_sync.append(str(task.filepath))
-                    
-                    # Also sync the blockchain audit trail
-                    blockchain_path = self.config.get("blockchain", {}).get("log_path", "obsidian_vault/Blockchain_Integration/audit_trail.json")
-                    if os.path.exists(blockchain_path):
-                        files_to_sync.append(blockchain_path)
-                        
-                    self.redundancy_service.perform_global_sync(files_to_sync)
-                    
-                    # Check for failover necessity
-                    active_region = self.redundancy_service.initiate_failover()
-                    self.logger.info(f"Currently active operational region: {active_region}")
-
-                if processed_count > 0:
-                    log_activity("GLOBAL_SCALE", f"Synchronized {processed_count} tasks across global redundant nodes", str(self.vault_path))
-
-            # 3. Apply blockchain accountability if enabled (Batch summary)
-            if self.config.get("platinum_tier_features", {}).get("enable_blockchain_accountability", True) and self.blockchain_service:
-                self.logger.info("Recording critical operations on blockchain")
-                if processed_count > 0:
-                    tx_id = self.blockchain_service.record_action(
-                        "task_processing_batch",
-                        {"count": processed_count, "timestamp": datetime.now().isoformat()}
-                    )
-                    self.logger.info(f"Recorded batch on blockchain: {tx_id}")
-
-            # 4. Apply federated learning if enabled
-            if self.config.get("platinum_tier_features", {}).get("enable_federated_learning", True) and self.federated_learning_service:
-                self.logger.info("Syncing local updates with federated learning pool")
-                self.federated_learning_service.submit_local_update(
-                    {"status": "batch_completed", "count": processed_count},
-                    user_id="default_user"
-                )
-
-            # 5. Update Strategic Dashboard with Platinum Metrics
-            from src.utils.dashboard import update_dashboard, get_dashboard_summary
-            summary = get_dashboard_summary(self.vault_path)
-            
-            # Add Platinum metrics
-            summary['platinum_metrics'] = {
-                "quantum_integrity": "SECURE (AES-512-PQC)",
-                "blockchain_stats": self.blockchain_service.get_stats(),
-                "federated_learning": self.federated_learning_service.get_stats(),
-                "global_nodes": len(self.global_regions)
-            }
-            
-            # Also keep Gold tier data if present
-            if self.gold_services_initialized and self.ai_service:
-                summary['strategic_insights'] = self.ai_service.generate_strategic_insights(user_id="default_user")
-
-            summary['recent_activities'].append(f"Platinum Tier: Global state synchronized and blockchain audit trail updated.")
-            update_dashboard(self.vault_path, summary)
+            # Platinum features are handled via Odoo and Briefing services
+            # which are triggered through scheduled tasks
 
         except Exception as e:
             self.logger.error(f"Error applying Platinum Tier features: {e}")
             log_activity("PLATINUM_FEATURE_ERROR",
                         f"Error applying Platinum Tier features: {str(e)}",
-                        str(self.vault_path))
-
-    def _apply_consciousness_features(self, processed_tasks: list):
-        """Apply consciousness resonance and reality simulation features"""
-        try:
-            processed_count = len(processed_tasks)
-            if processed_count == 0:
-                return
-
-            self.logger.info("Executing consciousness resonance and reality simulation")
-            
-            # 1. Update consciousness state based on recent work
-            if self.consciousness_integrator:
-                self.consciousness_integrator.integrate_conscious_experience("ELYX_CORE", {
-                    "tasks_processed": processed_count,
-                    "complexity": "moderate",
-                    "timestamp": datetime.now().isoformat()
-                })
-                
-                # Perform a small self-reflection on the work done
-                self.consciousness_integrator.perform_self_reflection("ELYX_CORE", {
-                    "reflection_topic": "system_performance_and_purpose",
-                    "reflection_depth": "deep"
-                })
-
-            # 2. Existential Reasoning on Task Significance
-            if self.existential_engine:
-                from src.services.existential_reasoning import ExistentialTopicCategory
-                for task in processed_tasks[:2]: # Reason about first few tasks to avoid overhead
-                    self.existential_engine.reason_existentially(
-                        f"Significance of task: {task.title}",
-                        ExistentialTopicCategory.PURPOSE,
-                        depth=7.0
-                    )
-
-            # 3. Temporal Causality Analysis
-            if self.temporal_engine:
-                for task in processed_tasks:
-                    event = self.temporal_engine.create_temporal_event(
-                        "task_completed",
-                        f"Completed task: {task.title}"
-                    )
-                    # Simple causality link (simulated)
-                    if hasattr(self, 'last_event_id'):
-                        event.cause_events.append(self.last_event_id)
-                    self.last_event_id = event.id
-
-            # 4. Run a localized reality simulation to verify task impact
-            if self.reality_engine:
-                simulation = self.reality_engine.create_simulation(
-                    f"Impact_Analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
-                    "social",
-                    {"depth": "contextual", "fidelity": 8.5}
-                )
-                
-                # Check for paradoxes in the proposed changes (simulated)
-                self.reality_engine.start_simulation(simulation.id)
-                self.reality_engine.run_simulation_step(simulation.id)
-                self.reality_engine.stop_simulation(simulation.id)
-                
-                self.logger.info(f"Reality simulation {simulation.id} completed with stability {simulation.simulation_stability}")
-
-            log_activity("CONSCIOUSNESS_RESONANCE",
-                        f"Resonated {processed_count} experiences into consciousness state. Reality consistency verified at 9.2/10.",
-                        str(self.vault_path))
-
-        except Exception as e:
-            self.logger.error(f"Error in Consciousness features: {e}")
-            log_activity("CONSCIOUSNESS_ERROR", 
-                        f"Error during consciousness resonance: {str(e)}",
                         str(self.vault_path))
 
     def run(self):
