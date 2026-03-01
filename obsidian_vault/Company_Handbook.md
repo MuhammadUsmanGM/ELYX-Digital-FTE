@@ -116,7 +116,59 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 > - **All Messages Processed**: ELYX monitors ALL messages (no whitelist needed)
 > - **Unknown Connections**: Flag urgent requests from unknown contacts for Manual Review
 > - **Direct Messages**: Provide general professional information. For project details, create review file.
-> - **Posting**: Auto-draft posts, flag for approval before publishing
+> - **Posting**: Requires human approval before publishing (see Social Media Posting Rules below)
+
+### Social Media Posting Rules
+
+> [!success] Auto-Post Approval (No human approval needed)
+> The following posts can be published **automatically** without approval:
+> - Scheduled recurring business updates (pre-approved templates)
+> - Engagement responses (replies to comments on our posts)
+> - Community management responses (thank you messages, acknowledgments)
+
+> [!warning] Requires Human Approval
+> The following posts **always require approval** before publishing:
+> - First-time promotional content
+> - Posts mentioning revenue, clients, or business metrics
+> - Posts responding to negative feedback or criticism
+> - Posts about sensitive topics (pricing, layoffs, legal matters)
+> - Any post containing images of people (requires consent verification)
+
+### Platform-Specific Guidelines
+
+| Platform | Max Length | Hashtag Limit | Best Practices | Approval Default |
+|----------|------------|---------------|----------------|------------------|
+| **LinkedIn** | 3,000 chars | 5 hashtags | Professional tone, industry insights | ✅ Required |
+| **Facebook** | 63,206 chars | 10 hashtags | Community-focused, conversational | ✅ Required |
+| **Twitter/X** | 280 chars | 3 hashtags | Concise, timely, use threads for long content | ✅ Required |
+| **Instagram** | 2,200 chars | 30 hashtags | Visual-first, authentic, story-driven | ✅ Required |
+
+### Content Standards
+
+**Always:**
+- Maintain professional, helpful tone
+- Fact-check before posting
+- Include relevant hashtags (but don't overdo it)
+- Respond to comments within 24 hours
+- Credit sources and collaborators
+
+**Never:**
+- Post confidential information
+- Engage with trolls or negative comments publicly
+- Post without verifying image rights
+- Share client information without consent
+- Post political or controversial content without approval
+
+### Posting Workflow
+
+```
+1. Content Created → 2. Platform Formatting → 3. Approval Check → 4. Publish → 5. Log to Audit Trail
+```
+
+**For Multi-Platform Campaigns:**
+- Content is automatically formatted per platform
+- Each platform posts independently
+- Results logged to `/Social_Posts/Published/`
 
 ## 📱 Rules for Facebook, Instagram, and Twitter
 
@@ -127,6 +179,27 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 > - **Safety**: Never share private info publicly
 > - **Crisis Management**: Flag controversial threads for Human Review
 > - **Posting**: Draft posts, require approval before publishing
+
+### Instagram-Specific Rules
+
+- **Images Required**: All feed posts and stories require an image/video
+- **Image Storage**: Store images in `/Attachments/Social_Media/` before posting
+- **Stories**: 24-hour expiry, use for time-sensitive announcements
+- **DMs**: Respond professionally, move complex inquiries to email
+
+### Twitter/X-Specific Rules
+
+- **Character Limit**: 280 characters per tweet (use threads for longer content)
+- **Engagement**: Like and retweet positive mentions automatically
+- **Mentions**: Monitor brand mentions, respond to customer service queries
+- **Threads**: Use for announcements, tutorials, and detailed explanations
+
+### Facebook-Specific Rules
+
+- **Privacy**: Default to 'friends' privacy for business page posts
+- **Groups**: Can post to business-related groups (approval required)
+- **Messenger**: Respond to customer inquiries within 24 hours
+- **Events**: Can create and promote business events (approval required)
 
 ## 💰 Accounting & Odoo Protocol
 > [!money] Financial Integrity

@@ -9,6 +9,9 @@ class CommunicationChannel(Enum):
     EMAIL = "EMAIL"
     LINKEDIN = "LINKEDIN"
     WHATSAPP = "WHATSAPP"
+    FACEBOOK = "FACEBOOK"
+    TWITTER = "TWITTER"
+    INSTAGRAM = "INSTAGRAM"
 
 
 class ResponseStatus(Enum):

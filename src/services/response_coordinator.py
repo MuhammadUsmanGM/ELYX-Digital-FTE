@@ -7,6 +7,9 @@ from enum import Enum
 from src.response_handlers.email_response_handler import EmailResponseHandler
 from src.response_handlers.linkedin_response_handler import LinkedInResponseHandler
 from src.response_handlers.whatsapp_response_handler import WhatsAppResponseHandler
+from src.response_handlers.facebook_response_handler import FacebookResponseHandler
+from src.response_handlers.twitter_response_handler import TwitterResponseHandler
+from src.response_handlers.instagram_response_handler import InstagramResponseHandler
 from src.response_handlers.base_handler import CommunicationChannel, ResponseStatus
 from src.services.conversation_tracker import ConversationTracker, ResponseType, Priority
 from src.services.approval_workflow import ApprovalWorkflow, MessageType
@@ -21,6 +24,9 @@ class ResponseCoordinator:
         self._email_handler = None
         self._linkedin_handler = None
         self._whatsapp_handler = None
+        self._facebook_handler = None
+        self._twitter_handler = None
+        self._instagram_handler = None
 
         self.conversation_tracker = ConversationTracker(vault_path)
         self.approval_workflow = ApprovalWorkflow(vault_path)
@@ -32,7 +38,10 @@ class ResponseCoordinator:
         self.rate_limits = {
             CommunicationChannel.EMAIL: {"requests": [], "limit": 250, "window": 86400},  # 250/day for Gmail
             CommunicationChannel.LINKEDIN: {"requests": [], "limit": 100, "window": 3600},  # 100/hour estimate
-            CommunicationChannel.WHATSAPP: {"requests": [], "limit": 50, "window": 3600}  # 50/hour estimate
+            CommunicationChannel.WHATSAPP: {"requests": [], "limit": 50, "window": 3600},  # 50/hour estimate
+            CommunicationChannel.FACEBOOK: {"requests": [], "limit": 50, "window": 3600},  # 50/hour
+            CommunicationChannel.TWITTER: {"requests": [], "limit": 2400, "window": 86400},  # 2400/day
+            CommunicationChannel.INSTAGRAM: {"requests": [], "limit": 25, "window": 3600},  # 25/hour
         }
 
     @property
@@ -58,6 +67,30 @@ class ResponseCoordinator:
             from src.response_handlers.whatsapp_response_handler import WhatsAppResponseHandler
             self._whatsapp_handler = WhatsAppResponseHandler()
         return self._whatsapp_handler
+
+    @property
+    def facebook_handler(self):
+        """Lazy initialization of Facebook handler"""
+        if self._facebook_handler is None:
+            from src.response_handlers.facebook_response_handler import FacebookResponseHandler
+            self._facebook_handler = FacebookResponseHandler()
+        return self._facebook_handler
+
+    @property
+    def twitter_handler(self):
+        """Lazy initialization of Twitter handler"""
+        if self._twitter_handler is None:
+            from src.response_handlers.twitter_response_handler import TwitterResponseHandler
+            self._twitter_handler = TwitterResponseHandler()
+        return self._twitter_handler
+
+    @property
+    def instagram_handler(self):
+        """Lazy initialization of Instagram handler"""
+        if self._instagram_handler is None:
+            from src.response_handlers.instagram_response_handler import InstagramResponseHandler
+            self._instagram_handler = InstagramResponseHandler()
+        return self._instagram_handler
 
     async def queue_response(self, original_message_id: str, channel: CommunicationChannel,
                            recipient_identifier: str, content: str, response_type: ResponseType = ResponseType.INFORMATIONAL,
@@ -210,6 +243,21 @@ class ResponseCoordinator:
                     result = await self.linkedin_handler.send_response(recipient, content)
             elif channel == CommunicationChannel.WHATSAPP:
                 result = await self.whatsapp_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.FACEBOOK:
+                if response_message.get("response_type") == ResponseType.FEED_POST:
+                    result = await self.facebook_handler.post_to_feed(content)
+                else:
+                    result = await self.facebook_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.TWITTER:
+                if response_message.get("response_type") == ResponseType.FEED_POST:
+                    result = await self.twitter_handler.post_tweet(content)
+                else:
+                    result = await self.twitter_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.INSTAGRAM:
+                if response_message.get("response_type") == ResponseType.FEED_POST:
+                    result = await self.instagram_handler.post_to_feed(content, response_message.get("image_path"))
+                else:
+                    result = await self.instagram_handler.send_response(recipient, content)
             else:
                 raise ValueError(f"Unsupported communication channel: {channel}")
 
