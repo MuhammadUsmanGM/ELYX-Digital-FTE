@@ -18,6 +18,7 @@ import {
   Loader2
 } from "lucide-react";
 import { fetchUserPreferences, updateUserPreference } from "@/lib/api";
+import FeatureFlagsTab from "./feature-flags";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("communication");
@@ -88,7 +89,8 @@ export default function SettingsPage() {
     { id: "workflow", label: "Workflow", icon: <CheckCircle2 size={18} /> },
     { id: "notifications", label: "Notifications", icon: <Bell size={18} /> },
     { id: "ai_behavior", label: "AI Behavior", icon: <Cpu size={18} /> },
-    { id: "security", label: "System Security", icon: <Shield size={18} /> }
+    { id: "security", label: "System Security", icon: <Shield size={18} /> },
+    { id: "feature_flags", label: "Feature Flags", icon: <Cpu size={18} /> }
   ];
 
   if (loading) {
@@ -368,6 +370,11 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
+          {/* Feature Flags Tab */}
+          {activeTab === "feature_flags" && (
+            <FeatureFlagsTab />
+          )}
         </div>
       </div>
     </DashboardLayout>

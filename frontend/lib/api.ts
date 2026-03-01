@@ -443,3 +443,59 @@ export async function fetchVaultApprovals(): Promise<ApprovalRequest[]> {
     return [] as ApprovalRequest[];
   }
 }
+
+// Settings API Functions (Feature Flags)
+const SETTINGS_API_BASE = "http://localhost:8081/api/settings";
+
+export interface FeatureFlag {
+  name: string;
+  value: boolean;
+  default: boolean;
+  type: string;
+  description: string;
+  category: string;
+}
+
+export async function fetchFeatureFlags(): Promise<FeatureFlag[]> {
+  try {
+    const response = await fetch(`${SETTINGS_API_BASE}/flags`);
+    if (!response.ok) throw new Error("Settings API offline");
+    const data = await response.json();
+    return data.flags || [];
+  } catch (error) {
+    console.warn("Using mock feature flags");
+    return [
+      { name: "ENABLE_ANALYTICS", value: true, default: true, type: "boolean", description: "Enable analytics", category: "features" },
+      { name: "ENABLE_LEARNING", value: true, default: true, type: "boolean", description: "Enable learning", category: "features" },
+      { name: "ENABLE_CALENDAR_INTEGRATION", value: false, default: false, type: "boolean", description: "Enable calendar", category: "integrations" },
+      { name: "ENABLE_AUDIT_LOGGING", value: true, default: true, type: "boolean", description: "Enable audit logging", category: "security" },
+      { name: "ENABLE_ACTION_SIGNING", value: true, default: true, type: "boolean", description: "Enable action signing", category: "security" }
+    ] as FeatureFlag[];
+  }
+}
+
+export async function updateFeatureFlag(flag: string, value: boolean): Promise<boolean> {
+  try {
+    const response = await fetch(`${SETTINGS_API_BASE}/flags`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ flag, value })
+    });
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Update flag failed:", error);
+    return false;
+  }
+}
+
+export async function fetchAllSettings(): Promise<any> {
+  try {
+    const response = await fetch(`${SETTINGS_API_BASE}/all`);
+    if (!response.ok) throw new Error("Settings API offline");
+    return await response.json();
+  } catch (error) {
+    console.warn("Using mock settings");
+    return {};
+  }
+}
