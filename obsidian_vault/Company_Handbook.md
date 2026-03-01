@@ -211,9 +211,9 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 ## 🔐 Audit & Accountability
 
 ### Action Logging
-- **Cryptographic Signing**: Every processed task is hashed using SHA3-512 to ensure tamper detection
-- **Immutable Audit Trail**: Action metadata and hashes are stored in append-only logs (`audit_trail.json`) to prevent history alteration
-- **Daily Audit Logs**: Detailed execution logs stored in `/Logs/YYYY-MM-DD_Audit.json`
+- **Comprehensive Logging**: Every processed task is logged with timestamp and action details
+- **Append-Only Audit Trail**: Action metadata is stored in append-only logs (`audit_trail.json`) to prevent history alteration
+- **Daily Audit Logs**: Detailed execution logs stored in `/Logs/YYYY-MM-DD.log`
 
 ### Data Redundancy
 - **Local Backup**: Vault data should be backed up daily to secure cloud storage
@@ -221,7 +221,7 @@ Welcome to the AI Employee's decision-making guide. This handbook defines the ru
 - **Disaster Recovery**: Restore from `/Attachments` folder and Git history if needed
 
 ### Validation
-- **Integrity Checks**: Before a task is marked 'Done', its SHA3-512 checksum is verified
+- **Integrity Checks**: Task completion status is verified before marking 'Done'
 - **Audit Trail**: All critical actions are logged with timestamps and action details for compliance
 
 ## 👤 Contact Management (OPTIONAL)

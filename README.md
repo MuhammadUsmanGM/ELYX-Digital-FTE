@@ -22,7 +22,7 @@ The system combines:
 - **Local data control** and long-term memory (Obsidian vault)
 - **A swappable multi-model reasoning core** (Claude, Gemini, Qwen, Codex)
 - **Role-based task execution** with human-in-the-loop approvals
-- **Cryptographically verifiable action logs** for audit trails
+- **Comprehensive audit logging** for traceability
 
 ELYX is built to explore how autonomous AI agents can safely operate within real-world business environments without compromising data sovereignty.
 
@@ -91,10 +91,10 @@ Performs deterministic actions such as:
 - Moving files between workflow states
 
 ### 4. Audit Layer
-Logs and cryptographically signs every strategic action for traceability:
-- SHA3-512 hashing via `quantum_resistant_hash.py`
+Logs every strategic action for traceability:
 - Append-only audit trail in `audit_trail.json`
-- Daily logs in `/Logs/YYYY-MM-DD_Audit.json`
+- Daily logs in `/Logs/YYYY-MM-DD.log`
+- Cryptographic hashing for tamper detection
 
 ---
 
@@ -107,7 +107,7 @@ Logs and cryptographically signs every strategic action for traceability:
 | **Database** | SQLite + Supabase | Hybrid storage |
 | **Memory** | Obsidian (Local Markdown) | Long-term memory & GUI |
 | **ERP Integration** | Odoo Cloud | Accounting & business logic |
-| **Security** | SHA3-512 | Cryptographic action signing |
+| **Security** | Hash-based signing | Action logging & audit trails |
 | **Model Support** | Claude, Gemini, Qwen, Codex | Swappable reasoning engines |
 
 ---
@@ -143,10 +143,9 @@ Actively expanding automation capabilities and safety constraints.
 - [x] Comprehensive audit logging
 - [x] Ralph Wiggum autonomous loop
 
-**Platinum Tier (Basic)**
-- [x] SHA3-512 action signing
-- [x] Blockchain-style immutable audit log (single-node simulation)
-- [x] Ralph Wiggum autonomous loop
+**Platinum Tier (Conceptual)**
+- [ ] Distributed ledger for audit logs (design phase)
+- [ ] Ralph Wiggum autonomous loop (implemented in Gold)
 
 ### 🚧 In Development (Prototype)
 
@@ -155,13 +154,11 @@ Actively expanding automation capabilities and safety constraints.
 - [ ] Multi-region sync (requires actual cloud infrastructure)
 - [ ] Federated learning (design phase)
 
-### 📋 Planned (Not Yet Implemented)
+### 📋 Planned (Future Enhancements)
 
-- [ ] True quantum-resistant cryptography (NIST PQC standards)
-- [ ] Distributed blockchain (currently single-node append-only log)
+- [ ] Multi-region sync (requires cloud infrastructure)
 - [ ] Global failover (requires multi-region deployment)
 - [ ] AR/VR interfaces (conceptual)
-- [ ] Bio-neural interfaces (research concept only)
 
 ### 🧪 Experimental (Use at Your Own Risk)
 
@@ -243,10 +240,10 @@ ELYX includes native Windows Task Scheduler integration for autonomous 24/7 oper
 | `ELYX_Orchestrator` | At Startup | Main orchestrator coordinating all watchers |
 | `ELYX_Gmail_Watcher` | At Logon | Monitors Gmail for important messages |
 | `ELYX_WhatsApp_Watcher` | At Logon | Monitors WhatsApp for urgent messages |
-| `ELYX_LinkedIn_Watcher` | At Logon | Monitors LinkedIn messages (disabled by default) |
-| `ELYX_Facebook_Watcher` | At Logon | Monitors Facebook Messenger (disabled by default) |
-| `ELYX_Twitter_Watcher` | At Logon | Monitors Twitter/X (disabled by default) |
-| `ELYX_Instagram_Watcher` | At Logon | Monitors Instagram DMs (disabled by default) |
+| `ELYX_LinkedIn_Watcher` | At Logon | Monitors LinkedIn messages |
+| `ELYX_Facebook_Watcher` | At Logon | Monitors Facebook Messenger |
+| `ELYX_Twitter_Watcher` | At Logon | Monitors Twitter/X notifications and DMs |
+| `ELYX_Instagram_Watcher` | At Logon | Monitors Instagram DMs |
 | `ELYX_Odoo_Watcher` | Hourly | Monitors Odoo accounting |
 | `ELYX_FileSystem_Watcher` | At Startup | Monitors file drops |
 | `ELYX_CEO_Briefing` | Weekly (Mon 8 AM) | Generates weekly CEO briefing |
@@ -301,9 +298,9 @@ ELYX_ACTIVE_BRAIN=claude
 ## 🛡 Security & Data Sovereignty
 
 - **Local Vault**: Credentials and memories never leave your machine
-- **Action Signing**: All strategic actions are cryptographically signed (SHA3-512)
-- **Audit Trail**: Immutable append-only log for compliance and debugging
+- **Audit Trail**: Append-only log for compliance and debugging
 - **Human-in-the-Loop**: Sensitive actions require explicit approval
+- **Error Recovery**: Exponential backoff for failed operations
 
 ---
 
