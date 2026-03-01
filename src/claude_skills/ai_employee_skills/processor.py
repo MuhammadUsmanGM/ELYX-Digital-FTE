@@ -763,19 +763,21 @@ subject: Response to your request
             task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_linkedin_message(self, task, action: dict):
-        """Send LinkedIn message via MCP"""
-        from src.mcp_client import MCPClient
+        """Send LinkedIn message via direct Python (no MCP)"""
+        import subprocess
         recipient = action.get('to', '')
         message = action.get('message', 'Hello')
         log_activity("LINKEDIN_SEND", f"Sending LinkedIn to {recipient}", self.vault_path)
         try:
-            mcp_client = MCPClient("social", transport="stdio")
-            result = mcp_client.call("social.linkedin.post", {"content": message})
-            if result.get('success'):
-                log_activity("LINKEDIN_SENT", f"LinkedIn sent to {recipient}", self.vault_path)
-                task.content += f"\n\n## LinkedIn Message Sent ✅\n- **To**: {recipient}\n- **Message**: {message}\n- **Status**: Sent\n"
+            result = subprocess.run(
+                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "linkedin", message],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
+                log_activity("LINKEDIN_SENT", "LinkedIn sent", self.vault_path)
+                task.content += f"\n\n## LinkedIn Message Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
             else:
-                task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {result.get('error')}\n"
+                task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {result.stderr}\n"
             task.filepath.write_text(task.content, encoding='utf-8')
         except Exception as e:
             self.logger.error(f"LinkedIn error: {e}")
@@ -783,19 +785,21 @@ subject: Response to your request
             task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_facebook_message(self, task, action: dict):
-        """Send Facebook message via MCP"""
-        from src.mcp_client import MCPClient
+        """Send Facebook message via direct Python (no MCP)"""
+        import subprocess
         recipient = action.get('to', '')
         message = action.get('message', 'Hello')
         log_activity("FACEBOOK_SEND", f"Sending Facebook to {recipient}", self.vault_path)
         try:
-            mcp_client = MCPClient("social", transport="stdio")
-            result = mcp_client.call("social.facebook.post", {"content": message})
-            if result.get('success'):
+            result = subprocess.run(
+                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "facebook", message],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
                 log_activity("FACEBOOK_SENT", "Facebook sent", self.vault_path)
                 task.content += f"\n\n## Facebook Message Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
             else:
-                task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {result.get('error')}\n"
+                task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {result.stderr}\n"
             task.filepath.write_text(task.content, encoding='utf-8')
         except Exception as e:
             self.logger.error(f"Facebook error: {e}")
@@ -803,19 +807,21 @@ subject: Response to your request
             task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_twitter_message(self, task, action: dict):
-        """Send Twitter/X DM via MCP"""
-        from src.mcp_client import MCPClient
+        """Send Twitter/X DM via direct Python (no MCP)"""
+        import subprocess
         recipient = action.get('to', '')
         message = action.get('message', 'Hello')
         log_activity("TWITTER_SEND", f"Sending Twitter to {recipient}", self.vault_path)
         try:
-            mcp_client = MCPClient("social", transport="stdio")
-            result = mcp_client.call("social.twitter.post", {"content": message})
-            if result.get('success'):
+            result = subprocess.run(
+                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "twitter", message],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
                 log_activity("TWITTER_SENT", "Twitter sent", self.vault_path)
                 task.content += f"\n\n## Twitter DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
             else:
-                task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {result.get('error')}\n"
+                task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {result.stderr}\n"
             task.filepath.write_text(task.content, encoding='utf-8')
         except Exception as e:
             self.logger.error(f"Twitter error: {e}")
@@ -823,19 +829,21 @@ subject: Response to your request
             task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_instagram_message(self, task, action: dict):
-        """Send Instagram DM via MCP"""
-        from src.mcp_client import MCPClient
+        """Send Instagram DM via direct Python (no MCP)"""
+        import subprocess
         recipient = action.get('to', '')
         message = action.get('message', 'Hello')
         log_activity("INSTAGRAM_SEND", f"Sending Instagram to {recipient}", self.vault_path)
         try:
-            mcp_client = MCPClient("social", transport="stdio")
-            result = mcp_client.call("social.instagram.post", {"content": message, "imagePath": ""})
-            if result.get('success'):
+            result = subprocess.run(
+                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "instagram", message],
+                capture_output=True, text=True, timeout=30
+            )
+            if result.returncode == 0:
                 log_activity("INSTAGRAM_SENT", "Instagram sent", self.vault_path)
                 task.content += f"\n\n## Instagram DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
             else:
-                task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {result.get('error')}\n"
+                task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {result.stderr}\n"
             task.filepath.write_text(task.content, encoding='utf-8')
         except Exception as e:
             self.logger.error(f"Instagram error: {e}")
