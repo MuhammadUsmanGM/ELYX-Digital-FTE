@@ -191,8 +191,14 @@ Move this file to /Rejected folder.
         updated_content = task.content + reasoning
         task.content = updated_content
 
-        # Check if the task requires a response to the original sender
-        if self._should_respond_to_task(task):
+        # ✨ DETECT SOCIAL MEDIA POST REQUESTS FROM EMAIL CONTENT
+        # Check if this email is requesting a social media post
+        social_action = self._detect_social_media_action(task)
+        
+        if social_action:
+            # Execute social media post
+            self._execute_social_media_post(task, social_action)
+        elif self._should_respond_to_task(task):
             # Generate a response based on the task and its processing results
             response_content = self._generate_response_content(task)
 
@@ -497,6 +503,119 @@ subject: Response to your request
         except Exception as e:
             self.logger.error(f"Direct email send failed: {e}")
             self._create_response_file(task, response_content)
+
+    def _detect_social_media_action(self, task) -> dict:
+        """
+        Detect if email content is requesting a social media post
+        
+        Args:
+            task: The task object
+            
+        Returns:
+            Dictionary with platform and content, or None if not a social media request
+        """
+        content_lower = task.content.lower()
+        subject_lower = task.frontmatter.get('subject', '').lower()
+        
+        # Keywords that indicate social media post request
+        social_keywords = {
+            'linkedin': ['linkedin', 'linked in', 'li.com'],
+            'twitter': ['twitter', 'tweet', 'x.com', 'post on x'],
+            'facebook': ['facebook', 'fb', 'facebook post'],
+            'instagram': ['instagram', 'insta', 'ig post']
+        }
+        
+        # Check for post request keywords
+        post_keywords = ['post', 'publish', 'share', 'make a post', 'first post']
+        
+        has_post_request = any(kw in content_lower or kw in subject_lower for kw in post_keywords)
+        
+        if not has_post_request:
+            return None
+        
+        # Detect which platforms
+        platforms = []
+        for platform, keywords in social_keywords.items():
+            if any(kw in content_lower or kw in subject_lower for kw in keywords):
+                platforms.append(platform)
+        
+        if not platforms:
+            return None
+        
+        # Extract content to post (simplified - would use AI in production)
+        content_to_post = self._extract_post_content(task.content)
+        
+        return {
+            'platforms': platforms,
+            'content': content_to_post,
+            'requires_approval': False
+        }
+    
+    def _extract_post_content(self, email_content: str) -> str:
+        """Extract content for social media posting"""
+        lines = email_content.split('\n')
+        content_lines = []
+        for line in lines:
+            line = line.strip()
+            if line and not line.startswith('---') and not line.startswith('type:') and not line.startswith('['):
+                content_lines.append(line)
+        return ' '.join(content_lines[:3])
+    
+    def _execute_social_media_post(self, task, social_action: dict):
+        """
+        Execute social media posting via MCP
+        
+        Args:
+            task: The task object
+            social_action: Dictionary with platforms and content
+        """
+        from src.mcp_client import MCPClient
+        
+        platforms = social_action.get('platforms', [])
+        content = social_action.get('content', 'ELYX AI Employee - Autonomous AI for business automation')
+        
+        log_activity("SOCIAL_POST", f"Posting to {platforms} via MCP", self.vault_path)
+        
+        results = {}
+        
+        for platform in platforms:
+            try:
+                mcp_client = MCPClient("social", transport="stdio")
+                
+                # Generate platform-specific content
+                if platform == 'linkedin':
+                    post_content = f"🤖 ELYX AI Employee - Now Operational!\n\n{content}\n\n#AI #Automation #ELYX"
+                    method = "social.linkedin.post"
+                elif platform == 'twitter':
+                    post_content = f"🤖 ELYX AI Employee is now operational! {content[:100]} #AI #Automation"
+                    method = "social.twitter.post"
+                elif platform == 'facebook':
+                    post_content = f"ELYX AI Employee - {content}\n\n#AI #Automation"
+                    method = "social.facebook.post"
+                elif platform == 'instagram':
+                    post_content = f"🤖 ELYX AI Employee\n{content}\n\n#AI #Automation #Tech"
+                    method = "social.instagram.post"
+                else:
+                    continue
+                
+                # Call MCP server
+                result = mcp_client.call(method, {"content": post_content})
+                results[platform] = result
+                log_activity("SOCIAL_POSTED", f"Posted to {platform} via MCP", self.vault_path)
+                
+            except Exception as e:
+                results[platform] = {"error": str(e)}
+                log_activity("SOCIAL_POST_ERROR", f"Failed to post to {platform}: {e}", self.vault_path)
+        
+        # Update task with results
+        task.content += f"\n\n## Social Media Post Results\n"
+        for platform, result in results.items():
+            if isinstance(result, dict) and result.get('success'):
+                task.content += f"- ✅ **{platform.title()}**: Posted successfully\n"
+            else:
+                task.content += f"- ⚠️ **{platform.title()}**: {result.get('error', 'Check credentials')}\n"
+        
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def process_approval_requests(self):
         """
