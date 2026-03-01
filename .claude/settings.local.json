@@ -6,7 +6,8 @@
       "Bash(python:*)",
       "Bash(where:*)",
       "Bash(cmd.exe:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(mkdir:*)"
     ]
   }
 }
