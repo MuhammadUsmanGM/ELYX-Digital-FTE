@@ -155,5 +155,74 @@
         "description": "OpenAI Codex CLI - Alternative brain. Code generation. (Optional)"
       }
     }
+  },
+  "windows_scheduler": {
+    "enabled": true,
+    "run_at_startup": true,
+    "tasks": {
+      "orchestrator": {
+        "enabled": true,
+        "trigger": "startup",
+        "description": "ELYX Main Orchestrator - Coordinates all watchers and AI processing"
+      },
+      "gmail_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX Gmail Watcher - Monitors Gmail for important messages"
+      },
+      "whatsapp_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX WhatsApp Watcher - Monitors WhatsApp for urgent messages"
+      },
+      "linkedin_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX LinkedIn Watcher - Monitors LinkedIn messages"
+      },
+      "facebook_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX Facebook Watcher - Monitors Facebook Messenger"
+      },
+      "twitter_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX Twitter Watcher - Monitors Twitter/X notifications and DMs"
+      },
+      "instagram_watcher": {
+        "enabled": true,
+        "trigger": "logon",
+        "description": "ELYX Instagram Watcher - Monitors Instagram DMs"
+      },
+      "odoo_watcher": {
+        "enabled": true,
+        "trigger": "hourly",
+        "description": "ELYX Odoo Watcher - Monitors Odoo accounting for invoices and payments"
+      },
+      "filesystem_watcher": {
+        "enabled": true,
+        "trigger": "startup",
+        "description": "ELYX File System Watcher - Monitors file drops for processing"
+      },
+      "ceo_briefing": {
+        "enabled": true,
+        "trigger": "weekly",
+        "day": "Monday",
+        "time": "08:00",
+        "description": "ELYX CEO Briefing - Generates weekly business reports every Monday at 8 AM"
+      },
+      "scheduled_posts": {
+        "enabled": true,
+        "trigger": "hourly",
+        "description": "ELYX Scheduled Posts - Publishes scheduled social media posts"
+      },
+      "vault_backup": {
+        "enabled": true,
+        "trigger": "daily",
+        "time": "02:00",
+        "description": "ELYX Vault Backup - Backs up Obsidian vault daily at 2 AM"
+      }
+    }
   }
 }

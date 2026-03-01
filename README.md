@@ -188,7 +188,7 @@ These modules are research prototypes and not recommended for production use.
 1. **Clone & Setup Backend**:
    ```bash
    pip install -r requirements.txt
-   python run_complete_system.py
+   python run_elyx.py
    ```
 
 2. **Setup Frontend**:
@@ -200,6 +200,83 @@ These modules are research prototypes and not recommended for production use.
 
 3. **Configure Environment**:
    Initialize your `.env` with your Odoo, API, and Security keys.
+
+---
+
+## 🪟 Windows Task Scheduler Integration (Gold Tier)
+
+ELYX includes native Windows Task Scheduler integration for autonomous 24/7 operation.
+
+### Quick Setup
+
+1. **Install pywin32** (required for Windows Task Scheduler):
+   ```bash
+   pip install pywin32
+   ```
+
+2. **Register ELYX Tasks**:
+   ```bash
+   python setup_windows_scheduler.py register
+   ```
+
+3. **Verify Registration**:
+   ```bash
+   python setup_windows_scheduler.py status
+   ```
+
+### Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `python setup_windows_scheduler.py register` | Register all ELYX tasks |
+| `python setup_windows_scheduler.py unregister` | Unregister all ELYX tasks |
+| `python setup_windows_scheduler.py status` | Show status of all tasks |
+| `python setup_windows_scheduler.py list` | List all registered tasks |
+| `python setup_windows_scheduler.py run --task <name>` | Run a task immediately |
+| `python setup_windows_scheduler.py enable --task <name>` | Enable a task |
+| `python setup_windows_scheduler.py disable --task <name>` | Disable a task |
+
+### Registered Tasks
+
+| Task | Schedule | Description |
+|------|----------|-------------|
+| `ELYX_Orchestrator` | At Startup | Main orchestrator coordinating all watchers |
+| `ELYX_Gmail_Watcher` | At Logon | Monitors Gmail for important messages |
+| `ELYX_WhatsApp_Watcher` | At Logon | Monitors WhatsApp for urgent messages |
+| `ELYX_LinkedIn_Watcher` | At Logon | Monitors LinkedIn messages (disabled by default) |
+| `ELYX_Facebook_Watcher` | At Logon | Monitors Facebook Messenger (disabled by default) |
+| `ELYX_Twitter_Watcher` | At Logon | Monitors Twitter/X (disabled by default) |
+| `ELYX_Instagram_Watcher` | At Logon | Monitors Instagram DMs (disabled by default) |
+| `ELYX_Odoo_Watcher` | Hourly | Monitors Odoo accounting |
+| `ELYX_FileSystem_Watcher` | At Startup | Monitors file drops |
+| `ELYX_CEO_Briefing` | Weekly (Mon 8 AM) | Generates weekly CEO briefing |
+| `ELYX_Scheduled_Posts` | Hourly | Publishes scheduled social media posts |
+| `ELYX_Vault_Backup` | Daily (2 AM) | Backs up Obsidian vault |
+
+### Configure Task Schedules
+
+Edit `config.json` to customize task schedules:
+
+```json
+{
+  "windows_scheduler": {
+    "enabled": true,
+    "tasks": {
+      "ceo_briefing": {
+        "enabled": true,
+        "trigger": "weekly",
+        "day": "Monday",
+        "time": "08:00"
+      },
+      "vault_backup": {
+        "enabled": true,
+        "trigger": "daily",
+        "time": "02:00"
+      }
+    }
+  }
+}
+```
 
 ---
 
