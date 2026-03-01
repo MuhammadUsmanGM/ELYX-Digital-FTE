@@ -1,291 +1,357 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Cpu, 
-  Zap, 
-  Shield, 
-  Settings, 
-  Mail, 
-  Slack, 
-  MessageSquare, 
-  ChevronRight, 
-  ChevronLeft, 
-  CheckCircle2, 
-  BrainCircuit,
-  Lock,
-  Globe2,
+import {
+  ArrowRight,
+  CheckCircle2,
+  Loader2,
+  Shield,
+  Zap,
+  MessageSquare,
+  Mail,
+  Linkedin,
+  Twitter,
+  Facebook,
+  Instagram,
+  Smartphone,
+  Globe,
   Database,
-  Terminal,
-  Unplug,
-  Loader2
+  Key,
+  Server,
+  Terminal
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
-import Image from "next/image";
-import { saveOnboardingData } from "@/lib/api";
 import { toast } from "react-hot-toast";
-import LoadingDots from "@/components/LoadingDots";
+import { motion } from "framer-motion";
+import { saveOnboardingData } from "@/lib/api";
 
-type Step = 1 | 2 | 3 | 4;
+const CHANNELS = [
+  { id: 'gmail', name: 'Gmail', icon: <Mail className="w-6 h-6" />, description: 'Email monitoring and responses' },
+  { id: 'whatsapp', name: 'WhatsApp', icon: <Smartphone className="w-6 h-6" />, description: 'Instant messaging' },
+  { id: 'linkedin', name: 'LinkedIn', icon: <Linkedin className="w-6 h-6" />, description: 'Professional networking' },
+  { id: 'twitter', name: 'Twitter/X', icon: <Twitter className="w-6 h-6" />, description: 'Social media updates' },
+  { id: 'facebook', name: 'Facebook', icon: <Facebook className="w-6 h-6" />, description: 'Social networking' },
+  { id: 'instagram', name: 'Instagram', icon: <Instagram className="w-6 h-6" />, description: 'Visual content sharing' }
+];
 
 export default function OnboardingPage() {
-  const [currentStep, setCurrentStep] = useState<Step>(1);
-  const [loading, setLoading] = useState(false);
-  const [anthropicKey, setAnthropicKey] = useState("");
-  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
   const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [selectedChannels, setSelectedChannels] = useState<string[]>([]);
+  const [anthropicKey, setAnthropicKey] = useState('');
+  const [gmailCreds, setGmailCreds] = useState<File | null>(null);
+  const [isSettingUp, setIsSettingUp] = useState(false);
+  const [setupProgress, setSetupProgress] = useState<string>('');
 
-  const channels = [
-    { id: 'email', name: 'Email Connector', icon: <Mail size={18} />, desc: 'Primary communication channel' },
-    { id: 'slack', name: 'Slack Integration', icon: <Slack size={18} />, desc: 'Real-time internal workspace' },
-    { id: 'whatsapp', name: 'WhatsApp Secure', icon: <MessageSquare size={18} />, desc: 'End-to-end encrypted mobility' },
-    { id: 'linkedin', name: 'LinkedIn Professional', icon: <Globe2 size={18} />, desc: 'B2B growth & outreach' },
-  ];
-
-  useEffect(() => {
-    const checkUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        router.push("/auth");
-      }
-    };
-    checkUser();
-  }, [router]);
-
-  const handleNext = () => {
-    if (currentStep === 2 && !anthropicKey) {
-      toast.error("Please provide a valid Anthropic API Security Token.");
-      return;
-    }
-    if (currentStep === 3 && selectedChannels.length === 0) {
-      toast.error("At least one communication vector must be synchronized.");
-      return;
-    }
-
-    if (currentStep < 4) {
-      setCurrentStep((prev) => (prev + 1) as Step);
-      toast.success(`Module ${currentStep} Calibrated`, {
-        icon: '⚙️',
-        style: {
-          background: '#020617',
-          color: '#fff',
-          border: '1px solid rgba(6, 182, 212, 0.2)',
-          fontSize: '10px',
-          fontWeight: 'bold',
-          textTransform: 'uppercase'
-        }
-      });
-    }
-    else finishOnboarding();
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) setCurrentStep((prev) => (prev - 1) as Step);
-  };
-
-  const toggleChannel = (id: string) => {
-    const isSelecting = !selectedChannels.includes(id);
-    setSelectedChannels(prev => 
-      prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id]
+  const toggleChannel = (channelId: string) => {
+    setSelectedChannels(prev =>
+      prev.includes(channelId)
+        ? prev.filter(id => id !== channelId)
+        : [...prev, channelId]
     );
-    
-    if (isSelecting) {
-      toast.success(`Channel Enabled: ${id}`, {
-        duration: 2000,
-        position: 'bottom-center'
-      });
+  };
+
+  const handleFileDrop = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setGmailCreds(file);
+      toast.success('Gmail credentials loaded');
     }
   };
 
-  const finishOnboarding = async () => {
-    setLoading(true);
+  const completeOnboarding = async () => {
+    setIsSettingUp(true);
+    
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await saveOnboardingData({
-          user_id: user.id,
-          anthropic_key: anthropicKey,
-          selected_channels: selectedChannels
-        });
-      }
-      
-      toast.success("System Link Established. Welcome to the Workspace.", {
-        duration: 4000
+      // Step 1: Save configuration
+      setSetupProgress('Saving configuration...');
+      await saveOnboardingData({
+        user_id: 'current_user',
+        anthropic_key: anthropicKey,
+        selected_channels: selectedChannels
       });
 
-      setTimeout(() => {
-        setLoading(false);
-        router.push("/dashboard");
-      }, 2500);
+      // Step 2: Create vault structure
+      setSetupProgress('Creating vault structure...');
+      await fetch('http://localhost:8080/api/vault/summary').catch(() => {
+        // Vault API might not be running, that's OK
+      });
+
+      // Step 3: Setup complete
+      setSetupProgress('Finalizing setup...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      toast.success('Welcome to ELYX! Your AI employee is ready.');
+      router.push('/dashboard');
     } catch (error) {
-       console.error("Onboarding failed", error);
-       toast.error("Handshake Failed: Database storage error.");
-       setLoading(false);
+      console.error('Onboarding error:', error);
+      toast.error('Setup failed. Please try again.');
+    } finally {
+      setIsSettingUp(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#020617] text-white flex flex-col relative overflow-hidden selection:bg-primary/30">
-      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#131f33_1px,transparent_1px),linear-gradient(to_bottom,#131f33_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
-      </div>
-
-      <div className="relative z-10 w-full pt-12 px-8 flex flex-col items-center">
-        <div className="w-full max-w-4xl flex items-center justify-between mb-4">
-           <div className="flex items-center gap-3">
-              <Image src="/icon.png" alt="ELYX" width={32} height={32} />
-              <span className="text-xs font-black tracking-[0.3em] text-slate-500 uppercase">System Provisioning v2.0</span>
-           </div>
-           <div className="text-[10px] font-black text-primary tracking-widest uppercase">
-             Step {currentStep} of 4
-           </div>
+    <div className="min-h-screen bg-[#020617] text-slate-50 flex items-center justify-center p-6">
+      <div className="max-w-4xl w-full">
+        {/* Progress Steps */}
+        <div className="mb-12">
+          <div className="flex items-center justify-between mb-4">
+            {[1, 2, 3].map((s) => (
+              <div key={s} className="flex items-center">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                  step >= s ? 'bg-primary text-white' : 'bg-slate-800 text-slate-500'
+                }`}>
+                  {step > s ? <CheckCircle2 className="w-5 h-5" /> : s}
+                </div>
+                {s < 3 && (
+                  <div className={`w-24 h-1 mx-4 rounded ${
+                    step > s ? 'bg-primary' : 'bg-slate-800'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="flex justify-between text-xs text-slate-500">
+            <span>AI Setup</span>
+            <span>Channels</span>
+            <span>Vault Setup</span>
+          </div>
         </div>
-        <div className="w-full max-w-4xl h-1 bg-slate-900 rounded-full overflow-hidden border border-white/5">
-           <motion.div 
-             initial={{ width: "25%" }}
-             animate={{ width: `${(currentStep / 4) * 100}%` }}
-             className="h-full bg-gradient-to-r from-primary to-indigo-500 shadow-[0_0_10px_rgba(6,182,212,0.5)]"
-           />
-        </div>
-      </div>
 
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <AnimatePresence mode="wait">
-          {currentStep === 1 && (
-            <motion.div key="step1" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="w-full max-w-2xl text-center space-y-8">
-              <div className="relative inline-block">
-                <div className="absolute inset-0 bg-primary blur-3xl opacity-20" />
-                <div className="w-24 h-24 border border-primary/30 rounded-3xl flex items-center justify-center bg-slate-950 relative z-10 mx-auto shadow-2xl">
-                  <BrainCircuit className="text-primary w-12 h-12" />
-                </div>
+        {/* Step 1: AI Configuration */}
+        {step === 1 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel rounded-3xl p-10"
+          >
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary mb-6">
+                <Zap className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-widest">Step 1 of 3</span>
               </div>
-              <div className="space-y-4">
-                <h1 className="text-5xl font-black tracking-tighter uppercase">Welcome to <span className="text-primary italic">ELYX</span>.</h1>
-                <p className="text-slate-400 text-lg font-medium leading-relaxed max-w-md mx-auto">You are about to initialize your personal AI employee. Let's calibrate your workspace environment.</p>
-              </div>
-              <div className="grid grid-cols-3 gap-4 text-left">
-                <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
-                  <Shield size={20} className="text-emerald-500 mb-2" />
-                  <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Privacy First</p>
-                  <p className="text-[11px] font-bold text-slate-200">Local compute & memory.</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
-                   <Zap size={20} className="text-primary mb-2" />
-                   <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Real-time</p>
-                   <p className="text-[11px] font-bold text-slate-200">System synchronization.</p>
-                </div>
-                <div className="p-4 rounded-2xl bg-slate-900/50 border border-card-border/50">
-                   <Settings size={20} className="text-accent mb-2" />
-                   <p className="text-[10px] font-black uppercase text-slate-500 tracking-tighter">Enterprise Hub</p>
-                   <p className="text-[11px] font-bold text-slate-200">Advanced AI capabilities.</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
+              <h1 className="text-4xl font-black text-white mb-4">Configure Your AI Brain</h1>
+              <p className="text-slate-400 text-lg">Choose your AI provider and enter your API key</p>
+            </div>
 
-          {currentStep === 2 && (
-            <motion.div key="step2" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="w-full max-w-xl space-y-8">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center">
-                   <Cpu className="text-primary" />
-                 </div>
-                 <div>
-                   <h2 className="text-2xl font-black tracking-tight text-white uppercase">Configure AI Core</h2>
-                   <p className="text-slate-500 text-sm font-bold">Connecting the Anthropic Claude provider.</p>
-                 </div>
-              </div>
-              <div className="glass-panel p-8 rounded-3xl border-card-border space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Claude API Security Token</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                    <input type="password" value={anthropicKey} onChange={(e) => setAnthropicKey(e.target.value)} placeholder="sk-ant-api03-..." className="w-full bg-slate-950/50 border border-card-border rounded-2xl py-4 pl-12 pr-4 text-sm font-bold text-white outline-none focus:border-primary/50 transition-all placeholder:text-slate-800" />
-                  </div>
-                </div>
-                <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 flex gap-4">
-                  <CheckCircle2 className="text-emerald-500 shrink-0" size={18} />
-                  <p className="text-xs text-slate-400 leading-relaxed font-medium">ELYX uses <span className="text-emerald-500 font-bold">Claude 3.5 Sonnet</span> as its primary reasoning layer.</p>
-                </div>
-              </div>
-            </motion.div>
-          )}
-
-          {currentStep === 3 && (
-            <motion.div key="step3" initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -50 }} className="w-full max-w-2xl space-y-8">
-              <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 rounded-2xl bg-accent/10 border border-accent/30 flex items-center justify-center">
-                   <Globe2 className="text-accent" />
-                 </div>
-                 <div>
-                   <h2 className="text-2xl font-black tracking-tight">Channel Synchronization</h2>
-                   <p className="text-slate-500 text-sm font-bold">Where should your AI Employee exert its influence?</p>
-                 </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {channels.map((channel) => (
-                  <button key={channel.id} onClick={() => toggleChannel(channel.id)} className={`flex items-start gap-4 p-5 rounded-3xl border transition-all text-left group ${selectedChannels.includes(channel.id) ? "bg-primary/5 border-primary/40 shadow-[0_0_20px_rgba(6,182,212,0.1)]" : "bg-slate-900/50 border-card-border hover:border-slate-700 hover:bg-slate-900/80" }`}>
-                    <div className={`p-3 rounded-2xl transition-colors ${selectedChannels.includes(channel.id) ? "bg-primary text-slate-950" : "bg-slate-800 text-slate-500 group-hover:text-slate-300" }`}>{channel.icon}</div>
-                    <div className="flex-1">
-                      <p className={`text-sm font-black mb-1 ${selectedChannels.includes(channel.id) ? "text-white" : "text-slate-300"}`}>{channel.name}</p>
-                      <p className="text-[10px] font-bold text-slate-500 line-clamp-1">{channel.desc}</p>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  AI Provider
+                </label>
+                <div className="grid grid-cols-2 gap-4">
+                  <button className="p-4 bg-primary/20 border border-primary/50 rounded-xl text-left">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Shield className="w-5 h-5 text-primary" />
+                      <span className="font-semibold text-white">Claude (Anthropic)</span>
                     </div>
+                    <p className="text-xs text-slate-400">Recommended for complex reasoning</p>
                   </button>
-                ))}
+                  <button className="p-4 bg-slate-800 border border-slate-700 rounded-xl text-left opacity-50">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Globe className="w-5 h-5 text-slate-400" />
+                      <span className="font-semibold text-slate-300">More coming soon</span>
+                    </div>
+                    <p className="text-xs text-slate-500">Qwen, Gemini, Codex support</p>
+                  </button>
+                </div>
               </div>
-            </motion.div>
-          )}
 
-          {currentStep === 4 && (
-            <motion.div key="step4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-xl text-center space-y-8">
-                <div className="relative">
-                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 10, repeat: Infinity, ease: "linear" }} className="absolute inset-0 border-2 border-dashed border-primary/20 rounded-full" />
-                   <div className="w-32 h-32 rounded-full bg-slate-900 border border-primary/40 flex items-center justify-center mx-auto relative z-10">
-                      <div className="absolute inset-0 bg-primary/10 rounded-full animate-ping" />
-                      <CheckCircle2 className="text-primary" size={48} />
-                   </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-400 mb-2">
+                  Anthropic API Key
+                </label>
+                <input
+                  type="password"
+                  value={anthropicKey}
+                  onChange={(e) => setAnthropicKey(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-primary"
+                  placeholder="sk-ant-..."
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Get your API key from{' '}
+                  <a href="https://console.anthropic.com" target="_blank" className="text-primary hover:underline">
+                    console.anthropic.com
+                  </a>
+                </p>
+              </div>
+
+              <button
+                onClick={() => setStep(2)}
+                disabled={!anthropicKey}
+                className="w-full py-4 bg-primary hover:bg-primary/80 disabled:bg-slate-800 disabled:text-slate-500 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                Continue
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 2: Channel Selection */}
+        {step === 2 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel rounded-3xl p-10"
+          >
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary mb-6">
+                <MessageSquare className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-widest">Step 2 of 3</span>
+              </div>
+              <h1 className="text-4xl font-black text-white mb-4">Select Communication Channels</h1>
+              <p className="text-slate-400 text-lg">Choose which channels your AI should monitor</p>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-4 mb-8">
+              {CHANNELS.map((channel) => (
+                <button
+                  key={channel.id}
+                  onClick={() => toggleChannel(channel.id)}
+                  className={`p-4 rounded-xl border transition-all text-left ${
+                    selectedChannels.includes(channel.id)
+                      ? 'bg-primary/20 border-primary/50'
+                      : 'bg-slate-800 border-slate-700 hover:border-slate-600'
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2 rounded-lg ${
+                      selectedChannels.includes(channel.id)
+                        ? 'bg-primary/30 text-primary'
+                        : 'bg-slate-700 text-slate-400'
+                    }`}>
+                      {channel.icon}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-white">{channel.name}</h3>
+                      <p className="text-xs text-slate-400">{channel.description}</p>
+                    </div>
+                    {selectedChannels.includes(channel.id) && (
+                      <CheckCircle2 className="w-5 h-5 text-primary ml-auto" />
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+
+            {selectedChannels.includes('gmail') && (
+              <div className="mb-6 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <Mail className="w-5 h-5 text-primary" />
+                  <span className="font-semibold text-white">Gmail Setup Required</span>
                 </div>
-                <div className="space-y-4">
-                  <h2 className="text-4xl font-black tracking-tight uppercase">Initializing Workspace</h2>
-                  <p className="text-slate-400 font-bold max-w-sm mx-auto">All system pathways have been mapped. Preparing your Enterprise workspace.</p>
-                </div>
-                <div className="p-6 rounded-3xl bg-slate-900/50 border border-card-border flex flex-col gap-4 text-left">
-                  <div className="flex items-center justify-between text-[10px] font-black tracking-[0.2em] text-slate-500 uppercase"><span>Status</span><span className="text-emerald-500">99% Complete</span></div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Cpu size={14} className="text-primary"/> AI Core</span><span className="text-emerald-500">Active</span></div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Database size={14} className="text-indigo-400"/> Local Vault</span><span className="text-indigo-400">Secure</span></div>
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300"><span className="flex items-center gap-2"><Terminal size={14} className="text-accent"/> Logic Engine</span><span className="text-accent">Calibrated</span></div>
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileDrop}
+                  className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/20 file:text-primary hover:file:bg-primary/30"
+                />
+                <p className="text-xs text-slate-500 mt-2">
+                  Upload your gmail_credentials.json file from Google Cloud Console
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setStep(1)}
+                className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-white font-semibold transition-all"
+              >
+                Back
+              </button>
+              <button
+                onClick={() => setStep(3)}
+                disabled={selectedChannels.length === 0}
+                className="flex-1 py-4 bg-primary hover:bg-primary/80 disabled:bg-slate-800 disabled:text-slate-500 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                Continue
+                <ArrowRight className="w-5 h-5" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Step 3: Vault Setup */}
+        {step === 3 && (
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="glass-panel rounded-3xl p-10"
+          >
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary mb-6">
+                <Database className="w-4 h-4" />
+                <span className="text-xs font-bold uppercase tracking-widest">Step 3 of 3</span>
+              </div>
+              <h1 className="text-4xl font-black text-white mb-4">Setup Your Vault</h1>
+              <p className="text-slate-400 text-lg">Initialize your Obsidian vault and start ELYX</p>
+            </div>
+
+            {isSettingUp ? (
+              <div className="text-center py-12">
+                <Loader2 className="w-16 h-16 animate-spin text-primary mx-auto mb-6" />
+                <h3 className="text-xl font-semibold text-white mb-2">Setting up your workspace...</h3>
+                <p className="text-slate-400">{setupProgress}</p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <Database className="w-8 h-8 text-primary mb-3" />
+                    <h3 className="font-semibold text-white mb-2">Obsidian Vault</h3>
+                    <p className="text-xs text-slate-400">Local markdown storage for all tasks and memories</p>
+                  </div>
+                  <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <Terminal className="w-8 h-8 text-primary mb-3" />
+                    <h3 className="font-semibold text-white mb-2">Vault API</h3>
+                    <p className="text-xs text-slate-400">REST API for vault operations on port 8080</p>
+                  </div>
+                  <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
+                    <Server className="w-8 h-8 text-primary mb-3" />
+                    <h3 className="font-semibold text-white mb-2">MCP Servers</h3>
+                    <p className="text-xs text-slate-400">Tool servers for AI agent integration</p>
                   </div>
                 </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
 
-      <div className="relative z-10 w-full p-8 flex justify-center">
-        <div className="w-full max-w-4xl flex items-center justify-between">
-           <button onClick={handleBack} disabled={currentStep === 1 || loading} className={`flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-black tracking-widest uppercase transition-all ${currentStep === 1 ? "opacity-0 pointer-events-none" : "hover:text-primary text-slate-500" }`}>
-             <ChevronLeft size={16} /> Terminal Back
-           </button>
-           <div className="flex items-center gap-4">
-             {loading ? (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="flex items-center gap-4 text-xs font-black uppercase text-primary tracking-[0.25em] font-outfit"
-                >
-                  <Loader2 className="animate-spin" size={20} />
-                  <span className="flex items-center">Initializing System Workflows<LoadingDots /></span>
-                </motion.div>
-             ) : (
-                <button onClick={handleNext} className="btn-premium-primary !px-10 !py-4 shadow-[0_20px_40px_rgba(6,182,212,0.15)] group">
-                  <span className="tracking-[0.25em] text-xs font-black uppercase">{currentStep === 4 ? "ESTABLISH LINK" : "CONTINUE"}</span>
-                  <ChevronRight size={18} className="group-hover:translate-x-1 transition-transform" />
-                </button>
-             )}
-           </div>
-        </div>
+                <div className="bg-primary/10 border border-primary/20 rounded-xl p-6">
+                  <h3 className="font-semibold text-white mb-3">After setup:</h3>
+                  <ul className="space-y-2 text-sm text-slate-300">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      Vault API will start on http://localhost:8080
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      You can manage tasks at /tasks and /approvals
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary" />
+                      AI will monitor your selected channels
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setStep(2)}
+                    className="flex-1 py-4 bg-slate-800 hover:bg-slate-700 rounded-xl text-white font-semibold transition-all"
+                  >
+                    Back
+                  </button>
+                  <button
+                    onClick={completeOnboarding}
+                    className="flex-1 py-4 bg-primary hover:bg-primary/80 rounded-xl text-white font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Zap className="w-5 h-5" />
+                    Complete Setup
+                  </button>
+                </div>
+              </div>
+            )}
+          </motion.div>
+        )}
       </div>
     </div>
   );

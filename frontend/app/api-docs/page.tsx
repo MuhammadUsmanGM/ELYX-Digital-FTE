@@ -1,366 +1,433 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  Terminal, 
-  Code2, 
-  Globe, 
-  Lock, 
-  Zap, 
-  Copy, 
-  Check, 
-  Play, 
-  ChevronRight, 
+import {
+  Terminal,
+  Code2,
+  Server,
+  Activity,
+  RefreshCcw,
+  CheckCircle2,
+  XCircle,
+  Copy,
+  Play,
   Search,
-  BookOpen,
+  Zap,
+  Lock,
+  Globe,
   Cpu,
-  Layers,
-  Webhook,
-  ArrowRight,
-  Loader2
+  Database,
+  Shield
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
-import LoadingDots from "@/components/LoadingDots";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
-interface Endpoint {
+interface APIEndpoint {
   id: string;
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
+  method: 'GET' | 'POST';
   path: string;
   title: string;
   description: string;
+  category: 'vault' | 'backend' | 'mcp';
   params?: { name: string; type: string; required: boolean; desc: string }[];
-  requestBody?: string;
-  response: string;
+  response?: string;
 }
 
-const ENDPOINTS: Endpoint[] = [
+const VAULT_ENDPOINTS: APIEndpoint[] = [
+  {
+    id: 'vault-summary',
+    method: 'GET',
+    path: '/api/vault/summary',
+    title: 'Get Vault Summary',
+    description: 'Get dashboard summary statistics from the Obsidian vault',
+    category: 'vault',
+    response: `{
+  "pending_tasks": 3,
+  "pending_approvals": 2,
+  "completed_tasks": 14,
+  "plans_created": 5,
+  "last_updated": "2026-03-01T12:00:00"
+}`
+  },
+  {
+    id: 'vault-tasks',
+    method: 'GET',
+    path: '/api/vault/tasks?folder=Needs_Action',
+    title: 'Get Tasks',
+    description: 'Get all tasks from a specific vault folder',
+    category: 'vault',
+    params: [
+      { name: 'folder', type: 'string', required: true, desc: 'Folder name (Needs_Action, Done, etc.)' }
+    ],
+    response: `{
+  "tasks": [
+    {
+      "id": "EMAIL_123",
+      "filename": "EMAIL_123.md",
+      "type": "email",
+      "priority": "high",
+      "from": "user@example.com",
+      "subject": "Test Email"
+    }
+  ],
+  "count": 1
+}`
+  },
+  {
+    id: 'vault-approvals',
+    method: 'GET',
+    path: '/api/vault/approvals',
+    title: 'Get Approvals',
+    description: 'Get all pending approval requests',
+    category: 'vault',
+    response: `{
+  "approvals": [
+    {
+      "id": "APPROVAL_456",
+      "action": "Post to LinkedIn",
+      "reason": "Social media post request"
+    }
+  ],
+  "count": 1
+}`
+  },
+  {
+    id: 'vault-approve',
+    method: 'POST',
+    path: '/api/vault/approve',
+    title: 'Approve Task',
+    description: 'Approve a pending task (moves to Approved folder)',
+    category: 'vault',
+    params: [
+      { name: 'filename', type: 'string', required: true, desc: 'Name of the approval file' }
+    ],
+    response: `{
+  "success": true,
+  "message": "Task approved",
+  "filename": "APPROVAL_456.md"
+}`
+  },
+  {
+    id: 'vault-reject',
+    method: 'POST',
+    path: '/api/vault/reject',
+    title: 'Reject Task',
+    description: 'Reject a pending task (moves to Rejected folder)',
+    category: 'vault',
+    params: [
+      { name: 'filename', type: 'string', required: true, desc: 'Name of the approval file' }
+    ],
+    response: `{
+  "success": true,
+  "message": "Task rejected"
+}`
+  },
+  {
+    id: 'vault-completed',
+    method: 'GET',
+    path: '/api/vault/completed',
+    title: 'Get Completed Tasks',
+    description: 'Get all completed tasks from Done folder',
+    category: 'vault',
+    response: `{
+  "completed": [...],
+  "count": 14
+}`
+  }
+];
+
+const BACKEND_ENDPOINTS: APIEndpoint[] = [
+  {
+    id: 'dashboard-status',
+    method: 'GET',
+    path: '/api/dashboard/status',
+    title: 'Get Dashboard Status',
+    description: 'Get main dashboard data including tasks and health',
+    category: 'backend',
+    response: `{
+  "tasks": { "pending_count": 3 },
+  "health": { "status": "healthy" }
+}`
+  },
   {
     id: 'system-state',
     method: 'GET',
-    path: '/api/system/state/{entity_id}',
+    path: '/api/system/state/system_core',
     title: 'Get System State',
-    description: 'Retrieves the current system stability, performance metrics, and workflow focus of a specific AI entity.',
-    params: [
-      { name: 'entity_id', type: 'string', required: true, desc: 'Unique identifier for the system entity (e.g., system_core).' }
-    ],
+    description: 'Get AI system state and stability metrics',
+    category: 'backend',
     response: `{
   "system_state": {
-    "id": "system_v2_99",
-    "stability_score": 98.42,
-    "workflow_focus": ["market_analysis", "resource_allocation"],
-    "system_integrity": 0.92,
-    "system_load": 2.4
-  },
-  "timestamp": "2026-02-06T09:15:00Z"
-}`
-  },
-  {
-    id: 'performance-forecast',
-    method: 'POST',
-    path: '/api/performance/forecast',
-    title: 'Initiate Performance Forecast',
-    description: 'Trigger a new simulation to project business outcomes across different operational scenarios.',
-    requestBody: `{
-  "scenario_name": "Global Expansion V2",
-  "outcome_factors": ["revenue", "market_share"],
-  "depth": "deep"
-}`,
-    response: `{
-  "task_id": "sim_81023",
-  "status": "simulating",
-  "estimated_completion": "200ms",
-  "nodes_processed": 1422
-}`
-  },
-  {
-    id: 'workflow-chains',
-    method: 'GET',
-    path: '/api/workflows/active',
-    title: 'List Active Workflows',
-    description: 'Returns all currently executing autonomous workflows and their current system status.',
-    response: `{
-  "active_chains": [
-    {
-      "id": "T-900",
-      "status": "processing",
-      "priority": "high",
-      "progress": 0.82
-    }
-  ]
+    "stability_score": 98.4,
+    "coherence_level": 0.95
+  }
 }`
   }
 ];
 
 export default function ApiDocsPage() {
-  const [activeEndpoint, setActiveEndpoint] = useState<Endpoint>(ENDPOINTS[0]);
-  const [activeLang, setActiveLang] = useState<'javascript' | 'python' | 'curl'>('javascript');
-  const [copied, setCopied] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<'vault' | 'backend'>('vault');
+  const [activeEndpoint, setActiveEndpoint] = useState<APIEndpoint | null>(null);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
+  const [vaultStatus, setVaultStatus] = useState<'online' | 'offline' | 'checking'>('checking');
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const checkVaultAPI = async () => {
+    try {
+      setVaultStatus('checking');
+      const res = await fetch('http://localhost:8080/api/vault/summary');
+      if (res.ok) {
+        setVaultStatus('online');
+        toast.success('Vault API is online');
+      } else {
+        setVaultStatus('offline');
+      }
+    } catch (error) {
+      setVaultStatus('offline');
+      toast.error('Vault API is offline. Run: python scripts/start_frontend.py');
+    }
+  };
+
+  useEffect(() => {
+    checkVaultAPI();
+    const interval = setInterval(checkVaultAPI, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const testEndpoint = async (endpoint: APIEndpoint) => {
+    setTesting(true);
+    setTestResult(null);
+    
+    try {
+      const url = `http://localhost:8080${endpoint.path}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      setTestResult(JSON.stringify(data, null, 2));
+      toast.success('API call successful');
+    } catch (error: any) {
+      setTestResult(JSON.stringify({ error: error.message }, null, 2));
+      toast.error('API call failed');
+    } finally {
+      setTesting(false);
+    }
+  };
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    toast.success('Copied to clipboard');
   };
 
-  const runTest = () => {
-    setTesting(true);
-    setTestResult(null);
-    setTimeout(() => {
-      setTesting(false);
-      setTestResult(activeEndpoint.response);
-    }, 800);
-  };
-
-  const getCodeSnippet = () => {
-    const url = `https://api.elyx.ai${activeEndpoint.path}`;
-    if (activeLang === 'javascript') {
-      return `const response = await fetch('${url}', {
-  method: '${activeEndpoint.method}',
-  headers: {
-    'Authorization': 'Bearer YOUR_API_KEY',
-    'Content-Type': 'application/json'
-  }${activeEndpoint.requestBody ? `,\n  body: JSON.stringify(${activeEndpoint.requestBody})` : ''}
-});
-const data = await response.json();
-console.log(data);`;
-    }
-    if (activeLang === 'python') {
-      return `import requests
-
-url = "${url}"
-headers = {
-    "Authorization": "Bearer YOUR_API_KEY",
-    "Content-Type": "application/json"
-}
-
-response = requests.${activeEndpoint.method.toLowerCase()}(
-    url, 
-    headers=headers${activeEndpoint.requestBody ? `, \n    json=${activeEndpoint.requestBody}` : ''}
-)
-print(response.json())`;
-    }
-    return `curl -X ${activeEndpoint.method} "${url}" \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  ${activeEndpoint.requestBody ? `-d '${activeEndpoint.requestBody}'` : ''}`;
-  };
+  const filteredEndpoints = [...VAULT_ENDPOINTS, ...BACKEND_ENDPOINTS].filter(ep => {
+    if (activeCategory !== 'vault' && activeCategory !== 'backend') return true;
+    if (activeCategory === 'vault' && ep.category !== 'vault') return false;
+    if (activeCategory === 'backend' && ep.category !== 'backend') return false;
+    return ep.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+           ep.path.toLowerCase().includes(searchQuery.toLowerCase());
+  });
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col h-[calc(100vh-140px)] animate-in fade-in slide-in-from-bottom-4 duration-700">
-        
-        {/* Header Section */}
-        <div className="flex items-center justify-between mb-8 px-2">
-          <div className="space-y-1">
-            <h1 className="text-4xl font-black tracking-tighter text-white flex items-center gap-3">
-              <Terminal className="text-primary" size={32} />
-              API <span className="text-primary italic">Developer Hub</span>
-            </h1>
-            <p className="text-slate-500 font-medium">Build business integrations with the ELYX System Core.</p>
+      <div className="space-y-8">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between"
+        >
+          <div>
+            <h1 className="text-3xl font-bold text-white">API Documentation</h1>
+            <p className="text-slate-400 mt-1">Live API endpoints and testing interface</p>
           </div>
+          
           <div className="flex items-center gap-4">
-             <div className="px-4 py-2 bg-slate-900 border border-card-border rounded-xl flex items-center gap-3">
-                <Lock size={14} className="text-emerald-500" />
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">v2.0 Stable</span>
-             </div>
-             <button className="btn-premium-primary !px-6 !py-4 group">
-               <BookOpen size={18} />
-               Full Guide
-               <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-             </button>
+            <div className={`flex items-center gap-2 px-4 py-2 rounded-lg ${
+              vaultStatus === 'online' ? 'bg-green-500/20 text-green-400' :
+              vaultStatus === 'offline' ? 'bg-red-500/20 text-red-400' :
+              'bg-yellow-500/20 text-yellow-400'
+            }`}>
+              {vaultStatus === 'online' ? <CheckCircle2 className="w-4 h-4" /> :
+               vaultStatus === 'offline' ? <XCircle className="w-4 h-4" /> :
+               <RefreshCcw className="w-4 h-4 animate-spin" />}
+              <span className="text-sm font-medium">
+                Vault API: {vaultStatus === 'online' ? 'Online' : vaultStatus === 'offline' ? 'Offline' : 'Checking...'}
+              </span>
+            </div>
+            
+            <button
+              onClick={checkVaultAPI}
+              className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors"
+            >
+              <RefreshCcw className="w-5 h-5" />
+            </button>
           </div>
+        </motion.div>
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search endpoints..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder:text-slate-500 focus:outline-none focus:border-primary transition-colors"
+          />
         </div>
 
-        <div className="flex-1 flex gap-8 min-h-0">
-          
-          {/* Navigation Sidebar */}
-          <div className="w-80 flex flex-col gap-6">
-            <div className="glass-panel rounded-3xl p-6 border-card-border/30 flex flex-col h-full">
-               <div className="relative mb-6">
-                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-                  <input 
-                    placeholder="Search Endpoints..." 
-                    className="w-full bg-slate-950 border border-card-border/50 rounded-xl py-3 pl-10 pr-4 text-xs font-bold text-slate-300 outline-none focus:border-primary/50 transition-all"
-                  />
-               </div>
+        {/* Category Tabs */}
+        <div className="flex gap-2 border-b border-slate-800">
+          <button
+            onClick={() => setActiveCategory('vault')}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              activeCategory === 'vault'
+                ? "text-primary border-b-2 border-primary"
+                : "text-slate-400 hover:text-slate-300"
+            }`}
+          >
+            <Database className="w-4 h-4 inline mr-2" />
+            Vault API
+          </button>
+          <button
+            onClick={() => setActiveCategory('backend')}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              activeCategory === 'backend'
+                ? "text-primary border-b-2 border-primary"
+                : "text-slate-400 hover:text-slate-300"
+            }`}
+          >
+            <Server className="w-4 h-4 inline mr-2" />
+            Backend API
+          </button>
+          <button
+            onClick={() => setActiveCategory('all')}
+            className={`px-4 py-2 text-sm font-medium transition-all ${
+              activeCategory === 'all'
+                ? "text-primary border-b-2 border-primary"
+                : "text-slate-400 hover:text-slate-300"
+            }`}
+          >
+            <Globe className="w-4 h-4 inline mr-2" />
+            All Endpoints
+          </button>
+        </div>
 
-               <div className="flex-1 overflow-y-auto pr-2 space-y-6 scrollbar-hide">
-                  <div>
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                       <Layers size={12} />
-                       Core Intelligence
-                    </h3>
-                    <div className="space-y-2">
-                      {ENDPOINTS.map((ep) => (
-                        <button
-                          key={ep.id}
-                          onClick={() => setActiveEndpoint(ep)}
-                          className={`w-full text-left p-3 rounded-xl transition-all group ${
-                            activeEndpoint.id === ep.id 
-                              ? 'bg-primary/10 border border-primary/20' 
-                              : 'hover:bg-slate-900 border border-transparent'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                             <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${
-                                ep.method === 'GET' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'
-                             }`}>
-                                {ep.method}
-                             </span>
-                             <span className={`text-xs font-bold transition-colors ${
-                                activeEndpoint.id === ep.id ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'
-                             }`}>
-                                {ep.title}
-                             </span>
+        {/* Endpoints Grid */}
+        <div className="grid gap-4">
+          {filteredEndpoints.map((endpoint, index) => (
+            <motion.div
+              key={endpoint.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+              onClick={() => setActiveEndpoint(endpoint)}
+              className={`glass-panel p-6 rounded-xl cursor-pointer transition-all hover:border-primary/50 ${
+                activeEndpoint?.id === endpoint.id ? 'border-primary/50 bg-primary/5' : ''
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1">
+                  <div className={`p-3 rounded-lg ${
+                    endpoint.method === 'GET' ? 'bg-blue-500/20 text-blue-400' :
+                    'bg-green-500/20 text-green-400'
+                  }`}>
+                    <span className="text-xs font-bold">{endpoint.method}</span>
+                  </div>
+                  
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-white mb-1">{endpoint.title}</h3>
+                    <code className="text-sm text-slate-400 font-mono">{endpoint.path}</code>
+                    <p className="text-sm text-slate-500 mt-2">{endpoint.description}</p>
+                    
+                    {endpoint.params && endpoint.params.length > 0 && (
+                      <div className="mt-3 space-y-1">
+                        {endpoint.params.map((param, i) => (
+                          <div key={i} className="text-xs text-slate-500">
+                            <span className="text-primary font-medium">{param.name}</span>
+                            <span className="text-slate-600 mx-2">•</span>
+                            <span className="text-slate-400">{param.type}</span>
+                            {param.required && <span className="text-red-400 ml-2">(required)</span>}
                           </div>
-                        </button>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
+                </div>
+                
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    testEndpoint(endpoint);
+                  }}
+                  disabled={testing || vaultStatus !== 'online'}
+                  className="px-4 py-2 bg-primary/20 hover:bg-primary/30 text-primary rounded-lg transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Play className="w-4 h-4" />
+                  Test
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
 
-                  <div>
-                    <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
-                       <Webhook size={12} />
-                       Event Webhooks
-                    </h3>
-                    <div className="p-4 rounded-2xl bg-slate-950/50 border border-dashed border-card-border/30 text-center">
-                       <p className="text-[10px] font-bold text-slate-600 uppercase">Incoming Data Streams</p>
-                    </div>
-                  </div>
-               </div>
+        {/* Test Result */}
+        {testResult && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-panel rounded-xl p-6 border border-primary/30"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-white flex items-center gap-2">
+                <Terminal className="w-5 h-5 text-primary" />
+                Response
+              </h3>
+              <button
+                onClick={() => copyToClipboard(testResult)}
+                className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+              >
+                <Copy className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+            <pre className="bg-slate-900/50 rounded-lg p-4 overflow-x-auto text-sm font-mono text-slate-300 max-h-96 overflow-y-auto">
+              {testResult}
+            </pre>
+          </motion.div>
+        )}
 
-               <div className="mt-6 pt-6 border-t border-card-border/30">
-                  <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/10">
-                    <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">API Status</p>
-                    <p className="text-[10px] text-slate-500 font-medium">Global nodes operational. Latency &lt; 20ms</p>
-                  </div>
-               </div>
+        {/* Quick Start Guide */}
+        <div className="glass-panel rounded-xl p-8">
+          <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+            <Zap className="w-5 h-5 text-yellow-400" />
+            Quick Start
+          </h2>
+          
+          <div className="space-y-4 text-sm text-slate-400">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">1</div>
+              <div>
+                <p className="text-white font-medium">Start Vault API</p>
+                <code className="text-xs bg-slate-800 px-2 py-1 rounded">python scripts/start_frontend.py</code>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">2</div>
+              <div>
+                <p className="text-white font-medium">Test an endpoint</p>
+                <p>Click the "Test" button on any endpoint above</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">3</div>
+              <div>
+                <p className="text-white font-medium">Use in your code</p>
+                <code className="text-xs bg-slate-800 px-2 py-1 rounded">fetch('http://localhost:8080/api/vault/summary')</code>
+              </div>
             </div>
           </div>
-
-          {/* Documentation Content */}
-          <div className="flex-1 flex flex-col gap-8 overflow-y-auto pr-4 scrollbar-hide">
-            
-            {/* Main Info */}
-            <div className="glass-panel rounded-[2.5rem] p-10 border-card-border/30">
-               <div className="flex items-start justify-between mb-8">
-                  <div>
-                    <div className="flex items-center gap-3 mb-2">
-                       <span className={`px-3 py-1 rounded-lg text-xs font-black ${
-                          activeEndpoint.method === 'GET' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-primary/20 text-primary'
-                       }`}>
-                          {activeEndpoint.method}
-                       </span>
-                       <code className="text-xl font-mono text-slate-300 font-bold tracking-tight">
-                          {activeEndpoint.path}
-                       </code>
-                    </div>
-                    <h2 className="text-3xl font-black text-white">{activeEndpoint.title}</h2>
-                    <p className="text-slate-500 font-medium mt-4 max-w-2xl leading-relaxed">
-                       {activeEndpoint.description}
-                    </p>
-                  </div>
-                  <button className="p-4 bg-slate-900 border border-card-border rounded-2xl text-slate-400 hover:text-primary transition-all">
-                     <Copy size={20} />
-                  </button>
-               </div>
-
-               {activeEndpoint.params && (
-                 <div className="mt-10">
-                    <h3 className="text-sm font-black text-white uppercase tracking-widest mb-6">Parameters</h3>
-                    <div className="rounded-2xl border border-card-border/30 overflow-hidden">
-                       <table className="w-full text-left text-xs">
-                          <thead className="bg-slate-900/50 border-b border-card-border/30">
-                             <tr>
-                                <th className="p-4 font-black uppercase text-slate-500 tracking-widest">Name</th>
-                                <th className="p-4 font-black uppercase text-slate-500 tracking-widest">Type</th>
-                                <th className="p-4 font-black uppercase text-slate-500 tracking-widest">Description</th>
-                             </tr>
-                          </thead>
-                          <tbody className="divide-y divide-card-border/20">
-                             {activeEndpoint.params.map((p, i) => (
-                               <tr key={i} className="hover:bg-white/[0.02]">
-                                  <td className="p-4">
-                                     <code className="text-primary font-bold">{p.name}</code>
-                                     {p.required && <span className="ml-2 text-red-500/50 italic text-[10px]">required</span>}
-                                  </td>
-                                  <td className="p-4 text-slate-400">{p.type}</td>
-                                  <td className="p-4 text-slate-500">{p.desc}</td>
-                               </tr>
-                             ))}
-                          </tbody>
-                       </table>
-                    </div>
-                 </div>
-               )}
-            </div>
-
-            {/* Code & Testing Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-               
-               {/* Code Preview */}
-               <div className="glass-panel rounded-[2.5rem] overflow-hidden flex flex-col border-card-border/30">
-                  <div className="p-6 bg-slate-900/50 border-b border-card-border/30 flex items-center justify-between">
-                     <div className="flex gap-2">
-                        {['javascript', 'python', 'curl'].map((lang) => (
-                          <button
-                            key={lang}
-                            onClick={() => setActiveLang(lang as any)}
-                            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                              activeLang === lang ? 'bg-primary/20 text-primary' : 'text-slate-500 hover:text-slate-300'
-                            }`}
-                          >
-                            {lang}
-                          </button>
-                        ))}
-                     </div>
-                     <button 
-                       onClick={() => copyToClipboard(getCodeSnippet())}
-                       className="text-slate-500 hover:text-white transition-colors"
-                     >
-                        {copied ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} />}
-                     </button>
-                  </div>
-                  <div className="flex-1 p-6 bg-slate-950 font-mono text-[11px] leading-relaxed text-slate-400 overflow-x-auto">
-                     <pre>
-                        <code>{getCodeSnippet()}</code>
-                     </pre>
-                  </div>
-               </div>
-
-               {/* Result / Terminal */}
-               <div className="glass-panel rounded-[2.5rem] overflow-hidden flex flex-col border-card-border/30">
-                  <div className="p-6 bg-slate-900/50 border-b border-card-border/30 flex items-center justify-between">
-                     <h4 className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                        <Play size={10} className="text-emerald-500 fill-emerald-500" />
-                        Response Terminal
-                     </h4>
-                     <button 
-                        onClick={runTest}
-                        disabled={testing}
-                        className="btn-premium-primary !px-4 !py-1.5 !rounded-lg !text-[9px] group"
-                     >
-                        {testing ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-                        Execute Request
-                     </button>
-                  </div>
-                  <div className="flex-1 p-6 bg-slate-950 font-mono text-[11px] leading-relaxed text-emerald-400/80 overflow-y-auto max-h-[300px] scrollbar-hide">
-                     {testResult ? (
-                       <pre className="animate-in fade-in slide-in-from-top-2">
-                          <code>{testResult}</code>
-                       </pre>
-                     ) : (
-                        <p className="text-slate-700 italic flex items-center">No request executed yet. System idle<LoadingDots /></p>
-                     )}
-                  </div>
-               </div>
-
-            </div>
-
-         </div>
-
         </div>
       </div>
     </DashboardLayout>

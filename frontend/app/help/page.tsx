@@ -1,274 +1,386 @@
 "use client";
 
-import { useState } from "react";
-import { 
-  HelpCircle, 
-  Search, 
-  Book, 
-  PlayCircle, 
-  LifeBuoy, 
-  ChevronRight, 
-  ExternalLink, 
-  MessageSquare, 
-  FileText,
-  Zap,
-  ArrowRight,
-  Plus,
-  Clock,
+import { useState, useEffect } from "react";
+import {
+  Search,
+  HelpCircle,
+  MessageSquare,
+  BookOpen,
+  Send,
   CheckCircle2,
-  AlertCircle
+  Clock,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  LifeBuoy,
+  Mail,
+  FileText,
+  MessageCircle
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { motion } from "framer-motion";
+import { toast } from "react-hot-toast";
 
-const KB_CATEGORIES = [
-  { id: 'getting-started', title: 'Onboarding & Setup', count: 12, icon: <Zap className="text-primary" size={18} /> },
-  { id: 'security', title: 'Data & Privacy', count: 8, icon: <LifeBuoy className="text-emerald-500" size={18} /> },
-  { id: 'system-sync', title: 'System Synchronization', count: 15, icon: <Book className="text-blue-500" size={18} /> },
-  { id: 'performance-modeling', title: 'Performance Forecasting', count: 6, icon: <FileText className="text-purple-500" size={18} /> },
-];
+interface FAQ {
+  id: number;
+  question: string;
+  answer: string;
+  category: 'general' | 'technical' | 'billing' | 'security';
+}
 
-const TUTORIALS = [
-  { title: "Your First System Sync", duration: "4:20", level: "Beginner", image: "https://images.unsplash.com/photo-1620712943543-bcc4628c6bb5?auto=format&fit=crop&q=80&w=400" },
-  { title: "Advanced Workflow Logic", duration: "12:45", level: "Expert", image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400" },
-  { title: "Security Protocols 101", duration: "8:12", level: "Intermediate", image: "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=400" },
+interface SupportTicket {
+  id: string;
+  subject: string;
+  status: 'open' | 'in-progress' | 'resolved';
+  created: string;
+  messages: { from: string; content: string; timestamp: string }[];
+}
+
+const FAQS: FAQ[] = [
+  {
+    id: 1,
+    question: "How does ELYX handle multiple communication channels?",
+    answer: "ELYX uses unified system processing to monitor and respond across WhatsApp, LinkedIn, Email, and social media simultaneously. Every interaction is context-aware and maintains your unique brand voice.",
+    category: 'general'
+  },
+  {
+    id: 2,
+    question: "How do I approve or reject AI actions?",
+    answer: "Go to the Approvals page (/approvals) to see all pending actions. Click 'Approve' to allow the action or 'Reject' to deny it. Approved actions are processed automatically.",
+    category: 'general'
+  },
+  {
+    id: 3,
+    question: "Where can I see completed tasks?",
+    answer: "Visit the Tasks page (/tasks) and filter by 'Completed' to see all finished tasks. Each task shows the results and actions taken by the AI.",
+    category: 'general'
+  },
+  {
+    id: 4,
+    question: "How do I set up Gmail integration?",
+    answer: "1. Create OAuth credentials in Google Cloud Console. 2. Save as gmail_credentials.json in the project root. 3. Run: python setup_gmail_auth.py. 4. Follow the browser authentication flow.",
+    category: 'technical'
+  },
+  {
+    id: 5,
+    question: "What is the Vault API?",
+    answer: "The Vault API (port 8080) provides REST endpoints to interact with your Obsidian vault. Run it with: python scripts/start_frontend.py",
+    category: 'technical'
+  },
+  {
+    id: 6,
+    question: "How do I configure MCP servers?",
+    answer: "Run: python scripts/setup_mcp_config.py --agent all. This configures MCP servers for Claude, Qwen, Gemini, and Codex.",
+    category: 'technical'
+  },
+  {
+    id: 7,
+    question: "Is my data secure?",
+    answer: "Yes. ELYX uses enterprise-grade security with local-first architecture. Your credentials never leave your machine, and all data is stored locally in your Obsidian vault.",
+    category: 'security'
+  },
+  {
+    id: 8,
+    question: "Can I customize AI decision-making?",
+    answer: "Yes! Edit obsidian_vault/Company_Handbook.md to set custom rules for what actions require approval, response guidelines, and business policies.",
+    category: 'general'
+  }
 ];
 
 export default function HelpPage() {
-  const [activeTab, setActiveTab] = useState<'kb' | 'tutorials' | 'support'>('kb');
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+  const [showTicketForm, setShowTicketForm] = useState(false);
+  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [newTicket, setNewTicket] = useState({ subject: '', message: '', email: '' });
+
+  const filteredFaqs = FAQS.filter(faq => {
+    const matchesSearch = faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         faq.answer.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = categoryFilter === 'all' || faq.category === categoryFilter;
+    return matchesSearch && matchesCategory;
+  });
+
+  const handleSubmitTicket = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    const ticket: SupportTicket = {
+      id: `TICKET_${Date.now()}`,
+      subject: newTicket.subject,
+      status: 'open',
+      created: new Date().toISOString(),
+      messages: [
+        { from: 'You', content: newTicket.message, timestamp: new Date().toISOString() }
+      ]
+    };
+    
+    setTickets([ticket, ...tickets]);
+    setNewTicket({ subject: '', message: '', email: '' });
+    setShowTicketForm(false);
+    toast.success('Support ticket created! We\'ll respond within 24 hours.');
+  };
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-        
-        {/* Header Section */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
-          <div className="space-y-2">
-            <h1 className="text-5xl font-black tracking-tighter text-white">
-              Intelligence <span className="text-primary italic">Center</span>
-            </h1>
-            <p className="text-slate-500 font-medium max-w-xl">
-              Access the foundational knowledge, tutorials, and support required to master the <span className="text-slate-300 font-bold">ELYX System Core</span>.
-            </p>
+      <div className="space-y-8">
+        {/* Header */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 border border-primary/20 rounded-full text-primary mb-6">
+            <LifeBuoy className="w-4 h-4" />
+            <span className="text-xs font-bold uppercase tracking-widest">Support Center</span>
           </div>
-          <div className="flex items-center gap-4">
-             <div className="relative group w-80">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-hover:text-primary transition-colors" />
-                <input 
-                  type="text" 
-                  placeholder="Query knowledge base..." 
-                  className="w-full bg-slate-900 border border-card-border rounded-2xl py-4 pl-12 pr-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all shadow-2xl"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-             </div>
+          <h1 className="text-4xl md:text-5xl font-black text-white mb-4">
+            How can we help you?
+          </h1>
+          <p className="text-slate-400 text-lg max-w-2xl mx-auto">
+            Search our knowledge base or submit a support ticket
+          </p>
+        </motion.div>
+
+        {/* Search */}
+        <div className="max-w-3xl mx-auto relative">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 w-6 h-6 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search for answers..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-16 pr-4 py-5 bg-slate-800/50 border border-slate-700 rounded-2xl text-white placeholder:text-slate-500 focus:outline-none focus:border-primary transition-all text-lg"
+          />
+        </div>
+
+        {/* Quick Actions */}
+        <div className="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <button
+            onClick={() => setShowTicketForm(true)}
+            className="glass-panel p-6 rounded-2xl hover:border-primary/50 transition-all group text-left"
+          >
+            <div className="w-12 h-12 rounded-xl bg-primary/20 text-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <MessageSquare className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-white mb-2">Submit a Ticket</h3>
+            <p className="text-sm text-slate-400">Get help from our support team</p>
+          </button>
+
+          <a
+            href="/docs"
+            className="glass-panel p-6 rounded-2xl hover:border-primary/50 transition-all group text-left"
+          >
+            <div className="w-12 h-12 rounded-xl bg-green-500/20 text-green-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <BookOpen className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-white mb-2">Documentation</h3>
+            <p className="text-sm text-slate-400">Read the full documentation</p>
+          </a>
+
+          <a
+            href="/api-docs"
+            className="glass-panel p-6 rounded-2xl hover:border-primary/50 transition-all group text-left"
+          >
+            <div className="w-12 h-12 rounded-xl bg-blue-500/20 text-blue-400 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+              <FileText className="w-6 h-6" />
+            </div>
+            <h3 className="font-semibold text-white mb-2">API Reference</h3>
+            <p className="text-sm text-slate-400">Explore the API endpoints</p>
+          </a>
+        </div>
+
+        {/* FAQ Section */}
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
+              <HelpCircle className="w-6 h-6 text-primary" />
+              Frequently Asked Questions
+            </h2>
+            
+            <select
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+              className="bg-slate-800 border border-slate-700 rounded-lg px-4 py-2 text-sm text-slate-300 focus:outline-none focus:border-primary"
+            >
+              <option value="all">All Categories</option>
+              <option value="general">General</option>
+              <option value="technical">Technical</option>
+              <option value="security">Security</option>
+            </select>
           </div>
-        </div>
 
-        {/* Navigation Tabs */}
-        <div className="flex items-center gap-2 p-1 bg-slate-900/50 border border-card-border/50 rounded-2xl w-fit">
-           <TabButton active={activeTab === 'kb'} onClick={() => setActiveTab('kb')} icon={<Book size={16} />} label="Knowledge Base" />
-           <TabButton active={activeTab === 'tutorials'} onClick={() => setActiveTab('tutorials')} icon={<PlayCircle size={16} />} label="Tutorials" />
-           <TabButton active={activeTab === 'support'} onClick={() => setActiveTab('support')} icon={<MessageSquare size={16} />} label="Support Tickets" />
-        </div>
-
-        {/* Content Area */}
-        <div className="min-h-[600px]">
-          {activeTab === 'kb' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
-               {/* Categories */}
-               <div className="lg:col-span-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {KB_CATEGORIES.map((cat) => (
-                    <div key={cat.id} className="glass-panel p-8 rounded-[2.5rem] border-card-border/30 hover:border-primary/30 transition-all group cursor-pointer relative overflow-hidden">
-                       <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform duration-700">
-                          {cat.icon}
-                       </div>
-                       <div className="p-3 rounded-2xl bg-slate-900 border border-card-border mb-6 group-hover:shadow-[0_0_15px_rgba(6,182,212,0.1)] transition-all inline-block">
-                          {cat.icon}
-                       </div>
-                       <h3 className="text-xl font-black text-white mb-2">{cat.title}</h3>
-                       <p className="text-xs text-slate-500 font-medium mb-6 uppercase tracking-widest">{cat.count} Intelligence Units</p>
-                       <div className="space-y-3">
-                          <p className="text-sm text-slate-400 font-medium flex items-center justify-between group/item hover:text-white transition-colors">
-                             Setting up your system anchor
-                             <ChevronRight size={14} className="text-slate-600 group-hover/item:translate-x-1 transition-transform" />
-                          </p>
-                          <p className="text-sm text-slate-400 font-medium flex items-center justify-between group/item hover:text-white transition-colors">
-                             Distributed system security
-                             <ChevronRight size={14} className="text-slate-600 group-hover/item:translate-x-1 transition-transform" />
-                          </p>
-                       </div>
+          <div className="space-y-4">
+            {filteredFaqs.map((faq, index) => (
+              <motion.div
+                key={faq.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                className="glass-panel rounded-xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setActiveFaq(activeFaq === faq.id ? null : faq.id)}
+                  className="w-full p-6 text-left flex items-center justify-between gap-4"
+                >
+                  <span className="font-semibold text-white">{faq.question}</span>
+                  {activeFaq === faq.id ? (
+                    <ChevronUp className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-slate-400 flex-shrink-0" />
+                  )}
+                </button>
+                
+                {activeFaq === faq.id && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    className="px-6 pb-6 text-slate-400"
+                  >
+                    <div className="pt-4 border-t border-slate-800">
+                      {faq.answer}
                     </div>
-                  ))}
-               </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            ))}
+          </div>
 
-               {/* Trending Side */}
-               <div className="lg:col-span-4 space-y-8">
-                  <div className="glass-panel p-8 rounded-[2rem] border-card-border/30">
-                     <h3 className="text-lg font-black text-white mb-6">Trending Queries</h3>
-                     <div className="space-y-4">
-                        {['How to optimize system stability?', 'Connecting to WhatsApp API', 'System divergence warnings', 'Auth token rotation'].map((q, i) => (
-                           <div key={i} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-900 transition-colors cursor-pointer group">
-                              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                              <span className="text-sm font-bold text-slate-400 group-hover:text-slate-200 transition-colors">{q}</span>
-                           </div>
-                        ))}
-                     </div>
-                  </div>
-
-                  <div className="glass-panel p-8 rounded-[2rem] bg-primary/[0.02] border-primary/20">
-                     <h3 className="text-lg font-black text-white mb-4">System Assistant</h3>
-                     <p className="text-xs text-slate-500 font-medium leading-relaxed mb-6 italic underline decoration-primary/30">
-                        "I am trained on our entire documentation corpus. Ask me any technical query for immediate synthesis."
-                     </p>
-                     <button className="w-full py-4 bg-primary text-slate-950 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-white transition-all shadow-xl shadow-primary/20">
-                        Initialize AI Support
-                     </button>
-                  </div>
-               </div>
-            </div>
-          )}
-
-          {activeTab === 'tutorials' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-               {TUTORIALS.map((video, i) => (
-                 <div key={i} className="glass-panel overflow-hidden rounded-[2.5rem] border-card-border/30 group hover:border-primary/20 transition-all">
-                    <div className="relative h-48 bg-slate-900 overflow-hidden">
-                       <img src={video.image} className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-1000" alt={video.title} />
-                       <div className="absolute inset-0 flex items-center justify-center">
-                          <button className="w-14 h-14 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center backdrop-blur-md group-hover:bg-primary group-hover:text-slate-950 transition-all scale-90 group-hover:scale-100">
-                             <PlayCircle size={32} />
-                          </button>
-                       </div>
-                       <div className="absolute bottom-4 right-4 px-3 py-1 bg-slate-950/80 border border-card-border rounded-lg text-[10px] font-black text-white">
-                          {video.duration}
-                       </div>
-                    </div>
-                    <div className="p-8">
-                       <div className="flex items-center justify-between mb-4">
-                          <span className="text-[10px] font-black text-primary uppercase tracking-widest">{video.level}</span>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase">Module {i+1}</span>
-                       </div>
-                       <h3 className="text-xl font-black text-white mb-4 group-hover:text-primary transition-colors">{video.title}</h3>
-                       <button className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest hover:text-white transition-colors">
-                          Resume Learning <ArrowRight size={14} />
-                       </button>
-                    </div>
-                 </div>
-               ))}
-            </div>
-          )}
-
-          {activeTab === 'support' && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in duration-500">
-               {/* Left: Ticket Statistics */}
-               <div className="lg:col-span-4 space-y-6">
-                  <div className="glass-panel p-8 rounded-[2.5rem] border-card-border/30">
-                     <h3 className="text-lg font-black text-white mb-8">Active Tickets</h3>
-                     <div className="space-y-6">
-                        <TicketStat label="Open Inquiries" value={2} color="text-primary" />
-                        <TicketStat label="Resolved (30d)" value={14} color="text-emerald-500" />
-                        <TicketStat label="Avg Response" value="2h 45m" color="text-blue-500" />
-                     </div>
-                     <button className="w-full mt-10 py-5 bg-slate-900 border border-card-border rounded-2xl font-black text-xs text-white uppercase tracking-widest hover:bg-white hover:text-slate-950 transition-all flex items-center justify-center gap-2 group">
-                        <Plus size={18} className="group-hover:rotate-90 transition-transform" />
-                        Open New Support Ticket
-                     </button>
-                  </div>
-               </div>
-
-               {/* Right: Ticket List */}
-               <div className="lg:col-span-8">
-                  <div className="glass-panel p-1 border-card-border/30 rounded-[2.5rem] overflow-hidden">
-                     <div className="p-8 border-b border-card-border/30 bg-slate-900/30">
-                        <h3 className="text-xl font-black text-white">Recent Interactions</h3>
-                     </div>
-                     <div className="divide-y divide-card-border/20">
-                        <TicketItem 
-                          id="TKT-8842" 
-                          subject="System Sync Lag on Node 7" 
-                          status="open" 
-                          date="Feb 06, 2026"
-                          icon={<AlertCircle className="text-red-400" size={18} />}
-                        />
-                        <TicketItem 
-                          id="TKT-8812" 
-                          subject="Onboarding Guidance Query" 
-                          status="processing" 
-                          date="Feb 05, 2026"
-                          icon={<Clock className="text-primary" size={18} />}
-                        />
-                        <TicketItem 
-                          id="TKT-8765" 
-                          subject="Priority Deployment Verification" 
-                          status="resolved" 
-                          date="Jan 30, 2026"
-                          icon={<CheckCircle2 className="text-emerald-500" size={18} />}
-                        />
-                     </div>
-                  </div>
-               </div>
+          {filteredFaqs.length === 0 && (
+            <div className="text-center py-12">
+              <Search className="w-16 h-16 mx-auto text-slate-700 mb-4" />
+              <p className="text-slate-400">No results found for "{searchQuery}"</p>
             </div>
           )}
         </div>
 
+        {/* Support Tickets */}
+        {tickets.length > 0 && (
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+              <MessageCircle className="w-6 h-6 text-primary" />
+              Your Support Tickets
+            </h2>
+            
+            <div className="space-y-4">
+              {tickets.map((ticket) => (
+                <div key={ticket.id} className="glass-panel p-6 rounded-xl">
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="font-semibold text-white">{ticket.subject}</h3>
+                      <p className="text-sm text-slate-500 mt-1">
+                        Created: {new Date(ticket.created).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
+                      ticket.status === 'open' ? 'bg-green-500/20 text-green-400' :
+                      ticket.status === 'in-progress' ? 'bg-yellow-500/20 text-yellow-400' :
+                      'bg-slate-500/20 text-slate-400'
+                    }`}>
+                      {ticket.status}
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {ticket.messages.map((msg, i) => (
+                      <div key={i} className={`p-4 rounded-lg ${
+                        msg.from === 'You' ? 'bg-primary/10 ml-8' : 'bg-slate-800 mr-8'
+                      }`}>
+                        <p className="text-sm text-slate-300">{msg.content}</p>
+                        <p className="text-xs text-slate-500 mt-2">
+                          {msg.from} • {new Date(msg.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Ticket Form Modal */}
+        {showTicketForm && (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-panel rounded-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+            >
+              <div className="p-6 border-b border-slate-800 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Submit Support Ticket</h2>
+                <button
+                  onClick={() => setShowTicketForm(false)}
+                  className="p-2 hover:bg-slate-800 rounded-lg transition-colors"
+                >
+                  <Send className="w-5 h-5 text-slate-400 rotate-45" />
+                </button>
+              </div>
+              
+              <form onSubmit={handleSubmitTicket} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={newTicket.email}
+                    onChange={(e) => setNewTicket({...newTicket, email: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-primary"
+                    placeholder="your@email.com"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
+                    Subject
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={newTicket.subject}
+                    onChange={(e) => setNewTicket({...newTicket, subject: e.target.value})}
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-primary"
+                    placeholder="Brief description of your issue"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-slate-400 mb-2">
+                    Message
+                  </label>
+                  <textarea
+                    required
+                    value={newTicket.message}
+                    onChange={(e) => setNewTicket({...newTicket, message: e.target.value})}
+                    rows={6}
+                    className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-primary resize-none"
+                    placeholder="Describe your issue in detail..."
+                  />
+                </div>
+                
+                <div className="flex gap-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowTicketForm(false)}
+                    className="flex-1 px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-white transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 px-4 py-3 bg-primary hover:bg-primary/80 rounded-xl text-white font-semibold transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" />
+                    Submit Ticket
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
-  );
-}
-
-function TabButton({ active, onClick, icon, label }: any) {
-  return (
-    <button 
-      onClick={onClick}
-      className={`flex items-center gap-3 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-        active 
-          ? 'bg-primary text-slate-950 shadow-[0_0_20px_rgba(6,182,212,0.3)]' 
-          : 'text-slate-500 hover:text-slate-300'
-      }`}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-function TicketStat({ label, value, color }: any) {
-  return (
-    <div className="flex items-center justify-between">
-       <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{label}</span>
-       <span className={`text-xl font-black ${color}`}>{value}</span>
-    </div>
-  );
-}
-
-function TicketItem({ id, subject, status, date, icon }: any) {
-  return (
-    <div className="p-6 hover:bg-slate-900 transition-colors group cursor-pointer">
-       <div className="flex items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-             <div className="w-12 h-12 rounded-2xl bg-slate-900 border border-card-border flex items-center justify-center">
-                {icon}
-             </div>
-             <div>
-                <div className="flex items-center gap-3 mb-1">
-                   <p className="text-sm font-black text-slate-200 group-hover:text-primary transition-colors">{subject}</p>
-                   <span className="text-[10px] font-mono text-slate-600">#{id}</span>
-                </div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{date}</p>
-             </div>
-          </div>
-          <div className="flex items-center gap-4">
-             <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter border ${
-                status === 'open' ? 'text-red-400 border-red-400/20 bg-red-400/5' :
-                status === 'processing' ? 'text-primary border-primary/20 bg-primary/5' :
-                'text-emerald-500 border-emerald-500/20 bg-emerald-500/5'
-             }`}>
-                {status}
-             </span>
-             <ChevronRight size={18} className="text-slate-700 group-hover:text-primary group-hover:translate-x-1 transition-all" />
-          </div>
-       </div>
-    </div>
   );
 }
