@@ -143,6 +143,11 @@ class MemorySystem:
         if embeddings_list:
             # Add to FAISS index
             embeddings_array = np.array(embeddings_list).astype('float32')
+            # Ensure 2D shape (n_samples, embedding_dim) for FAISS
+            if embeddings_array.ndim == 1:
+                embeddings_array = embeddings_array.reshape(1, -1)
+            elif embeddings_array.ndim > 2:
+                embeddings_array = embeddings_array.reshape(embeddings_array.shape[0], -1)
             # Normalize for cosine similarity
             faiss.normalize_L2(embeddings_array)
             self.vector_index.add(embeddings_array)
@@ -206,7 +211,8 @@ class MemorySystem:
 
     def _generate_memory_id(self, content: str, memory_type: MemoryType, context: Dict[str, Any]) -> str:
         """Generate a unique ID for a memory"""
-        hash_input = f"{content}{memory_type.value}{json.dumps(context, sort_keys=True)}"
+        type_val = memory_type.value if hasattr(memory_type, 'value') else str(memory_type)
+        hash_input = f"{content}{type_val}{json.dumps(context, sort_keys=True)}"
         return hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
     def _generate_embeddings(self, content: str) -> Optional[np.ndarray]:
@@ -252,7 +258,7 @@ class MemorySystem:
         ''', (
             memory_entry.id,
             memory_entry.content,
-            memory_entry.memory_type.value,
+            memory_entry.memory_type.value if hasattr(memory_entry.memory_type, 'value') else str(memory_entry.memory_type),
             memory_entry.timestamp,
             memory_entry.importance,
             context_json,
@@ -712,7 +718,7 @@ class MemorySystem:
                 FROM memories
                 WHERE memory_type = ?
                 ORDER BY timestamp DESC
-            ''', (memory_type.value,))
+            ''', (memory_type.value if hasattr(memory_type, 'value') else str(memory_type),))
         else:
             cursor.execute('''
                 SELECT id, content, memory_type, timestamp, importance, context, tags, access_count
@@ -879,7 +885,7 @@ class LearningSystem:
                     'confidence': min(1.0, count / len(recent_memories))
                 })
 
-        log_activity("PATTERNS_IDENTIFIED", f"Identified {len(patterns)} patterns in {memory_type.value} memories", "obsidian_vault")
+        log_activity("PATTERNS_IDENTIFIED", f"Identified {len(patterns)} patterns in {memory_type.value if hasattr(memory_type, 'value') else memory_type} memories", "obsidian_vault")
         return patterns
 
     def update_knowledge_base(self, new_information: str, source: str = "user_interaction") -> str:
@@ -991,7 +997,7 @@ if __name__ == "__main__":
     retrieved_memory = memory_system.retrieve_memory(memory_id1)
     if retrieved_memory:
         print(f"Retrieved: {retrieved_memory.content[:50]}...")
-        print(f"Type: {retrieved_memory.memory_type.value}, Importance: {retrieved_memory.importance}")
+        print(f"Type: {retrieved_memory.memory_type.value if hasattr(retrieved_memory.memory_type, 'value') else retrieved_memory.memory_type}, Importance: {retrieved_memory.importance}")
 
     # Test searching memories
     print("\n3. Testing Memory Search:")
