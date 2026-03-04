@@ -10,7 +10,7 @@ from ...services.database import get_db_session
 from ...services.task_service import TaskService
 from ...services.preference_service import UserPreferenceService
 from ...services.interaction_service import InteractionService
-from ..models import (
+from ..api_models import (
     DashboardStatusResponse,
     AnalyticsRequest,
     AnalyticsResponse,

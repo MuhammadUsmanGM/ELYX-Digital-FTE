@@ -9,7 +9,7 @@ from datetime import datetime
 from ...services.database import get_db_session
 from ...services.task_service import TaskService
 from ...services.database import ApprovalRequest
-from ..models import TaskResponse
+from ..api_models import TaskResponse
 
 # Create router for approval endpoints
 approval_router = APIRouter(prefix="/approvals", tags=["approvals"])

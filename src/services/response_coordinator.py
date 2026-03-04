@@ -381,7 +381,7 @@ class ResponseCoordinator:
 
     def get_response_status(self, response_id: str) -> Optional[Dict[str, Any]]:
         """
-        Get the status of a specific response
+        Get the status of a specific response by checking the queue and recent sends.
 
         Args:
             response_id: ID of the response to check
@@ -389,14 +389,21 @@ class ResponseCoordinator:
         Returns:
             Dictionary with response status or None if not found
         """
-        # In a full implementation, this would check persistent storage
-        # For now, we'll just return a placeholder
-        # This would typically interface with a database or file system to track response statuses
-        return {
-            "id": response_id,
-            "status": "STATUS_PENDING_IMPLEMENTATION",
-            "timestamp": datetime.now().isoformat()
-        }
+        # Check in-memory queue for pending items
+        for item in list(self.response_queue._queue):
+            if item.get("id") == response_id:
+                return {
+                    "id": response_id,
+                    "status": item.get("status", ResponseStatus.QUEUED.value),
+                    "channel": item.get("channel", CommunicationChannel.EMAIL).value if isinstance(item.get("channel"), CommunicationChannel) else str(item.get("channel", "")),
+                    "recipient": item.get("recipient_identifier", "unknown"),
+                    "queued_at": item.get("queued_at"),
+                    "sent_at": item.get("sent_at"),
+                    "timestamp": datetime.now().isoformat()
+                }
+
+        # Not found in queue - could be already sent or unknown
+        return None
 
     async def start_processing_loop(self):
         """

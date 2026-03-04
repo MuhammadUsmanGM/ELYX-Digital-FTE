@@ -14,6 +14,9 @@ class CommunicationChannel(str, Enum):
     EMAIL = "EMAIL"
     LINKEDIN = "LINKEDIN"
     WHATSAPP = "WHATSAPP"
+    FACEBOOK = "FACEBOOK"
+    TWITTER = "TWITTER"
+    INSTAGRAM = "INSTAGRAM"
 
 
 class ResponseType(str, Enum):
@@ -24,6 +27,7 @@ class ResponseType(str, Enum):
     ACTION_REQUEST = "ACTION_REQUEST"
     CONFIRMATION = "CONFIRMATION"
     STATUS_UPDATE = "STATUS_UPDATE"
+    FEED_POST = "FEED_POST"
 
 
 class Priority(str, Enum):

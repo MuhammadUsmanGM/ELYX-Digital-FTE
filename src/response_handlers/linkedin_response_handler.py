@@ -16,7 +16,7 @@ class LinkedInResponseHandler(BaseResponseHandler):
     """
     def __init__(self, session_path: Optional[str] = None):
         super().__init__(CommunicationChannel.LINKEDIN)
-        self.session_path = Path(session_path or os.getenv('LINKEDIN_SESSION_FILE', './linkedin_session.json'))
+        self.session_path = Path(session_path or os.getenv('LINKEDIN_SESSION_PATH', './sessions/linkedin_session'))
         self.playwright = None
         self.browser = None
         self.page = None
@@ -30,11 +30,13 @@ class LinkedInResponseHandler(BaseResponseHandler):
             self.playwright = await async_playwright().start()
 
         if self.browser is None or not self.browser.is_connected():
+            self.session_path.mkdir(parents=True, exist_ok=True)
             self.browser = await self.playwright.chromium.launch_persistent_context(
-                str(self.session_path.parent),
-                headless=True,
+                str(self.session_path),
+                headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
                 viewport={'width': 1920, 'height': 1080},
-                locale='en-US'
+                locale='en-US',
+                args=['--disable-blink-features=AutomationControlled']
             )
 
             self.page = await self.browser.new_page()

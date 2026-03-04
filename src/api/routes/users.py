@@ -7,7 +7,7 @@ from typing import List
 from datetime import datetime
 
 from ...services.database import get_db_session, TeamMember
-from ..models import TeamMemberResponse, TeamMemberCreateRequest
+from ..api_models import TeamMemberResponse, TeamMemberCreateRequest
 
 router = APIRouter(prefix="/users", tags=["users"])
 

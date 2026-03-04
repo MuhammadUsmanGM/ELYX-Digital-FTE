@@ -8,8 +8,8 @@ from pathlib import Path
 import logging
 
 from src.services.response_coordinator import ResponseCoordinator
-from src.response_handlers.base_handler import CommunicationChannel, ResponseStatus, ResponseType, Priority
-from src.services.conversation_tracker import ConversationTracker
+from src.response_handlers.base_handler import CommunicationChannel, ResponseStatus
+from src.services.conversation_tracker import ConversationTracker, ResponseType, Priority
 from src.services.approval_workflow import ApprovalWorkflow, MessageType
 
 
@@ -33,7 +33,10 @@ class ResponseCoordinatorService:
         self.rate_limits = {
             CommunicationChannel.EMAIL: {"requests": [], "limit": 250, "window": 86400},  # 250/day for Gmail
             CommunicationChannel.LINKEDIN: {"requests": [], "limit": 100, "window": 3600},  # 100/hour estimate
-            CommunicationChannel.WHATSAPP: {"requests": [], "limit": 50, "window": 3600}  # 50/hour estimate
+            CommunicationChannel.WHATSAPP: {"requests": [], "limit": 50, "window": 3600},  # 50/hour estimate
+            CommunicationChannel.FACEBOOK: {"requests": [], "limit": 50, "window": 3600},  # 50/hour
+            CommunicationChannel.TWITTER: {"requests": [], "limit": 2400, "window": 86400},  # 2400/day
+            CommunicationChannel.INSTAGRAM: {"requests": [], "limit": 25, "window": 3600},  # 25/hour
         }
 
     async def queue_response(
@@ -196,14 +199,35 @@ class ResponseCoordinatorService:
         subject = response_message.get("subject")
 
         try:
+            response_type = response_message.get("response_type")
             if channel == CommunicationChannel.EMAIL:
                 result = await self.response_coordinator.email_handler.send_response(
                     recipient, content, subject=subject or "Response from AI Employee"
                 )
             elif channel == CommunicationChannel.LINKEDIN:
-                result = await self.response_coordinator.linkedin_handler.send_response(recipient, content)
+                if response_type == ResponseType.FEED_POST:
+                    result = await self.response_coordinator.linkedin_handler.post_to_feed(content)
+                else:
+                    result = await self.response_coordinator.linkedin_handler.send_response(recipient, content)
             elif channel == CommunicationChannel.WHATSAPP:
                 result = await self.response_coordinator.whatsapp_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.FACEBOOK:
+                if response_type == ResponseType.FEED_POST:
+                    result = await self.response_coordinator.facebook_handler.post_to_feed(content)
+                else:
+                    result = await self.response_coordinator.facebook_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.TWITTER:
+                if response_type == ResponseType.FEED_POST:
+                    result = await self.response_coordinator.twitter_handler.post_tweet(content)
+                else:
+                    result = await self.response_coordinator.twitter_handler.send_response(recipient, content)
+            elif channel == CommunicationChannel.INSTAGRAM:
+                if response_type == ResponseType.FEED_POST:
+                    result = await self.response_coordinator.instagram_handler.post_to_feed(
+                        content, response_message.get("image_path")
+                    )
+                else:
+                    result = await self.response_coordinator.instagram_handler.send_response(recipient, content)
             else:
                 raise ValueError(f"Unsupported communication channel: {channel}")
 

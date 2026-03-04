@@ -10,7 +10,7 @@ import uuid
 
 from ...services.database import get_db_session
 from ...services.ai_service_minimal import AIService
-from ...api.models import (
+from ...api.api_models import (
     TaskResponse,
     TaskCreateRequest,
     AnalyticsResponse

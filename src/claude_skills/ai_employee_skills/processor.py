@@ -710,20 +710,37 @@ subject: Response to your request
 
     def _send_whatsapp_message(self, task, whatsapp_action: dict):
         """
-        Execute WhatsApp message sending via MCP
+        Execute WhatsApp message sending via Playwright (direct browser automation).
+        Uses the same Chrome session as the WhatsApp watcher — no Business API needed.
+        Falls back to MCP if direct send fails.
 
         Args:
             task: The task object
             whatsapp_action: Dictionary with 'to' and 'message'
         """
-        from src.mcp_client import MCPClient
-
         phone = whatsapp_action.get('to', '')
         message = whatsapp_action.get('message', 'Hello')
 
-        log_activity("WHATSAPP_SEND", f"Sending WhatsApp to {phone} via MCP", self.vault_path)
+        log_activity("WHATSAPP_SEND", f"Sending WhatsApp to {phone} via Playwright", self.vault_path)
 
+        # Try direct Playwright send first (same session as watcher)
         try:
+            result = self._send_whatsapp_direct(phone, message)
+
+            if result.get('success'):
+                log_activity("WHATSAPP_SENT", f"WhatsApp sent successfully to {phone}", self.vault_path)
+                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Method**: Direct Playwright\n- **Timestamp**: {datetime.now().isoformat()}\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+                return
+            else:
+                self.logger.warning(f"Direct WhatsApp send failed: {result.get('error')}. Trying MCP fallback...")
+
+        except Exception as e:
+            self.logger.warning(f"Direct WhatsApp send error: {e}. Trying MCP fallback...")
+
+        # Fallback: try MCP server
+        try:
+            from src.mcp_client import MCPClient
             mcp_client = MCPClient("whatsapp", transport="stdio")
 
             result = mcp_client.call("whatsapp.send", {
@@ -733,34 +750,116 @@ subject: Response to your request
             })
 
             if result.get('success'):
-                log_activity("WHATSAPP_SENT", f"WhatsApp sent successfully to {phone}", self.vault_path)
-
-                # Update task with success
-                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Timestamp**: {datetime.now().isoformat()}\n"
+                log_activity("WHATSAPP_SENT", f"WhatsApp sent via MCP to {phone}", self.vault_path)
+                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Method**: MCP Server\n- **Timestamp**: {datetime.now().isoformat()}\n"
                 task.filepath.write_text(task.content, encoding='utf-8')
             else:
                 error_msg = result.get('error', 'Unknown error')
                 log_activity("WHATSAPP_FAILED", f"Failed to send WhatsApp: {error_msg}", self.vault_path)
-
-                # Update task with failure
-                task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: WhatsApp session may need to be setup. Run: python setup_sessions.py whatsapp\n"
+                task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: Run: python setup_sessions.py whatsapp\n"
                 task.filepath.write_text(task.content, encoding='utf-8')
-
-        except FileNotFoundError:
-            error_msg = "WhatsApp MCP server not found"
-            self.logger.error(f"WhatsApp MCP server not found: {error_msg}")
-            log_activity("WHATSAPP_MCP_NOT_FOUND", error_msg, self.vault_path)
-
-            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: MCP server may not be running\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
 
         except Exception as e:
             error_msg = str(e)
-            self.logger.error(f"Error sending WhatsApp: {error_msg}")
-            log_activity("WHATSAPP_ERROR", f"Error sending WhatsApp: {error_msg}", self.vault_path)
-
-            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n"
+            self.logger.error(f"All WhatsApp send methods failed: {error_msg}")
+            log_activity("WHATSAPP_ERROR", f"All methods failed: {error_msg}", self.vault_path)
+            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: Run: python setup_sessions.py whatsapp\n"
             task.filepath.write_text(task.content, encoding='utf-8')
+
+    def _send_whatsapp_direct(self, phone: str, message: str) -> dict:
+        """
+        Send WhatsApp message directly via Playwright using the persistent session.
+        Same approach as the WhatsApp watcher — no API keys needed.
+        """
+        import time
+        import random
+        from pathlib import Path
+
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            return {"success": False, "error": "Playwright not installed"}
+
+        session_path = os.getenv('WHATSAPP_SESSION_PATH', './sessions/whatsapp_session')
+        p = None
+
+        try:
+            p = sync_playwright().start()
+            Path(session_path).mkdir(parents=True, exist_ok=True)
+            browser = p.chromium.launch_persistent_context(
+                session_path,
+                headless=False,
+                viewport={'width': 1280, 'height': 800},
+                args=['--disable-blink-features=AutomationControlled'],
+            )
+            page = browser.pages[0] if browser.pages else browser.new_page()
+            page.goto('https://web.whatsapp.com', wait_until='domcontentloaded', timeout=90000)
+
+            # Wait for chat list (indicates logged in)
+            selectors = '[data-testid="chat-list"], #pane-side, [aria-label="Chat list"]'
+            try:
+                page.wait_for_selector(selectors, timeout=20000)
+            except Exception:
+                return {"success": False, "error": "WhatsApp not logged in. Run: python setup_sessions.py whatsapp"}
+
+            # Search for contact
+            search_box = page.query_selector('div[contenteditable="true"][data-tab="3"]')
+            if not search_box:
+                search_icon = page.query_selector('[data-testid="search"], [data-icon="search"]')
+                if search_icon:
+                    search_icon.click()
+                    time.sleep(1)
+                    search_box = page.query_selector('div[contenteditable="true"][data-tab="3"]')
+
+            if not search_box:
+                return {"success": False, "error": "Could not find WhatsApp search box"}
+
+            search_box.click()
+            time.sleep(0.5)
+            page.keyboard.press('Control+A')
+            page.keyboard.press('Backspace')
+            page.keyboard.type(phone, delay=random.randint(30, 80))
+            time.sleep(2)
+
+            # Click first result or press Enter
+            contact = page.query_selector(f'span[title*="{phone}"]')
+            if contact:
+                contact.click()
+            else:
+                page.keyboard.press('Enter')
+            time.sleep(1.5)
+
+            # Find message input and type
+            msg_box = page.query_selector('div[contenteditable="true"][data-tab="10"]')
+            if not msg_box:
+                msg_box = page.query_selector('footer div[contenteditable="true"]')
+            if not msg_box:
+                return {"success": False, "error": "Could not find message input box"}
+
+            msg_box.click()
+            time.sleep(0.3)
+
+            lines = message.split('\n')
+            for i, line in enumerate(lines):
+                page.keyboard.type(line, delay=random.randint(10, 30))
+                if i < len(lines) - 1:
+                    page.keyboard.press('Shift+Enter')
+
+            time.sleep(0.5)
+            page.keyboard.press('Enter')
+            time.sleep(2)
+
+            browser.close()
+            p.stop()
+            return {"success": True, "message": f"WhatsApp message sent to {phone}"}
+
+        except Exception as e:
+            if p:
+                try:
+                    p.stop()
+                except Exception:
+                    pass
+            return {"success": False, "error": str(e)}
 
     def _send_linkedin_message(self, task, action: dict):
         """Send LinkedIn message via direct Python (no MCP)"""

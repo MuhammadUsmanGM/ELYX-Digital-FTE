@@ -27,13 +27,17 @@
       "mcp__whatsapp_mcp__mark_as_read",
       "mcp__filesystem_mcp__read_file",
       "mcp__filesystem_mcp__write_file",
-      "mcp__filesystem_mcp__list_directory"
+      "mcp__filesystem_mcp__list_directory",
+      "Bash(cd C:\\\\Users\\\\Usman Mustafa\\\\OneDrive\\\\Desktop\\\\ELYX-Personal-AI-Employee:*)",
+      "Bash(python3:*)"
     ]
   },
   "mcpServers": {
     "email-mcp": {
       "command": "node",
-      "args": ["src/mcp-servers/email-mcp/index.js"],
+      "args": [
+        "src/mcp-servers/email-mcp/index.js"
+      ],
       "env": {
         "GMAIL_CREDENTIALS_PATH": "gmail_credentials.json",
         "EMAIL_USER": ""
@@ -41,7 +45,9 @@
     },
     "odoo-mcp": {
       "command": "node",
-      "args": ["src/mcp-servers/odoo-mcp/index.js"],
+      "args": [
+        "src/mcp-servers/odoo-mcp/index.js"
+      ],
       "env": {
         "ODOO_URL": "https://elyx-ai.odoo.com",
         "ODOO_DB": "elyx-ai",
@@ -52,7 +58,9 @@
     },
     "social-mcp": {
       "command": "node",
-      "args": ["src/mcp-servers/social-mcp/index.js"],
+      "args": [
+        "src/mcp-servers/social-mcp/index.js"
+      ],
       "env": {
         "BROWSER_HEADLESS": "true",
         "CHROME_USER_DATA_DIR": ""
@@ -60,7 +68,9 @@
     },
     "whatsapp-mcp": {
       "command": "node",
-      "args": ["src/mcp-servers/whatsapp-mcp/index.js"],
+      "args": [
+        "src/mcp-servers/whatsapp-mcp/index.js"
+      ],
       "env": {
         "BROWSER_HEADLESS": "true",
         "CHROME_USER_DATA_DIR": "",
