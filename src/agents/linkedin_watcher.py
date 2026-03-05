@@ -39,12 +39,19 @@ class LinkedInWatcher(BaseWatcher):
         try:
             self._page.wait_for_selector('nav.global-nav', timeout=10000)
             self.logger.info("LinkedIn: already logged in")
+            return
         except Exception:
-            self.logger.error(
-                "LinkedIn: not logged in. Run: python setup_sessions.py linkedin"
-            )
-            self._close_browser()
-            raise RuntimeError("LinkedIn session missing — run setup_sessions.py linkedin")
+            pass
+        # Fallback: if we're on feed URL (not redirected to login), session is valid
+        current_url = (self._page.url or "")
+        if "/feed/" in current_url and "login" not in current_url:
+            self.logger.info("LinkedIn: already logged in (verified via URL)")
+            return
+        self.logger.error(
+            "LinkedIn: not logged in. Run: python setup_sessions.py linkedin"
+        )
+        self._close_browser()
+        raise RuntimeError("LinkedIn session missing — run setup_sessions.py linkedin")
 
     def _is_browser_alive(self) -> bool:
         try:

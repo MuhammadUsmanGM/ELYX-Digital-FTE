@@ -38,12 +38,16 @@ PLATFORMS = {
     "linkedin": {
         "url": "https://www.linkedin.com/login",
         "session_dir": "linkedin_session",
-        "logged_in_selector": '.feed-identity-module, [data-test-id="nav-header"], .scaffold-layout, .global-nav__me',
+        # Same selector as linkedin_watcher._ensure_logged_in so setup and watcher stay in sync
+        "logged_in_selector": "nav.global-nav",
         "instructions": (
             "Log in to LinkedIn with your email and password.\n"
             "Complete any 2FA if prompted. Once your feed loads — press Enter here"
         ),
         "wait_seconds": 60,
+        # Fallback: consider logged in if URL is feed (not login page)
+        "logged_in_url_contains": "/feed/",
+        "logged_in_url_excludes": "login",
     },
     "facebook": {
         "url": "https://www.facebook.com/login",
@@ -115,10 +119,23 @@ def setup_platform(name: str, config: dict):
         input(f"\n>>> Browser is open. Log in to {name.upper()}, then press Enter here to save session...")
 
         # Verify login worked
+        verified = False
         try:
             page.wait_for_selector(config["logged_in_selector"], timeout=10000)
-            print(f"✓ {name.upper()} login verified — session saved!")
+            verified = True
         except Exception:
+            # Fallback: for platforms that define it, accept URL-based check
+            url_contains = config.get("logged_in_url_contains")
+            url_excludes = config.get("logged_in_url_excludes")
+            if url_contains or url_excludes:
+                current = (page.url or "")
+                if (url_contains is None or url_contains in current) and (
+                    url_excludes is None or url_excludes not in current
+                ):
+                    verified = True
+        if verified:
+            print(f"✓ {name.upper()} login verified — session saved!")
+        else:
             print(f"⚠ Could not auto-verify {name.upper()} login, but session was saved anyway.")
             print("  If the watcher fails, run this script again for this platform.")
 
