@@ -42,6 +42,48 @@ class Colors:
 
 # Global process tracking
 processes = []
+vault_git_enabled = False
+
+def is_vault_git_repo():
+    """Check if vault is a git repository"""
+    global vault_git_enabled
+    vault_path = Path("obsidian_vault")
+    git_dir = vault_path / ".git"
+    vault_git_enabled = git_dir.exists()
+    return vault_git_enabled
+
+def commit_vault_changes(message: str = "Auto-commit: Vault changes"):
+    """Commit vault changes to git"""
+    if not vault_git_enabled:
+        return False
+    
+    try:
+        vault_path = Path("obsidian_vault")
+        
+        # Check if there are changes
+        success, stdout, stderr = run_command("git status --porcelain", cwd=vault_path)
+        if not stdout.strip():
+            return False  # No changes
+        
+        # Add, commit, push
+        run_command("git add .", cwd=vault_path)
+        run_command(f'git commit -m "{message}"', cwd=vault_path)
+        
+        # Don't push automatically (let GitHub Actions handle it)
+        # run_command("git push origin main", cwd=vault_path)
+        
+        return True
+    except Exception as e:
+        print(f"Warning: Could not commit vault changes: {e}")
+        return False
+
+def run_command(cmd, cwd=None):
+    """Run shell command"""
+    try:
+        result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=10)
+        return result.returncode == 0, result.stdout, result.stderr
+    except Exception as e:
+        return False, "", str(e)
 
 def start_vault_api():
     """Start Vault API server"""
@@ -283,11 +325,33 @@ def main():
 
     print(f"\n{Colors.WARNING}Press Ctrl+C to shut down all services gracefully.{Colors.ENDC}\n")
 
-    # Keep alive
+    # Check if vault is git repo
+    is_vault_git_repo()
+    if vault_git_enabled:
+        print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Vault Git repository detected - auto-commit enabled")
+        print(f"   Changes will be committed every hour")
+        print(f"   GitHub Actions will sync to GitHub automatically\n")
+
+    # Keep alive with periodic vault commits
+    last_commit_time = time.time()
+    commit_interval = 3600  # 1 hour
+    
     try:
         while True:
             time.sleep(10)
+            
+            # Auto-commit vault changes every hour
+            if vault_git_enabled and (time.time() - last_commit_time) > commit_interval:
+                print(f"\n{Colors.BOLD}[AUTO-COMMIT]{Colors.ENDC} Committing vault changes...")
+                if commit_vault_changes(f"Auto-commit: {datetime.now().strftime('%Y-%m-%d %H:%M')}"):
+                    print(f"  {Colors.OKGREEN}✓ Vault changes committed{Colors.ENDC}")
+                last_commit_time = time.time()
+                
     except KeyboardInterrupt:
+        # Final commit before shutdown
+        if vault_git_enabled:
+            print(f"\n{Colors.BOLD}[AUTO-COMMIT]{Colors.ENDC} Final vault commit before shutdown...")
+            commit_vault_changes(f"Final commit: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         cleanup()
 
 if __name__ == "__main__":
