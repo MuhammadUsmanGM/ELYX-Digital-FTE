@@ -303,7 +303,7 @@ def send_instagram_dm(message: str, image_path: str = None, session_path: str = 
 
 def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str = None):
     """
-    Send an email by opening Gmail in the browser, composing, and clicking Send.
+    Send an email by opening Gmail compose URL directly in the browser.
     Uses sessions/gmail_session (log in once via browser when prompted).
     No MCP or Gmail API required.
     """
@@ -313,66 +313,66 @@ def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str =
     session_path = session_path or "sessions/gmail_session"
     Path(session_path).mkdir(parents=True, exist_ok=True)
 
+    import urllib.parse
+
     p = None
     try:
         p, browser, page = _launch_browser(session_path, headless=False)
-        page.goto("https://mail.google.com/", wait_until="domcontentloaded", timeout=60000)
-        time.sleep(3)
 
-        if "accounts.google" in page.url or "login" in page.url.lower():
+        # Use Gmail compose URL - pre-fills To, Subject, Body directly
+        params = urllib.parse.urlencode({
+            "to": to,
+            "su": subject,
+            "body": body,
+            "fs": "1",       # fullscreen compose
+            "tf": "cm",      # compose mode
+        })
+        compose_url = f"https://mail.google.com/mail/?view=cm&{params}"
+
+        page.goto(compose_url, wait_until="domcontentloaded", timeout=60000)
+        time.sleep(4)
+
+        # Check if redirected to login
+        if "accounts.google" in page.url or "signin" in page.url.lower():
             logger.warning("Gmail not logged in. Browser opened — log in to Gmail, then run again.")
             return {"success": False, "error": "Not logged in to Gmail. Open browser and log in to Gmail once."}
 
-        # Click Compose (role or text)
-        compose = page.get_by_role("button", name="Compose").first
-        try:
-            compose.wait_for(state="visible", timeout=15000)
-            compose.click()
-        except Exception:
-            compose = page.get_by_text("Compose", exact=True).first
-            compose.wait_for(state="visible", timeout=5000)
-            compose.click()
-        time.sleep(2)
+        # Wait for compose window to load, then click Send
+        # Try multiple selectors for the Send button
+        send_clicked = False
+        send_selectors = [
+            'div[role="button"][aria-label*="Send"]',
+            'div[role="button"][data-tooltip*="Send"]',
+            'div[aria-label*="Send"]:not([aria-label*="schedule"])',
+            'div.T-I.J-J5-Ji[role="button"]',  # Gmail's classic send button class
+        ]
 
-        # To
-        to_field = page.get_by_role("combobox", name="To").or_(page.locator('input[aria-label*="To"], input[name="to"]')).first
-        to_field.wait_for(state="visible", timeout=10000)
-        to_field.fill(to)
-        time.sleep(0.5)
+        for selector in send_selectors:
+            try:
+                btn = page.locator(selector).first
+                btn.wait_for(state="visible", timeout=8000)
+                btn.click()
+                send_clicked = True
+                logger.info(f"Send clicked via selector: {selector}")
+                break
+            except Exception:
+                continue
 
-        # Subject (optional placeholder "Subject" or "Add a subject")
-        subj_sel = page.get_by_role("textbox", name="Subject").or_(
-            page.locator('input[aria-label*="Subject"], input[name="subject"]')
-        ).first
-        try:
-            subj_sel.wait_for(state="visible", timeout=5000)
-            subj_sel.fill(subject)
-        except Exception:
-            pass
-        time.sleep(0.5)
+        if not send_clicked:
+            # Last resort: use keyboard shortcut Ctrl+Enter to send
+            try:
+                page.keyboard.press("Control+Enter")
+                send_clicked = True
+                logger.info("Send via Ctrl+Enter keyboard shortcut")
+            except Exception:
+                pass
 
-        # Body (contenteditable or role=textbox)
-        body_el = page.locator('div[aria-label*="Message"], div[contenteditable="true"]').first
-        try:
-            body_el.wait_for(state="visible", timeout=5000)
-            body_el.click()
-            page.keyboard.type(body, delay=20)
-        except Exception:
-            body_el = page.get_by_role("textbox").last
-            body_el.fill(body)
-        time.sleep(1)
+        if not send_clicked:
+            return {"success": False, "error": "Could not find Send button in Gmail compose"}
 
-        # Send
-        send_btn = page.get_by_role("button", name="Send").first
-        try:
-            send_btn.wait_for(state="visible", timeout=5000)
-            send_btn.click()
-        except Exception:
-            send_btn = page.get_by_text("Send", exact=True).first
-            send_btn.click()
-        time.sleep(2)
+        time.sleep(3)
+        return {"success": True, "message": f"Email sent to {to} via Gmail (browser)", "platform": "gmail"}
 
-        return {"success": True, "message": "Email sent via Gmail (browser)", "platform": "gmail"}
     except Exception as e:
         logger.exception("Gmail browser send failed")
         return {"success": False, "error": str(e)}
