@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -32,18 +33,30 @@ class TwitterWatcher(BaseWatcher):
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
         self._page.goto('https://x.com/home', wait_until='domcontentloaded', timeout=90000)
+        # Wait for redirect to settle so URL/login check sees home (not login)
+        try:
+            self._page.wait_for_url(re.compile(r'x\.com/home|/home'), timeout=15000)
+        except Exception:
+            pass
         self._ensure_logged_in()
 
     def _ensure_logged_in(self):
         try:
             self._page.wait_for_selector('[data-testid="SideNav_AccountSwitcher_Button"]', timeout=10000)
             self.logger.info("Twitter: already logged in")
+            return
         except Exception:
-            self.logger.error(
-                "Twitter: not logged in. Run: python setup_sessions.py twitter"
-            )
-            self._close_browser()
-            raise RuntimeError("Twitter session missing — run setup_sessions.py twitter")
+            pass
+        # Fallback: if we're on home URL (not redirected to login), session is valid
+        current_url = (self._page.url or "")
+        if ("/home" in current_url or "x.com/home" in current_url) and "login" not in current_url:
+            self.logger.info("Twitter: already logged in (verified via URL)")
+            return
+        self.logger.error(
+            "Twitter: not logged in. Run: python setup_sessions.py twitter"
+        )
+        self._close_browser()
+        raise RuntimeError("Twitter session missing — run setup_sessions.py twitter")
 
     def _is_browser_alive(self) -> bool:
         try:

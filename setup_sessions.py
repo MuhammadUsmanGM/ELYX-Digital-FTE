@@ -78,6 +78,8 @@ PLATFORMS = {
             "Once your home timeline loads — press Enter here"
         ),
         "wait_seconds": 60,
+        "logged_in_url_contains": "/home",
+        "logged_in_url_excludes": "login",
     },
     "odoo": {
         "url": "https://elyx-ai.odoo.com",
