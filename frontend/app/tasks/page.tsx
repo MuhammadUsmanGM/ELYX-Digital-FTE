@@ -21,11 +21,11 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "react-hot-toast";
-import { fetchVaultTasks } from "@/lib/api";
+import { fetchVaultTasks, completeVaultTask } from "@/lib/api";
 
 interface Task {
   id: string;
-  filename: string;
+  filename?: string;
   type: string;
   priority: string;
   status: string;
@@ -272,8 +272,7 @@ export default function TasksPage() {
                   <>
                     <button
                       onClick={async () => {
-                        // TODO: Implement reject
-                        toast.error("Reject functionality coming soon");
+                        toast.info("Use Approvals page to reject items that require approval.");
                       }}
                       className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all flex items-center gap-2"
                     >
@@ -282,13 +281,24 @@ export default function TasksPage() {
                     </button>
                     <button
                       onClick={async () => {
-                        // TODO: Implement approve
-                        toast.error("Approve functionality coming soon");
+                        const filename = selectedTask.filename;
+                        if (!filename) {
+                          toast.error("Task filename missing");
+                          return;
+                        }
+                        const ok = await completeVaultTask(filename);
+                        if (ok) {
+                          toast.success("Task marked done");
+                          setSelectedTask(null);
+                          loadTasks();
+                        } else {
+                          toast.error("Failed to complete task. Is Vault API running?");
+                        }
                       }}
                       className="px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 rounded-lg transition-all flex items-center gap-2"
                     >
                       <CheckCircle className="w-4 h-4" />
-                      Process
+                      Mark done
                     </button>
                   </>
                 )}

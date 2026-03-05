@@ -105,19 +105,24 @@ export async function fetchScenarioStatus(domain: string = "primary"): Promise<S
 
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {
-    const [statusRes, system, scenarios] = await Promise.all([
-      fetch(`${API_BASE_URL}/dashboard/status`).then(r => r.json()),
+    const [vaultSummary, statusRes, system, scenarios] = await Promise.all([
+      fetchVaultSummary(),
+      fetch(`${API_BASE_URL}/dashboard/status`).then(r => r.json()).catch(() => ({})),
       fetchSystemState(),
       fetchScenarioStatus()
     ]);
+    
+    const pendingApprovals = vaultSummary?.pending_approvals ?? statusRes.pending_approvals ?? 0;
+    const pendingTasks = vaultSummary?.pending_tasks ?? statusRes.pending_tasks ?? 0;
     
     return {
       system,
       scenarios,
       tasks: {
-        pending_count: statusRes.pending_approvals || 0,
-        completed_today: statusRes.tasks_processed_today || 0,
-        active_chains: statusRes.active_agents || 0
+        pending_count: pendingApprovals + pendingTasks,
+        pending_approvals: pendingApprovals,
+        completed_today: vaultSummary?.completed_tasks ?? statusRes.tasks_processed_today ?? 0,
+        active_chains: statusRes.active_agents ?? 0
       },
       health: {
         status: statusRes.status === "active" ? "healthy" : "warning",
@@ -126,12 +131,17 @@ export async function fetchDashboardData(): Promise<DashboardData> {
       }
     };
   } catch (error) {
-    // Fallback to full mock if backend is down
+    const vaultSummary = await fetchVaultSummary();
     return {
       system: await fetchSystemState(),
       scenarios: await fetchScenarioStatus(),
-      tasks: { pending_count: 3, completed_today: 14, active_chains: 5 },
-      health: { status: "healthy", uptime: "14d 6h 22m", version: "System v2.0" }
+      tasks: {
+        pending_count: (vaultSummary?.pending_approvals ?? 0) + (vaultSummary?.pending_tasks ?? 0),
+        pending_approvals: vaultSummary?.pending_approvals ?? 0,
+        completed_today: vaultSummary?.completed_tasks ?? 0,
+        active_chains: 5
+      },
+      health: { status: "healthy", uptime: "0m", version: "System v2.0" }
     };
   }
 }
@@ -367,6 +377,21 @@ export async function fetchOnboardingStatus(userId: string): Promise<boolean> {
 // Vault API Functions (for Tasks and Approvals pages)
 const VAULT_API_BASE = "http://localhost:8080/api/vault";
 
+export async function fetchVaultSummary(): Promise<{ pending_tasks: number; pending_approvals: number; completed_tasks: number } | null> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/summary`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      pending_tasks: data.pending_tasks ?? 0,
+      pending_approvals: data.pending_approvals ?? 0,
+      completed_tasks: data.completed_tasks ?? 0
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchVaultTasks(folder: string = "Needs_Action"): Promise<Task[]> {
   try {
     const response = await fetch(`${VAULT_API_BASE}/tasks?folder=${folder}`);
@@ -375,6 +400,7 @@ export async function fetchVaultTasks(folder: string = "Needs_Action"): Promise<
     
     return (data.tasks || []).map((t: any) => ({
       id: t.id,
+      filename: t.filename,
       type: t.type || "unknown",
       from: t.from || "Unknown",
       priority: t.priority || "medium",
@@ -420,6 +446,21 @@ export async function rejectVaultTask(filename: string): Promise<boolean> {
   }
 }
 
+export async function completeVaultTask(filename: string): Promise<boolean> {
+  try {
+    const response = await fetch(`${VAULT_API_BASE}/complete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename })
+    });
+    const data = await response.json();
+    return data.success === true;
+  } catch (error) {
+    console.error("Complete task failed:", error);
+    return false;
+  }
+}
+
 export async function fetchVaultApprovals(): Promise<ApprovalRequest[]> {
   try {
     const response = await fetch(`${VAULT_API_BASE}/approvals`);
@@ -429,9 +470,9 @@ export async function fetchVaultApprovals(): Promise<ApprovalRequest[]> {
     return (data.approvals || []).map((a: any) => ({
       id: a.id,
       type: "approval_request",
-      action: a.frontmatter?.action || "Action Required",
+      action: a.frontmatter?.action === "process_task" ? "Process task" : (a.frontmatter?.action || "Action Required"),
       recipient: a.from || a.frontmatter?.recipient || "N/A",
-      reason: a.content || a.frontmatter?.reason || "Review required",
+      reason: a.frontmatter?.reason || a.content?.slice?.(0, 200) || "Review required",
       created: a.created || a.frontmatter?.created,
       expires: new Date(Date.now() + 86400000).toISOString(),
       status: "pending",

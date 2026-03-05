@@ -58,8 +58,12 @@ class VaultAPI:
         return tasks
     
     def get_approval_requests(self) -> list:
-        """Get all approval requests"""
-        return self.get_tasks("Pending_Approval")
+        """Get all approval requests, with action/reason from second YAML block if present"""
+        tasks = self.get_tasks("Pending_Approval")
+        for t in tasks:
+            details = self._parse_approval_details(t.get("content", ""))
+            t["frontmatter"] = {**(t.get("frontmatter") or {}), **details}
+        return tasks
     
     def get_completed_tasks(self) -> list:
         """Get completed tasks from Done folder"""
@@ -72,6 +76,10 @@ class VaultAPI:
     def reject_task(self, filename: str) -> dict:
         """Reject a task by moving it from Pending_Approval to Rejected"""
         return self._move_task(filename, "Pending_Approval", "Rejected")
+
+    def complete_task(self, filename: str) -> dict:
+        """Mark a task done by moving it from Needs_Action to Done"""
+        return self._move_task(filename, "Needs_Action", "Done")
     
     def _move_task(self, filename: str, from_folder: str, to_folder: str) -> dict:
         """Move a task file between folders"""
@@ -85,7 +93,12 @@ class VaultAPI:
             # Read and update status
             content = from_path.read_text(encoding='utf-8')
             frontmatter = self._parse_frontmatter(content)
-            frontmatter['status'] = 'approved' if to_folder == "Approved" else 'rejected'
+            if to_folder == "Approved":
+                frontmatter['status'] = 'approved'
+            elif to_folder == "Rejected":
+                frontmatter['status'] = 'rejected'
+            else:
+                frontmatter['status'] = 'completed'
             frontmatter['processed_at'] = datetime.now().isoformat()
             
             # Rebuild content with updated frontmatter
@@ -93,7 +106,8 @@ class VaultAPI:
             new_fm_yaml = yaml.dump(frontmatter, default_flow_style=False).strip()
             new_content = f"---\n{new_fm_yaml}\n---\n{content_without_fm}"
             
-            # Write to new location
+            # Write to new location (ensure target folder exists)
+            to_path.parent.mkdir(parents=True, exist_ok=True)
             to_path.write_text(new_content, encoding='utf-8')
             
             # Delete old file
@@ -140,6 +154,26 @@ class VaultAPI:
                 if lines[i].strip() == '---':
                     return '\n'.join(lines[i+1:])
         return content
+
+    def _parse_approval_details(self, content: str) -> dict:
+        """Parse second YAML block in approval files for action, reason, related_task"""
+        lines = content.split('\n')
+        count = 0
+        start = -1
+        for i, line in enumerate(lines):
+            if line.strip() == '---':
+                count += 1
+                if count == 1:
+                    start = -1
+                elif count == 2 and start == -1:
+                    start = i + 1
+                elif count == 3 and start >= 0:
+                    try:
+                        fm_str = '\n'.join(lines[start:i])
+                        return yaml.safe_load(fm_str) or {}
+                    except Exception:
+                        return {}
+        return {}
 
 
 class VaultAPIHandler(BaseHTTPRequestHandler):
@@ -231,6 +265,16 @@ class VaultAPIHandler(BaseHTTPRequestHandler):
                 result = self.vault_api.reject_task(filename)
                 status = 200 if result.get('success') else 400
                 self._send_json(result, status)
+
+            elif path == '/api/vault/complete':
+                filename = body.get('filename')
+                if not filename:
+                    self._send_json({"error": "filename required"}, 400)
+                    return
+                
+                result = self.vault_api.complete_task(filename)
+                status = 200 if result.get('success') else 400
+                self._send_json(result, status)
             
             else:
                 self._send_json({"error": "Not found"}, 404)
@@ -260,6 +304,7 @@ def run_server(port: int = 8080):
     print(f"   - GET  /api/vault/completed")
     print(f"   - POST /api/vault/approve")
     print(f"   - POST /api/vault/reject")
+    print(f"   - POST /api/vault/complete")
     print(f"\nPress Ctrl+C to stop")
     
     try:
