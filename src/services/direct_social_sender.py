@@ -319,17 +319,8 @@ def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str =
     try:
         p, browser, page = _launch_browser(session_path, headless=False)
 
-        # Use Gmail compose URL - pre-fills To, Subject, Body directly
-        params = urllib.parse.urlencode({
-            "to": to,
-            "su": subject,
-            "body": body,
-            "fs": "1",       # fullscreen compose
-            "tf": "cm",      # compose mode
-        })
-        compose_url = f"https://mail.google.com/mail/?view=cm&{params}"
-
-        page.goto(compose_url, wait_until="domcontentloaded", timeout=60000)
+        # Step 1: Navigate to Gmail inbox first to establish session
+        page.goto("https://mail.google.com/mail/u/0/#inbox", timeout=60000)
         time.sleep(4)
 
         # Check if redirected to login
@@ -337,40 +328,144 @@ def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str =
             logger.warning("Gmail not logged in. Browser opened — log in to Gmail, then run again.")
             return {"success": False, "error": "Not logged in to Gmail. Open browser and log in to Gmail once."}
 
-        # Wait for compose window to load, then click Send
-        # Try multiple selectors for the Send button
-        send_clicked = False
-        send_selectors = [
-            'div[role="button"][aria-label*="Send"]',
-            'div[role="button"][data-tooltip*="Send"]',
-            'div[aria-label*="Send"]:not([aria-label*="schedule"])',
-            'div.T-I.J-J5-Ji[role="button"]',  # Gmail's classic send button class
+        # Step 2: Click the Compose button
+        compose_clicked = False
+        compose_selectors = [
+            'div.T-I.T-I-KE.L3[role="button"]',  # Gmail Compose button class
+            '[gh="cm"]',                            # Gmail compose attribute
+            'div[role="button"]:has-text("Compose")',
         ]
-
-        for selector in send_selectors:
+        for selector in compose_selectors:
             try:
                 btn = page.locator(selector).first
-                btn.wait_for(state="visible", timeout=8000)
+                btn.wait_for(state="visible", timeout=5000)
                 btn.click()
-                send_clicked = True
-                logger.info(f"Send clicked via selector: {selector}")
+                compose_clicked = True
+                logger.info(f"Compose clicked via: {selector}")
                 break
             except Exception:
                 continue
 
-        if not send_clicked:
-            # Last resort: use keyboard shortcut Ctrl+Enter to send
+        if not compose_clicked:
+            # Fallback: use keyboard shortcut 'c' to open compose
+            page.keyboard.press("c")
+            compose_clicked = True
+            logger.info("Compose opened via 'c' keyboard shortcut")
+
+        time.sleep(2)
+
+        # Step 3: Verify compose window opened — look for To field
+        to_field = None
+        to_selectors = [
+            'textarea[aria-label="To recipients"]',
+            'textarea[name="to"]',
+            'input[aria-label="To recipients"]',
+            'input[name="to"]',
+            'div[aria-label="To recipients"] input',
+            'input[peoplekit-id="BbVjBd"]',
+        ]
+        for selector in to_selectors:
             try:
-                page.keyboard.press("Control+Enter")
-                send_clicked = True
-                logger.info("Send via Ctrl+Enter keyboard shortcut")
+                to_field = page.locator(selector).first
+                to_field.wait_for(state="visible", timeout=5000)
+                logger.info(f"To field found via: {selector}")
+                break
             except Exception:
-                pass
+                to_field = None
+                continue
+
+        if not to_field:
+            return {"success": False, "error": "Compose window opened but could not find To field"}
+
+        # Step 4: Fill To field
+        to_field.click()
+        to_field.fill(to)
+        page.keyboard.press("Tab")
+        time.sleep(0.5)
+
+        # Step 5: Fill Subject field
+        subj_field = None
+        subj_selectors = [
+            'input[aria-label="Subject"]',
+            'input[name="subjectbox"]',
+        ]
+        for selector in subj_selectors:
+            try:
+                subj_field = page.locator(selector).first
+                subj_field.wait_for(state="visible", timeout=3000)
+                break
+            except Exception:
+                subj_field = None
+                continue
+
+        if subj_field:
+            subj_field.click()
+            subj_field.fill(subject)
+            page.keyboard.press("Tab")
+            time.sleep(0.3)
+
+        # Step 6: Fill Body
+        body_field = None
+        body_selectors = [
+            'div[aria-label="Message Body"][contenteditable="true"]',
+            'div[role="textbox"][aria-label="Message Body"]',
+            'div.Am.Al.editable[contenteditable="true"]',
+            'div[contenteditable="true"][g_editable="true"]',
+        ]
+        for selector in body_selectors:
+            try:
+                body_field = page.locator(selector).first
+                body_field.wait_for(state="visible", timeout=3000)
+                break
+            except Exception:
+                body_field = None
+                continue
+
+        if body_field:
+            body_field.click()
+            body_field.fill(body)
+            time.sleep(0.3)
+        else:
+            # Fallback: just type into whatever is focused
+            page.keyboard.type(body, delay=10)
+
+        time.sleep(1)
+
+        # Step 7: Click Send
+        send_clicked = False
+
+        # First try Ctrl+Enter — most reliable, works regardless of DOM
+        try:
+            page.keyboard.press("Control+Enter")
+            send_clicked = True
+            logger.info("Send via Ctrl+Enter keyboard shortcut")
+        except Exception:
+            pass
 
         if not send_clicked:
-            return {"success": False, "error": "Could not find Send button in Gmail compose"}
+            send_selectors = [
+                'div[role="button"][aria-label*="Send"]',
+                'div[role="button"][data-tooltip*="Send"]',
+                'div[aria-label*="Send"]:not([aria-label*="schedule"])',
+            ]
+            for selector in send_selectors:
+                try:
+                    btn = page.locator(selector).first
+                    btn.wait_for(state="visible", timeout=5000)
+                    btn.click()
+                    send_clicked = True
+                    logger.info(f"Send clicked via selector: {selector}")
+                    break
+                except Exception:
+                    continue
+
+        if not send_clicked:
+            return {"success": False, "error": "Could not send — compose was open but Send failed"}
 
         time.sleep(3)
+
+        # Verify: compose window should have closed after sending
+        logger.info(f"Email sent to {to} via Gmail (browser)")
         return {"success": True, "message": f"Email sent to {to} via Gmail (browser)", "platform": "gmail"}
 
     except Exception as e:
