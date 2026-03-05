@@ -38,7 +38,7 @@ PLATFORMS = {
     "linkedin": {
         "url": "https://www.linkedin.com/login",
         "session_dir": "linkedin_session",
-        "logged_in_selector": "nav.global-nav",
+        "logged_in_selector": '.feed-identity-module, [data-test-id="nav-header"], .scaffold-layout, .global-nav__me',
         "instructions": (
             "Log in to LinkedIn with your email and password.\n"
             "Complete any 2FA if prompted. Once your feed loads — press Enter here"
