@@ -440,6 +440,18 @@ subject: Response to your request
 
         log_activity("RESPONSE_CREATED", f"Created response file: {response_filename}", self.vault_path)
 
+    @staticmethod
+    def _extract_email(recipient_str: str) -> str:
+        """Extract email from 'Name <email@domain.com>' or return stripped string if already plain email."""
+        import re
+        s = (recipient_str or "").strip()
+        if not s:
+            return ""
+        match = re.search(r'<([^>]+)>', s)
+        if match:
+            return match.group(1).strip()
+        return s
+
     def _send_email_response(self, task, response_content: str):
         """
         Actually send an email response using MCP (Universal Protocol)
@@ -453,14 +465,14 @@ subject: Response to your request
         
         try:
             # Extract recipient and subject from task
-            recipient = task.frontmatter.get('from', '')
+            raw_recipient = task.frontmatter.get('from', '')
             original_subject = task.frontmatter.get('subject', 'Your Request')
-            
-            # Validate recipient is an email address
+            # Accept "Name <email@domain.com>" or bare email
             import re
+            recipient = self._extract_email(raw_recipient)
             email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-            if not re.match(email_pattern, recipient):
-                self.logger.warning(f"Invalid email recipient: {recipient}. Creating response file instead.")
+            if not recipient or not re.match(email_pattern, recipient):
+                self.logger.warning(f"Invalid email recipient: {raw_recipient}. Creating response file instead.")
                 self._create_response_file(task, response_content)
                 return
             
@@ -506,7 +518,8 @@ subject: Response to your request
         from src.response_handlers.email_response_handler import EmailResponseHandler
         
         try:
-            recipient = task.frontmatter.get('from', '')
+            raw_recipient = task.frontmatter.get('from', '')
+            recipient = self._extract_email(raw_recipient) or raw_recipient
             original_subject = task.frontmatter.get('subject', 'Your Request')
             
             handler = EmailResponseHandler()

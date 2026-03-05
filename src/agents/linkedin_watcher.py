@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -33,6 +34,11 @@ class LinkedInWatcher(BaseWatcher):
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
         self._page.goto('https://www.linkedin.com/feed/', wait_until='domcontentloaded', timeout=90000)
+        # Wait for redirect to settle so URL/login check sees feed (not login)
+        try:
+            self._page.wait_for_url(re.compile(r'/feed'), timeout=15000)
+        except Exception:
+            pass
         self._ensure_logged_in()
 
     def _ensure_logged_in(self):
