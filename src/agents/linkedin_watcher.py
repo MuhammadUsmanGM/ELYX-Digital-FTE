@@ -33,7 +33,7 @@ class LinkedInWatcher(BaseWatcher):
             args=['--disable-blink-features=AutomationControlled'],
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
-        self._page.goto('https://www.linkedin.com/feed/', wait_until='domcontentloaded', timeout=90000)
+        self._page.goto('https://www.linkedin.com/feed/', wait_until='commit', timeout=120000)
         # Wait for redirect to settle so URL/login check sees feed (not login)
         try:
             self._page.wait_for_url(re.compile(r'/feed'), timeout=15000)

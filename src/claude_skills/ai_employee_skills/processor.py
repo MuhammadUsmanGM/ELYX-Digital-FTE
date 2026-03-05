@@ -454,61 +454,50 @@ subject: Response to your request
 
     def _send_email_response(self, task, response_content: str):
         """
-        Actually send an email response using MCP (Universal Protocol)
-        Works with any AI agent: Claude, Qwen, Gemini, Codex
-        
-        Args:
-            task: The original task that was processed
-            response_content: Content of the response to send
+        Send email: try browser (Gmail) first, then MCP, then direct API.
+        Browser path opens Gmail, composes, and sends — no MCP/Gmail API required.
         """
-        from src.mcp_client import MCPClient
-        
-        try:
-            # Extract recipient and subject from task
-            raw_recipient = task.frontmatter.get('from', '')
-            original_subject = task.frontmatter.get('subject', 'Your Request')
-            # Accept "Name <email@domain.com>" or bare email
-            import re
-            recipient = self._extract_email(raw_recipient)
-            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-            if not recipient or not re.match(email_pattern, recipient):
-                self.logger.warning(f"Invalid email recipient: {raw_recipient}. Creating response file instead.")
-                self._create_response_file(task, response_content)
-                return
-            
-            # Initialize MCP client (universal protocol)
-            mcp_client = MCPClient("email", transport="stdio")
-            
-            # Send the email via MCP
-            log_activity("EMAIL_SENDING_MCP", f"Sending email response to {recipient} via MCP", self.vault_path)
-            
-            result = mcp_client.call("email.send", {
-                "to": recipient,
-                "subject": f"Re: {original_subject}",
-                "body": response_content
-            })
-            
-            if result.get('success'):
-                log_activity("EMAIL_SENT_MCP", f"Email sent successfully to {recipient}. Message ID: {result.get('message_id')}", self.vault_path)
-                
-                # Update task with success
-                task.content += f"\n\n## Email Sent via MCP ✅\n- **To**: {recipient}\n- **Subject**: Re: {original_subject}\n- **Status**: Sent successfully\n- **Message ID**: {result.get('message_id')}\n- **Protocol**: Universal MCP (JSON-RPC 2.0)\n"
-                task.filepath.write_text(task.content, encoding='utf-8')
-            else:
-                log_activity("EMAIL_FAILED_MCP", f"Failed to send email via MCP: {result.get('error', 'Unknown error')}", self.vault_path)
-                # Create response file as fallback
-                self._create_response_file(task, response_content)
-                
-        except FileNotFoundError as e:
-            # MCP server not found - fallback to direct Python
-            self.logger.warning(f"MCP server not found: {e}. Falling back to direct Python.")
-            log_activity("EMAIL_MCP_FALLBACK", f"MCP not available, using direct Python", self.vault_path)
-            self._send_email_response_direct(task, response_content)
-        except Exception as e:
-            self.logger.error(f"Error sending email via MCP: {e}")
-            log_activity("EMAIL_MCP_ERROR", f"Error sending email via MCP: {str(e)}", self.vault_path)
-            # Fallback: create response file
+        import re
+        raw_recipient = task.frontmatter.get('from', '')
+        original_subject = task.frontmatter.get('subject', 'Your Request')
+        recipient = self._extract_email(raw_recipient)
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not recipient or not re.match(email_pattern, recipient):
+            self.logger.warning(f"Invalid email recipient: {raw_recipient}. Creating response file instead.")
             self._create_response_file(task, response_content)
+            return
+
+        subject = f"Re: {original_subject}"
+
+        # 1) Prefer browser: open Gmail, compose, type, send (no MCP)
+        try:
+            from src.services.direct_social_sender import send_gmail_via_browser
+            log_activity("EMAIL_SENDING_BROWSER", f"Sending email to {recipient} via Gmail browser", self.vault_path)
+            result = send_gmail_via_browser(to=recipient, subject=subject, body=response_content)
+            if result.get("success"):
+                log_activity("EMAIL_SENT_BROWSER", f"Email sent to {recipient} via Gmail (browser)", self.vault_path)
+                task.content += f"\n\n## Email Sent (Gmail browser) ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Status**: Sent\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+                return
+            self.logger.warning(f"Gmail browser send failed: {result.get('error')}. Trying MCP/direct.")
+        except Exception as e:
+            self.logger.warning(f"Gmail browser send error: {e}. Trying MCP/direct.")
+
+        # 2) Try MCP
+        try:
+            from src.mcp_client import MCPClient
+            mcp_client = MCPClient("email", transport="stdio")
+            result = mcp_client.call("email.send", {"to": recipient, "subject": subject, "body": response_content})
+            if result.get('success'):
+                log_activity("EMAIL_SENT_MCP", f"Email sent to {recipient} via MCP", self.vault_path)
+                task.content += f"\n\n## Email Sent via MCP ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Message ID**: {result.get('message_id')}\n"
+                task.filepath.write_text(task.content, encoding='utf-8')
+                return
+        except Exception as e:
+            self.logger.warning(f"MCP email failed: {e}")
+
+        # 3) Fallback: direct Python (Gmail API)
+        self._send_email_response_direct(task, response_content)
     
     def _send_email_response_direct(self, task, response_content: str):
         """

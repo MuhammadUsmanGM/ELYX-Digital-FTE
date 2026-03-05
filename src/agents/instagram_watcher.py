@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -32,19 +33,29 @@ class InstagramWatcher(BaseWatcher):
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
         self._page.goto('https://www.instagram.com/', wait_until='domcontentloaded', timeout=90000)
-        self._page.wait_for_timeout(3000)
+        try:
+            self._page.wait_for_url(re.compile(r'instagram\.com'), timeout=15000)
+        except Exception:
+            pass
+        self._page.wait_for_timeout(2000)
         self._ensure_logged_in()
 
     def _ensure_logged_in(self):
         try:
             self._page.wait_for_selector('a[href="/direct/inbox/"]', timeout=10000)
             self.logger.info("Instagram: already logged in")
+            return
         except Exception:
-            self.logger.error(
-                "Instagram: not logged in. Run: python setup_sessions.py instagram"
-            )
-            self._close_browser()
-            raise RuntimeError("Instagram session missing — run setup_sessions.py instagram")
+            pass
+        current_url = (self._page.url or "")
+        if "instagram.com" in current_url and "/accounts/login" not in current_url:
+            self.logger.info("Instagram: already logged in (verified via URL)")
+            return
+        self.logger.error(
+            "Instagram: not logged in. Run: python setup_sessions.py instagram"
+        )
+        self._close_browser()
+        raise RuntimeError("Instagram session missing — run setup_sessions.py instagram")
 
     def _is_browser_alive(self) -> bool:
         try:

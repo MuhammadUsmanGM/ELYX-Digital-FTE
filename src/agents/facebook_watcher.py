@@ -1,3 +1,4 @@
+import re
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -32,18 +33,28 @@ class FacebookWatcher(BaseWatcher):
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
         self._page.goto('https://www.facebook.com/', wait_until='domcontentloaded', timeout=90000)
+        try:
+            self._page.wait_for_url(re.compile(r'facebook\.com'), timeout=15000)
+        except Exception:
+            pass
         self._ensure_logged_in()
 
     def _ensure_logged_in(self):
         try:
             self._page.wait_for_selector('[aria-label="Facebook"]', timeout=10000)
             self.logger.info("Facebook: already logged in")
+            return
         except Exception:
-            self.logger.error(
-                "Facebook: not logged in. Run: python setup_sessions.py facebook"
-            )
-            self._close_browser()
-            raise RuntimeError("Facebook session missing — run setup_sessions.py facebook")
+            pass
+        current_url = (self._page.url or "")
+        if "facebook.com" in current_url and "/login" not in current_url:
+            self.logger.info("Facebook: already logged in (verified via URL)")
+            return
+        self.logger.error(
+            "Facebook: not logged in. Run: python setup_sessions.py facebook"
+        )
+        self._close_browser()
+        raise RuntimeError("Facebook session missing — run setup_sessions.py facebook")
 
     def _is_browser_alive(self) -> bool:
         try:

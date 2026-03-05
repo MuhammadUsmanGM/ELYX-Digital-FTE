@@ -23,6 +23,18 @@ from playwright.sync_api import sync_playwright
 SESSIONS_DIR = Path("./sessions")
 
 PLATFORMS = {
+    "gmail": {
+        "url": "https://mail.google.com/",
+        "session_dir": "gmail_session",
+        "logged_in_selector": 'a[href*="inbox"], div[role="navigation"]',
+        "instructions": (
+            "Log in to Gmail with your Google account.\n"
+            "Once your inbox loads — press Enter here. Session used for browser-based sending (no MCP)."
+        ),
+        "wait_seconds": 60,
+        "logged_in_url_contains": "mail.google",
+        "logged_in_url_excludes": "accounts",
+    },
     "whatsapp": {
         "url": "https://web.whatsapp.com",
         "session_dir": "whatsapp_session",
