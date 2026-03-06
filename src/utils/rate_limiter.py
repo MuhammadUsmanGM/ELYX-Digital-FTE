@@ -140,27 +140,33 @@ class RateLimiter:
 class ServiceRateLimiters:
     def __init__(self):
         self.gmail = RateLimiter()
-        self.gmail.set_limit('gmail', max_requests=250, time_window=86400)  # 250 requests per day
+        self.gmail.set_limit('gmail', max_requests=250, time_window=86400)  # 250/day
 
         self.linkedin = RateLimiter()
-        self.linkedin.set_limit('linkedin', max_requests=100, time_window=3600)  # 100 requests per hour
+        self.linkedin.set_limit('linkedin', max_requests=100, time_window=3600)  # 100/hour
 
         self.whatsapp = RateLimiter()
-        self.whatsapp.set_limit('whatsapp', max_requests=50, time_window=3600)  # 50 requests per hour
+        self.whatsapp.set_limit('whatsapp', max_requests=50, time_window=3600)  # 50/hour
+
+        self.facebook = RateLimiter()
+        self.facebook.set_limit('facebook', max_requests=50, time_window=3600)  # 50/hour
+
+        self.twitter = RateLimiter()
+        self.twitter.set_limit('twitter', max_requests=100, time_window=3600)  # 100/hour
+
+        self.instagram = RateLimiter()
+        self.instagram.set_limit('instagram', max_requests=25, time_window=3600)  # 25/hour
 
     def get_limiter(self, service: str) -> RateLimiter:
         """Get the appropriate rate limiter for a service"""
-        if service.lower() == 'gmail':
-            return self.gmail
-        elif service.lower() == 'linkedin':
-            return self.linkedin
-        elif service.lower() == 'whatsapp':
-            return self.whatsapp
-        else:
-            # Return a default rate limiter with conservative limits
-            default = RateLimiter()
-            default.set_limit(service, max_requests=10, time_window=60)  # 10 requests per minute
-            return default
+        svc = service.lower()
+        for name in ('gmail', 'linkedin', 'whatsapp', 'facebook', 'twitter', 'instagram'):
+            if svc == name:
+                return getattr(self, name)
+        # Default conservative limits
+        default = RateLimiter()
+        default.set_limit(service, max_requests=10, time_window=60)
+        return default
 
 
 # Global instance for easy access

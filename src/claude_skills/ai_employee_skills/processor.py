@@ -191,48 +191,29 @@ Move this file to /Rejected folder.
         updated_content = task.content + reasoning
         task.content = updated_content
 
-        # ✨ DETECT SOCIAL MEDIA POST REQUESTS FROM EMAIL CONTENT
-        social_action = self._detect_social_media_action(task)
-        
-        if social_action:
-            self._execute_social_media_post(task, social_action)
-        else:
-            # ✨ DETECT WHATSAPP MESSAGE REQUESTS
-            whatsapp_action = self._detect_whatsapp_action(task)
-            
-            if whatsapp_action:
-                self._send_whatsapp_message(task, whatsapp_action)
+        # Dispatch: detect platform action and send directly (no intermediate files)
+        platform_detectors = [
+            ('social_post', self._detect_social_media_action, self._execute_social_media_post),
+            ('whatsapp',    self._detect_whatsapp_action,      self._send_whatsapp_message),
+            ('linkedin',    self._detect_linkedin_message,     self._send_linkedin_message),
+            ('facebook',    self._detect_facebook_message,     self._send_facebook_message),
+            ('twitter',     self._detect_twitter_message,      self._send_twitter_message),
+            ('instagram',   self._detect_instagram_message,    self._send_instagram_message),
+        ]
+
+        for name, detector, sender in platform_detectors:
+            action = detector(task)
+            if action:
+                sender(task, action)
+                return
+
+        # No platform-specific action — check if we should auto-respond
+        if self._should_respond_to_task(task):
+            response_content = self._generate_response_content(task)
+            if "email" in task.type:
+                self._send_email_response(task, response_content)
             else:
-                # ✨ DETECT LINKEDIN MESSAGE REQUESTS
-                linkedin_action = self._detect_linkedin_message(task)
-                
-                if linkedin_action:
-                    self._send_linkedin_message(task, linkedin_action)
-                else:
-                    # ✨ DETECT FACEBOOK MESSAGE REQUESTS
-                    facebook_action = self._detect_facebook_message(task)
-                    
-                    if facebook_action:
-                        self._send_facebook_message(task, facebook_action)
-                    else:
-                        # ✨ DETECT TWITTER MESSAGE REQUESTS
-                        twitter_action = self._detect_twitter_message(task)
-                        
-                        if twitter_action:
-                            self._send_twitter_message(task, twitter_action)
-                        else:
-                            # ✨ DETECT INSTAGRAM MESSAGE REQUESTS
-                            instagram_action = self._detect_instagram_message(task)
-                            
-                            if instagram_action:
-                                self._send_instagram_message(task, instagram_action)
-                            elif self._should_respond_to_task(task):
-                                # Generate email response
-                                response_content = self._generate_response_content(task)
-                                if "email" in task.type:
-                                    self._send_email_response(task, response_content)
-                                else:
-                                    self._create_response_file(task, response_content)
+                self._create_response_file(task, response_content)
 
     def _generate_plan_content(self, task) -> str:
         """
@@ -397,23 +378,28 @@ Move this file to /Rejected folder.
         original_channel = task.frontmatter.get('type', 'email')  # default to email
         original_sender = task.frontmatter.get('from', 'unknown')
 
-        # Determine the appropriate channel enum value
-        from src.response_handlers.base_handler import CommunicationChannel
+        # Map task type to channel name
         channel_map = {
-            'email': CommunicationChannel.EMAIL,
-            'linkedin': CommunicationChannel.LINKEDIN,
-            'linkedin_message': CommunicationChannel.LINKEDIN,
-            'whatsapp': CommunicationChannel.WHATSAPP,
-            'whatsapp_message': CommunicationChannel.WHATSAPP
+            'email': 'EMAIL',
+            'linkedin': 'LINKEDIN',
+            'linkedin_message': 'LINKEDIN',
+            'whatsapp': 'WHATSAPP',
+            'whatsapp_message': 'WHATSAPP',
+            'facebook': 'FACEBOOK',
+            'facebook_message': 'FACEBOOK',
+            'twitter': 'TWITTER',
+            'twitter_notification': 'TWITTER',
+            'instagram': 'INSTAGRAM',
+            'instagram_dm': 'INSTAGRAM',
         }
 
-        channel_enum = channel_map.get(original_channel, CommunicationChannel.EMAIL)
+        channel_value = channel_map.get(original_channel, 'EMAIL')
 
         # Create response file with appropriate metadata
         response_content_full = f"""---
 type: response_message
 original_message_id: {task.filename.replace('.md', '')}
-channel: {channel_enum.value}
+channel: {channel_value}
 recipient: {original_sender}
 response_type: INFORMATIONAL
 priority: MEDIUM
@@ -483,53 +469,24 @@ subject: Response to your request
         except Exception as e:
             self.logger.warning(f"Gmail browser send error: {e}. Trying MCP/direct.")
 
-        # 2) Try MCP
+        # 2) Fallback: Gmail API (sync, no asyncio.run needed)
         try:
-            from src.mcp_client import MCPClient
-            mcp_client = MCPClient("email", transport="stdio")
-            result = mcp_client.call("email.send", {"to": recipient, "subject": subject, "body": response_content})
-            if result.get('success'):
-                log_activity("EMAIL_SENT_MCP", f"Email sent to {recipient} via MCP", self.vault_path)
-                task.content += f"\n\n## Email Sent via MCP ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Message ID**: {result.get('message_id')}\n"
+            from src.services.direct_social_sender import send_gmail_via_api
+            result = send_gmail_via_api(to=recipient, subject=subject, body=response_content)
+            if result.get("success"):
+                log_activity("EMAIL_SENT_API", f"Email sent to {recipient} via Gmail API", self.vault_path)
+                task.content += f"\n\n## Email Sent (Gmail API) ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n"
                 task.filepath.write_text(task.content, encoding='utf-8')
                 return
+            self.logger.warning(f"Gmail API send failed: {result.get('error')}")
         except Exception as e:
-            self.logger.warning(f"MCP email failed: {e}")
+            self.logger.warning(f"Gmail API fallback error: {e}")
 
-        # 3) Fallback: direct Python (Gmail API)
-        self._send_email_response_direct(task, response_content)
+        # 3) All methods failed — log error
+        log_activity("EMAIL_FAILED", f"All email methods failed for {recipient}", self.vault_path)
+        task.content += f"\n\n## Email Send Failed ⚠️\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Note**: Browser and API both failed\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
     
-    def _send_email_response_direct(self, task, response_content: str):
-        """
-        Fallback: Send email directly via Python (Phase 1 approach)
-        """
-        import asyncio
-        from src.response_handlers.email_response_handler import EmailResponseHandler
-        
-        try:
-            raw_recipient = task.frontmatter.get('from', '')
-            recipient = self._extract_email(raw_recipient) or raw_recipient
-            original_subject = task.frontmatter.get('subject', 'Your Request')
-            
-            handler = EmailResponseHandler()
-            result = asyncio.run(
-                handler.send_response(
-                    recipient_identifier=recipient,
-                    content=response_content,
-                    subject=f"Re: {original_subject}"
-                )
-            )
-            
-            if result.get('status') == 'sent':
-                log_activity("EMAIL_SENT_DIRECT", f"Email sent successfully (direct Python) to {recipient}", self.vault_path)
-                task.content += f"\n\n## Email Sent (Direct Python) ✅\n- **To**: {recipient}\n- **Message ID**: {result.get('message_id')}\n"
-                task.filepath.write_text(task.content, encoding='utf-8')
-            else:
-                self._create_response_file(task, response_content)
-                
-        except Exception as e:
-            self.logger.error(f"Direct email send failed: {e}")
-            self._create_response_file(task, response_content)
 
     def _detect_whatsapp_action(self, task) -> dict:
         """
@@ -711,300 +668,95 @@ subject: Response to your request
         return ' '.join(content_lines[:3])
 
     def _send_whatsapp_message(self, task, whatsapp_action: dict):
-        """
-        Execute WhatsApp message sending via Playwright (direct browser automation).
-        Uses the same Chrome session as the WhatsApp watcher — no Business API needed.
-        Falls back to MCP if direct send fails.
-
-        Args:
-            task: The task object
-            whatsapp_action: Dictionary with 'to' and 'message'
-        """
+        """Send WhatsApp message via unified sender."""
+        from src.services.direct_social_sender import send_whatsapp_message
         phone = whatsapp_action.get('to', '')
         message = whatsapp_action.get('message', 'Hello')
-
-        log_activity("WHATSAPP_SEND", f"Sending WhatsApp to {phone} via Playwright", self.vault_path)
-
-        # Try direct Playwright send first (same session as watcher)
-        try:
-            result = self._send_whatsapp_direct(phone, message)
-
-            if result.get('success'):
-                log_activity("WHATSAPP_SENT", f"WhatsApp sent successfully to {phone}", self.vault_path)
-                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Method**: Direct Playwright\n- **Timestamp**: {datetime.now().isoformat()}\n"
-                task.filepath.write_text(task.content, encoding='utf-8')
-                return
-            else:
-                self.logger.warning(f"Direct WhatsApp send failed: {result.get('error')}. Trying MCP fallback...")
-
-        except Exception as e:
-            self.logger.warning(f"Direct WhatsApp send error: {e}. Trying MCP fallback...")
-
-        # Fallback: try MCP server
-        try:
-            from src.mcp_client import MCPClient
-            mcp_client = MCPClient("whatsapp", transport="stdio")
-
-            result = mcp_client.call("whatsapp.send", {
-                "to": phone,
-                "message": message,
-                "isGroup": False
-            })
-
-            if result.get('success'):
-                log_activity("WHATSAPP_SENT", f"WhatsApp sent via MCP to {phone}", self.vault_path)
-                task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n- **Status**: Sent successfully\n- **Method**: MCP Server\n- **Timestamp**: {datetime.now().isoformat()}\n"
-                task.filepath.write_text(task.content, encoding='utf-8')
-            else:
-                error_msg = result.get('error', 'Unknown error')
-                log_activity("WHATSAPP_FAILED", f"Failed to send WhatsApp: {error_msg}", self.vault_path)
-                task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: Run: python setup_sessions.py whatsapp\n"
-                task.filepath.write_text(task.content, encoding='utf-8')
-
-        except Exception as e:
-            error_msg = str(e)
-            self.logger.error(f"All WhatsApp send methods failed: {error_msg}")
-            log_activity("WHATSAPP_ERROR", f"All methods failed: {error_msg}", self.vault_path)
-            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Message**: {message}\n- **Error**: {error_msg}\n- **Note**: Run: python setup_sessions.py whatsapp\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
-
-    def _send_whatsapp_direct(self, phone: str, message: str) -> dict:
-        """
-        Send WhatsApp message directly via Playwright using the persistent session.
-        Same approach as the WhatsApp watcher — no API keys needed.
-        """
-        import time
-        import random
-        from pathlib import Path
-
-        try:
-            from playwright.sync_api import sync_playwright
-        except ImportError:
-            return {"success": False, "error": "Playwright not installed"}
-
-        session_path = os.getenv('WHATSAPP_SESSION_PATH', './sessions/whatsapp_session')
-        p = None
-
-        try:
-            p = sync_playwright().start()
-            Path(session_path).mkdir(parents=True, exist_ok=True)
-            browser = p.chromium.launch_persistent_context(
-                session_path,
-                headless=False,
-                viewport={'width': 1280, 'height': 800},
-                args=['--disable-blink-features=AutomationControlled'],
-            )
-            page = browser.pages[0] if browser.pages else browser.new_page()
-            page.goto('https://web.whatsapp.com', wait_until='domcontentloaded', timeout=90000)
-
-            # Wait for chat list (indicates logged in)
-            selectors = '[data-testid="chat-list"], #pane-side, [aria-label="Chat list"]'
-            try:
-                page.wait_for_selector(selectors, timeout=20000)
-            except Exception:
-                return {"success": False, "error": "WhatsApp not logged in. Run: python setup_sessions.py whatsapp"}
-
-            # Search for contact
-            search_box = page.query_selector('div[contenteditable="true"][data-tab="3"]')
-            if not search_box:
-                search_icon = page.query_selector('[data-testid="search"], [data-icon="search"]')
-                if search_icon:
-                    search_icon.click()
-                    time.sleep(1)
-                    search_box = page.query_selector('div[contenteditable="true"][data-tab="3"]')
-
-            if not search_box:
-                return {"success": False, "error": "Could not find WhatsApp search box"}
-
-            search_box.click()
-            time.sleep(0.5)
-            page.keyboard.press('Control+A')
-            page.keyboard.press('Backspace')
-            page.keyboard.type(phone, delay=random.randint(30, 80))
-            time.sleep(2)
-
-            # Click first result or press Enter
-            contact = page.query_selector(f'span[title*="{phone}"]')
-            if contact:
-                contact.click()
-            else:
-                page.keyboard.press('Enter')
-            time.sleep(1.5)
-
-            # Find message input and type
-            msg_box = page.query_selector('div[contenteditable="true"][data-tab="10"]')
-            if not msg_box:
-                msg_box = page.query_selector('footer div[contenteditable="true"]')
-            if not msg_box:
-                return {"success": False, "error": "Could not find message input box"}
-
-            msg_box.click()
-            time.sleep(0.3)
-
-            lines = message.split('\n')
-            for i, line in enumerate(lines):
-                page.keyboard.type(line, delay=random.randint(10, 30))
-                if i < len(lines) - 1:
-                    page.keyboard.press('Shift+Enter')
-
-            time.sleep(0.5)
-            page.keyboard.press('Enter')
-            time.sleep(2)
-
-            browser.close()
-            p.stop()
-            return {"success": True, "message": f"WhatsApp message sent to {phone}"}
-
-        except Exception as e:
-            if p:
-                try:
-                    p.stop()
-                except Exception:
-                    pass
-            return {"success": False, "error": str(e)}
+        log_activity("WHATSAPP_SEND", f"Sending WhatsApp to {phone}", self.vault_path)
+        result = send_whatsapp_message(phone, message)
+        if result.get('success'):
+            log_activity("WHATSAPP_SENT", f"WhatsApp sent to {phone}", self.vault_path)
+            task.content += f"\n\n## WhatsApp Message Sent ✅\n- **To**: {phone}\n- **Message**: {message}\n"
+        else:
+            log_activity("WHATSAPP_FAILED", f"WhatsApp failed: {result.get('error')}", self.vault_path)
+            task.content += f"\n\n## WhatsApp Message Failed ⚠️\n- **To**: {phone}\n- **Error**: {result.get('error')}\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_linkedin_message(self, task, action: dict):
-        """Send LinkedIn message via direct Python (no MCP)"""
-        import subprocess
-        recipient = action.get('to', '')
+        """Send LinkedIn message via unified sender."""
+        from src.services.direct_social_sender import send_linkedin_post
         message = action.get('message', 'Hello')
-        log_activity("LINKEDIN_SEND", f"Sending LinkedIn to {recipient}", self.vault_path)
-        try:
-            result = subprocess.run(
-                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "linkedin", message],
-                capture_output=True, text=True, timeout=30
-            )
-            if result.returncode == 0:
-                log_activity("LINKEDIN_SENT", "LinkedIn sent", self.vault_path)
-                task.content += f"\n\n## LinkedIn Message Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
-            else:
-                task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {result.stderr}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
-        except Exception as e:
-            self.logger.error(f"LinkedIn error: {e}")
-            task.content += f"\n\n## LinkedIn Message Failed ⚠️\n- **Error**: {str(e)}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
+        log_activity("LINKEDIN_SEND", f"Sending LinkedIn post", self.vault_path)
+        result = send_linkedin_post(message)
+        if result.get('success'):
+            log_activity("LINKEDIN_SENT", "LinkedIn posted", self.vault_path)
+            task.content += f"\n\n## LinkedIn Post Sent ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## LinkedIn Post Failed ⚠️\n- **Error**: {result.get('error')}\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_facebook_message(self, task, action: dict):
-        """Send Facebook message via direct Python (no MCP)"""
-        import subprocess
-        recipient = action.get('to', '')
+        """Send Facebook message via unified sender."""
+        from src.services.direct_social_sender import send_facebook_post
         message = action.get('message', 'Hello')
-        log_activity("FACEBOOK_SEND", f"Sending Facebook to {recipient}", self.vault_path)
-        try:
-            result = subprocess.run(
-                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "facebook", message],
-                capture_output=True, text=True, timeout=30
-            )
-            if result.returncode == 0:
-                log_activity("FACEBOOK_SENT", "Facebook sent", self.vault_path)
-                task.content += f"\n\n## Facebook Message Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
-            else:
-                task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {result.stderr}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
-        except Exception as e:
-            self.logger.error(f"Facebook error: {e}")
-            task.content += f"\n\n## Facebook Message Failed ⚠️\n- **Error**: {str(e)}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
+        log_activity("FACEBOOK_SEND", f"Sending Facebook post", self.vault_path)
+        result = send_facebook_post(message)
+        if result.get('success'):
+            log_activity("FACEBOOK_SENT", "Facebook posted", self.vault_path)
+            task.content += f"\n\n## Facebook Post Sent ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## Facebook Post Failed ⚠️\n- **Error**: {result.get('error')}\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_twitter_message(self, task, action: dict):
-        """Send Twitter/X DM via direct Python (no MCP)"""
-        import subprocess
-        recipient = action.get('to', '')
+        """Send tweet via unified sender."""
+        from src.services.direct_social_sender import send_tweet
         message = action.get('message', 'Hello')
-        log_activity("TWITTER_SEND", f"Sending Twitter to {recipient}", self.vault_path)
-        try:
-            result = subprocess.run(
-                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "twitter", message],
-                capture_output=True, text=True, timeout=30
-            )
-            if result.returncode == 0:
-                log_activity("TWITTER_SENT", "Twitter sent", self.vault_path)
-                task.content += f"\n\n## Twitter DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
-            else:
-                task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {result.stderr}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
-        except Exception as e:
-            self.logger.error(f"Twitter error: {e}")
-            task.content += f"\n\n## Twitter DM Failed ⚠️\n- **Error**: {str(e)}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
+        log_activity("TWITTER_SEND", f"Posting tweet", self.vault_path)
+        result = send_tweet(message)
+        if result.get('success'):
+            log_activity("TWITTER_SENT", "Tweet posted", self.vault_path)
+            task.content += f"\n\n## Tweet Posted ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## Tweet Failed ⚠️\n- **Error**: {result.get('error')}\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_instagram_message(self, task, action: dict):
-        """Send Instagram DM via direct Python (no MCP)"""
-        import subprocess
+        """Send Instagram DM via unified sender."""
+        from src.services.direct_social_sender import send_instagram_dm
         recipient = action.get('to', '')
         message = action.get('message', 'Hello')
-        log_activity("INSTAGRAM_SEND", f"Sending Instagram to {recipient}", self.vault_path)
-        try:
-            result = subprocess.run(
-                [sys.executable, str(project_root / "src" / "services" / "direct_social_sender.py"), "instagram", message],
-                capture_output=True, text=True, timeout=30
-            )
-            if result.returncode == 0:
-                log_activity("INSTAGRAM_SENT", "Instagram sent", self.vault_path)
-                task.content += f"\n\n## Instagram DM Sent ✅\n- **Message**: {message}\n- **Status**: Sent\n"
-            else:
-                task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {result.stderr}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
-        except Exception as e:
-            self.logger.error(f"Instagram error: {e}")
-            task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {str(e)}\n"
-            task.filepath.write_text(task.content, encoding='utf-8')
+        log_activity("INSTAGRAM_SEND", f"Sending Instagram DM to {recipient}", self.vault_path)
+        result = send_instagram_dm(recipient, message)
+        if result.get('success'):
+            log_activity("INSTAGRAM_SENT", f"Instagram DM sent to {recipient}", self.vault_path)
+            task.content += f"\n\n## Instagram DM Sent ✅\n- **To**: {recipient}\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## Instagram DM Failed ⚠️\n- **Error**: {result.get('error')}\n"
+        task.filepath.write_text(task.content, encoding='utf-8')
 
     def _execute_social_media_post(self, task, social_action: dict):
-        """
-        Execute social media posting via MCP
-        
-        Args:
-            task: The task object
-            social_action: Dictionary with platforms and content
-        """
-        from src.mcp_client import MCPClient
-        
+        """Post to social media platforms via unified sender."""
+        from src.services.direct_social_sender import send_message
         platforms = social_action.get('platforms', [])
-        content = social_action.get('content', 'ELYX AI Employee - Autonomous AI for business automation')
-        
-        log_activity("SOCIAL_POST", f"Posting to {platforms} via MCP", self.vault_path)
-        
+        content = social_action.get('content', '')
+        log_activity("SOCIAL_POST", f"Posting to {platforms}", self.vault_path)
+
         results = {}
-        
         for platform in platforms:
-            try:
-                mcp_client = MCPClient("social", transport="stdio")
-                
-                # Generate platform-specific content
-                if platform == 'linkedin':
-                    post_content = f"🤖 ELYX AI Employee - Now Operational!\n\n{content}\n\n#AI #Automation #ELYX"
-                    method = "social.linkedin.post"
-                elif platform == 'twitter':
-                    post_content = f"🤖 ELYX AI Employee is now operational! {content[:100]} #AI #Automation"
-                    method = "social.twitter.post"
-                elif platform == 'facebook':
-                    post_content = f"ELYX AI Employee - {content}\n\n#AI #Automation"
-                    method = "social.facebook.post"
-                elif platform == 'instagram':
-                    post_content = f"🤖 ELYX AI Employee\n{content}\n\n#AI #Automation #Tech"
-                    method = "social.instagram.post"
-                else:
-                    continue
-                
-                # Call MCP server
-                result = mcp_client.call(method, {"content": post_content})
-                results[platform] = result
-                log_activity("SOCIAL_POSTED", f"Posted to {platform} via MCP", self.vault_path)
-                
-            except Exception as e:
-                results[platform] = {"error": str(e)}
-                log_activity("SOCIAL_POST_ERROR", f"Failed to post to {platform}: {e}", self.vault_path)
-        
-        # Update task with results
+            result = send_message(f"{platform}-post", "", content)
+            results[platform] = result
+            if result.get('success'):
+                log_activity("SOCIAL_POSTED", f"Posted to {platform}", self.vault_path)
+            else:
+                log_activity("SOCIAL_POST_ERROR", f"Failed {platform}: {result.get('error')}", self.vault_path)
+
         task.content += f"\n\n## Social Media Post Results\n"
         for platform, result in results.items():
-            if isinstance(result, dict) and result.get('success'):
+            if result.get('success'):
                 task.content += f"- ✅ **{platform.title()}**: Posted successfully\n"
             else:
                 task.content += f"- ⚠️ **{platform.title()}**: {result.get('error', 'Check credentials')}\n"
-        
         task.filepath.write_text(task.content, encoding='utf-8')
 
     def process_approval_requests(self):

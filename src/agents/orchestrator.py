@@ -1,7 +1,7 @@
 import subprocess
 import threading
 import time
-import asyncio
+
 from pathlib import Path
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -21,7 +21,7 @@ from src.services.predictive_analytics_service import PredictiveAnalyticsService
 from src.services.adaptive_learning_service import AdaptiveLearningService
 from src.services.database import init_db, SessionLocal
 from src.config.manager import ConfigManager
-from src.services.response_coordinator import ResponseCoordinator
+# ResponseCoordinator removed — processor sends directly via unified sender
 from src.agents.ralph_loop import RalphLoop
 
 class TaskTriggerHandler(FileSystemEventHandler):
@@ -107,8 +107,7 @@ class Orchestrator:
         self.gold_services_initialized = False
         self.ai_service = None
 
-        # Initialize Response Coordinator for bidirectional communication
-        self.response_coordinator = ResponseCoordinator(vault_path=vault_path)
+        # Response sending handled directly by processor via unified sender
 
         # Initialize Odoo Accounting Service
         self.odoo_service = None
@@ -454,115 +453,22 @@ class Orchestrator:
             log_activity("ERROR", f"Error processing tasks: {e}", str(self.vault_path))
 
     def _handle_responses_after_processing(self, processed_count: int):
-        """
-        Handle sending responses after Claude Code has processed tasks
-        """
+        """Move any leftover RESPONSE_*.md files to Done/ (transitional cleanup)."""
         try:
-            # Check for any response files in the vault that need to be sent
             response_dir = self.vault_path / "Responses"
-            if response_dir.exists():
-                # Process any response files that were created during task processing
-                response_files = list(response_dir.glob("RESPONSE_*.md"))
-
-                for response_file in response_files:
-                    try:
-                        # Read the response file
-                        content = response_file.read_text()
-
-                        # Parse the response information from the file
-                        response_info = self._parse_response_file(content)
-
-                        if response_info:
-                            # Queue the response to be sent
-                            asyncio.run(
-                                self.response_coordinator.queue_response(
-                                    original_message_id=response_info.get('original_message_id', 'unknown'),
-                                    channel=response_info['channel'],
-                                    recipient_identifier=response_info['recipient'],
-                                    content=response_info['content'],
-                                    response_type=response_info.get('response_type', ResponseType.INFORMATIONAL),
-                                    priority=response_info.get('priority', Priority.MEDIUM),
-                                    requires_approval=response_info.get('requires_approval', False),
-                                    subject=response_info.get('subject')
-                                )
-                            )
-
-                            # Mark the response file as processed
-                            processed_file = response_dir / f"PROCESSED_{response_file.name}"
-                            response_file.rename(processed_file)
-
-                            self.logger.info(f"Queued response to be sent to {response_info['recipient']}")
-
-                    except Exception as e:
-                        self.logger.error(f"Error processing response file {response_file}: {e}")
-
+            if not response_dir.exists():
+                return
+            response_files = list(response_dir.glob("RESPONSE_*.md"))
+            done_dir = self.vault_path / "Done"
+            done_dir.mkdir(parents=True, exist_ok=True)
+            for rf in response_files:
+                try:
+                    rf.rename(done_dir / rf.name)
+                    self.logger.info(f"Moved leftover response file to Done: {rf.name}")
+                except Exception as e:
+                    self.logger.warning(f"Could not move response file {rf.name}: {e}")
         except Exception as e:
-            self.logger.error(f"Error in response handling: {e}")
-
-    def _parse_response_file(self, content: str) -> dict:
-        """
-        Parse response information from a response file
-
-        Args:
-            content: Content of the response file
-
-        Returns:
-            Dictionary with response information
-        """
-        import re
-
-        # Parse YAML frontmatter if present
-        yaml_match = re.search(r'---\n(.*?)\n---', content, re.DOTALL)
-
-        if yaml_match:
-            yaml_content = yaml_match.group(1)
-            response_info = {}
-
-            for line in yaml_content.split('\n'):
-                if ':' in line:
-                    key, value = line.split(':', 1)
-                    key = key.strip()
-                    value = value.strip().strip('"\'')
-
-                    if key == 'channel':
-                        from src.response_handlers.base_handler import CommunicationChannel
-                        try:
-                            response_info['channel'] = CommunicationChannel[value.upper()]
-                        except KeyError:
-                            response_info['channel'] = None  # or default value
-                    elif key == 'response_type':
-                        from src.services.conversation_tracker import ResponseType
-                        try:
-                            response_info['response_type'] = ResponseType[value.upper()]
-                        except KeyError:
-                            response_info['response_type'] = ResponseType.INFORMATIONAL
-                    elif key == 'priority':
-                        from src.services.conversation_tracker import Priority
-                        try:
-                            response_info['priority'] = Priority[value.upper()]
-                        except KeyError:
-                            response_info['priority'] = Priority.MEDIUM
-                    elif key == 'requires_approval':
-                        response_info['requires_approval'] = value.lower() == 'true'
-                    else:
-                        response_info[key] = value
-        else:
-            # If no YAML frontmatter, create minimal response info
-            response_info = {
-                'channel': None,
-                'recipient': 'unknown',
-                'content': content,
-                'requires_approval': False
-            }
-
-        # Extract content after YAML frontmatter
-        content_match = re.search(r'---\n.*?\n---\n(.*)', content, re.DOTALL)
-        if content_match:
-            response_info['content'] = content_match.group(1).strip()
-        else:
-            response_info['content'] = content.strip()
-
-        return response_info
+            self.logger.error(f"Error in response cleanup: {e}")
 
     def _apply_silver_tier_features(self, processed_count: int):
         """

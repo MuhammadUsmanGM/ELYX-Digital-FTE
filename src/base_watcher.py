@@ -179,6 +179,27 @@ class BaseWatcher(ABC):
         
         self.logger.info("Recovery attempt completed")
 
+    def _load_processed_ids(self, platform_name: str) -> set:
+        """Load processed message IDs from JSON file (survives restarts)"""
+        ids_file = self.vault_path / "Logs" / f"{platform_name}_processed_ids.json"
+        if ids_file.exists():
+            try:
+                return set(json.load(open(ids_file, 'r')))
+            except Exception:
+                return set()
+        return set()
+
+    def _save_processed_ids(self, platform_name: str, ids: set):
+        """Save processed message IDs to JSON file"""
+        ids_file = self.vault_path / "Logs" / f"{platform_name}_processed_ids.json"
+        ids_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            ids_list = list(ids)[-10000:]  # Cap at 10k to prevent unbounded growth
+            with open(ids_file, 'w') as f:
+                json.dump(ids_list, f)
+        except Exception as e:
+            self.logger.error(f"Failed to save processed IDs for {platform_name}: {e}")
+
     @abstractmethod
     def check_for_updates(self) -> list:
         """Return list of new items to process"""

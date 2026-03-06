@@ -13,7 +13,8 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from src.services.social_posting_service import SocialPostingService, CommunicationChannel
+from src.services.communication_channel import ChannelType as CommunicationChannel
+from src.services.direct_social_sender import send_message
 from src.utils.logger import log_activity
 
 

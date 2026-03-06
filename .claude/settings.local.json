@@ -29,7 +29,10 @@
       "mcp__filesystem_mcp__write_file",
       "mcp__filesystem_mcp__list_directory",
       "Bash(cd C:\\\\Users\\\\Usman Mustafa\\\\OneDrive\\\\Desktop\\\\ELYX-Personal-AI-Employee:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "WebSearch",
+      "WebFetch(domain:www.thecaio.ai)",
+      "WebFetch(domain:playbooks.com)"
     ]
   },
   "mcpServers": {

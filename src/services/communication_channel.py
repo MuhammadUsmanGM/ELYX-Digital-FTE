@@ -8,6 +8,19 @@ class ChannelType(Enum):
     EMAIL = "EMAIL"
     LINKEDIN = "LINKEDIN"
     WHATSAPP = "WHATSAPP"
+    FACEBOOK = "FACEBOOK"
+    TWITTER = "TWITTER"
+    INSTAGRAM = "INSTAGRAM"
+
+# Alias — drop-in replacement for src.response_handlers.base_handler.CommunicationChannel
+CommunicationChannelEnum = ChannelType
+
+class ResponseStatus(Enum):
+    QUEUED = "QUEUED"
+    SENDING = "SENDING"
+    SENT = "SENT"
+    FAILED = "FAILED"
+    APPROVAL_REQUIRED = "APPROVAL_REQUIRED"
 
 class CommunicationChannel(ABC):
     def __init__(self, name: str, channel_type: ChannelType, status: str = "ACTIVE"):

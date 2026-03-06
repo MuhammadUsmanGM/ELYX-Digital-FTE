@@ -2,6 +2,7 @@ import re
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
+from datetime import datetime
 import os
 
 
@@ -94,9 +95,33 @@ class InstagramWatcher(BaseWatcher):
             for u in unread[:5]:
                 u_id = hash(u.inner_html())
                 if u_id not in self.processed_ids:
+                    sender = "Instagram User"
+                    text = "Unread message in thread"
+                    try:
+                        # Click into the thread to extract actual content
+                        u.click()
+                        page.wait_for_timeout(2000)
+
+                        # Extract sender name from thread header
+                        sender_elem = page.query_selector('header a[role="link"], [role="heading"] span')
+                        if sender_elem:
+                            sender = sender_elem.inner_text().strip() or sender
+
+                        # Extract last message text from conversation
+                        msg_elems = page.query_selector_all('div[role="row"] div[dir="auto"], div[class*="message"] span')
+                        if msg_elems:
+                            text = msg_elems[-1].inner_text().strip()[:500] or text
+
+                        # Navigate back to inbox
+                        page.goto('https://www.instagram.com/direct/inbox/', wait_until='domcontentloaded', timeout=30000)
+                        page.wait_for_timeout(2000)
+                    except Exception as thread_err:
+                        self.logger.warning(f"Instagram: could not extract thread content: {thread_err}")
+
                     updates.append({
                         'type': 'instagram_dm',
-                        'text': 'Unread message in thread',
+                        'sender': sender,
+                        'text': text,
                         'timestamp': str(page.evaluate("new Date().toISOString()")),
                     })
                     self.processed_ids.add(u_id)
@@ -108,22 +133,22 @@ class InstagramWatcher(BaseWatcher):
         return updates
 
     def create_action_file(self, item) -> Path:
+        sender = item.get('sender', 'Instagram')
         content = f'''---
 type: {item['type']}
-from: Instagram
+from: {sender}
 priority: medium
 status: pending
 received: {item["timestamp"]}
 ---
 
-## New Instagram DM
+## New Instagram DM from {sender}
 
 **Summary**: {item["text"]}
 
 **Received**: {item["timestamp"]}
 
 ## Suggested Actions
-- [ ] Open Instagram to check thread
 - [ ] Respond if business-related
 - [ ] Archive if personal/spam
 '''

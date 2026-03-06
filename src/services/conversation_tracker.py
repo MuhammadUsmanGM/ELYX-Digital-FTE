@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List
 from enum import Enum
 
-from src.response_handlers.base_handler import CommunicationChannel
+from src.services.communication_channel import ChannelType as CommunicationChannel
 
 
 class ResponseType(Enum):
