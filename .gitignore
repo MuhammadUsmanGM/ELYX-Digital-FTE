@@ -76,7 +76,9 @@ coverage.xml
 
 # Obsidian
 .obsidian/.*
-!obsidian_vault/.obsidian/
+obsidian_vault/
+obsidian_vault/Dashboard.md
+obsidian_vault/Company_Handbook.md
 obsidian_vault/.obsidian/workspace.json
 
 
