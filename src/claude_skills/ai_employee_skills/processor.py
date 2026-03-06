@@ -194,6 +194,7 @@ Move this file to /Rejected folder.
         # Dispatch: detect platform action and send directly (no intermediate files)
         platform_detectors = [
             ('social_post', self._detect_social_media_action, self._execute_social_media_post),
+            ('email',       self._detect_email_reply,          self._handle_email_action),
             ('whatsapp',    self._detect_whatsapp_action,      self._send_whatsapp_message),
             ('linkedin',    self._detect_linkedin_message,     self._send_linkedin_message),
             ('facebook',    self._detect_facebook_message,     self._send_facebook_message),
@@ -210,10 +211,7 @@ Move this file to /Rejected folder.
         # No platform-specific action — check if we should auto-respond
         if self._should_respond_to_task(task):
             response_content = self._generate_response_content(task)
-            if "email" in task.type:
-                self._send_email_response(task, response_content)
-            else:
-                self._create_response_file(task, response_content)
+            self._create_response_file(task, response_content)
 
     def _generate_plan_content(self, task) -> str:
         """
@@ -438,6 +436,26 @@ subject: Response to your request
             return match.group(1).strip()
         return s
 
+    def _detect_email_reply(self, task) -> dict:
+        """Detect if this task is an email that needs a reply."""
+        task_type = task.frontmatter.get('type', '')
+        if 'email' in task_type:
+            sender = task.frontmatter.get('from', '')
+            subject = task.frontmatter.get('subject', '')
+            if sender:
+                response = self._generate_response_content(task)
+                return {'to': sender, 'subject': subject, 'message': response}
+        # Also detect email-sending requests in content
+        content_lower = task.content.lower()
+        if 'send' in content_lower and ('email' in content_lower or 'mail' in content_lower):
+            return {'to': task.frontmatter.get('from', ''), 'subject': '', 'message': self._extract_message_to_send(task)}
+        return None
+
+    def _handle_email_action(self, task, action: dict):
+        """Handle email action detected by the dispatch loop."""
+        response_content = action.get('message', '')
+        self._send_email_response(task, response_content)
+
     def _send_email_response(self, task, response_content: str):
         """
         Send email: try browser (Gmail) first, then MCP, then direct API.
@@ -583,32 +601,72 @@ subject: Response to your request
         }
 
     def _detect_linkedin_message(self, task) -> dict:
-        """Detect LinkedIn message request"""
+        """Detect LinkedIn message — either from watcher or email requesting LinkedIn action."""
+        task_type = task.frontmatter.get('type', '')
+        if 'linkedin' in task_type:
+            # Action file from LinkedIn watcher — respond to the sender
+            sender = task.frontmatter.get('from', 'LinkedIn Contact')
+            response = self._generate_response_content(task)
+            return {'to': sender, 'message': response, 'is_reply': True}
         content_lower = task.content.lower()
-        if 'linkedin' in content_lower and ('message' in content_lower or 'send' in content_lower):
-            return {'to': 'LinkedIn Contact', 'message': 'Hello from ELYX'}
+        if 'linkedin' in content_lower and ('message' in content_lower or 'send' in content_lower or 'dm' in content_lower):
+            return {'to': task.frontmatter.get('from', ''), 'message': self._extract_message_to_send(task), 'is_reply': False}
         return None
 
     def _detect_facebook_message(self, task) -> dict:
-        """Detect Facebook message request"""
+        """Detect Facebook message — either from watcher or email requesting Facebook action."""
+        task_type = task.frontmatter.get('type', '')
+        if 'facebook' in task_type:
+            sender = task.frontmatter.get('from', 'Facebook Contact')
+            response = self._generate_response_content(task)
+            return {'to': sender, 'message': response, 'is_reply': True}
         content_lower = task.content.lower()
-        if 'facebook' in content_lower and ('message' in content_lower or 'send' in content_lower):
-            return {'to': 'Facebook Contact', 'message': 'Hello from ELYX'}
+        if 'facebook' in content_lower and ('message' in content_lower or 'send' in content_lower or 'dm' in content_lower):
+            return {'to': task.frontmatter.get('from', ''), 'message': self._extract_message_to_send(task), 'is_reply': False}
         return None
 
     def _detect_twitter_message(self, task) -> dict:
-        """Detect Twitter/X DM request"""
+        """Detect Twitter/X message — either from watcher or email requesting Twitter action."""
+        task_type = task.frontmatter.get('type', '')
+        if 'twitter' in task_type:
+            sender = task.frontmatter.get('from', 'Twitter/X')
+            response = self._generate_response_content(task)
+            return {'to': sender, 'message': response, 'is_reply': True}
         content_lower = task.content.lower()
-        if ('twitter' in content_lower or 'x.com' in content_lower) and ('message' in content_lower or 'dm' in content_lower):
-            return {'to': 'Twitter Contact', 'message': 'Hello from ELYX'}
+        if ('twitter' in content_lower or 'x.com' in content_lower) and ('message' in content_lower or 'dm' in content_lower or 'tweet' in content_lower):
+            return {'to': task.frontmatter.get('from', ''), 'message': self._extract_message_to_send(task), 'is_reply': False}
         return None
 
     def _detect_instagram_message(self, task) -> dict:
-        """Detect Instagram DM request"""
+        """Detect Instagram DM — either from watcher or email requesting Instagram action."""
+        task_type = task.frontmatter.get('type', '')
+        if 'instagram' in task_type:
+            sender = task.frontmatter.get('from', 'Instagram User')
+            response = self._generate_response_content(task)
+            return {'to': sender, 'message': response, 'is_reply': True}
         content_lower = task.content.lower()
         if 'instagram' in content_lower and ('message' in content_lower or 'dm' in content_lower):
-            return {'to': 'Instagram Contact', 'message': 'Hello from ELYX'}
+            return {'to': task.frontmatter.get('from', ''), 'message': self._extract_message_to_send(task), 'is_reply': False}
         return None
+
+    def _extract_message_to_send(self, task) -> str:
+        """Extract the message the user wants to send from the task content."""
+        import re
+        content_lower = task.content.lower()
+        # Try: "saying [msg]", "say [msg]", "message: [msg]", "with message [msg]"
+        patterns = [
+            r'saying\s+["\']?(.+?)["\']?(?:\.|$)',
+            r'(?:say|tell)\s+["\']?(.+?)["\']?(?:\.|$)',
+            r'(?:message|text):\s*["\']?(.+?)["\']?(?:\.|$)',
+            r'with\s+(?:the\s+)?message\s+["\']?(.+?)["\']?(?:\.|$)',
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, content_lower)
+            if match:
+                msg = match.group(1).strip()
+                if msg:
+                    return msg[0].upper() + msg[1:] if len(msg) > 1 else msg.upper()
+        return self._generate_response_content(task)
 
     def _detect_social_media_action(self, task) -> dict:
         """
@@ -683,42 +741,72 @@ subject: Response to your request
         task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_linkedin_message(self, task, action: dict):
-        """Send LinkedIn message via unified sender."""
-        from src.services.direct_social_sender import send_linkedin_post
+        """Send LinkedIn message via unified sender — DM for replies, post for outbound."""
+        from src.services.direct_social_sender import send_linkedin_dm, send_linkedin_post
+        recipient = action.get('to', '')
         message = action.get('message', 'Hello')
-        log_activity("LINKEDIN_SEND", f"Sending LinkedIn post", self.vault_path)
-        result = send_linkedin_post(message)
-        if result.get('success'):
-            log_activity("LINKEDIN_SENT", "LinkedIn posted", self.vault_path)
-            task.content += f"\n\n## LinkedIn Post Sent ✅\n- **Message**: {message}\n"
+        is_reply = action.get('is_reply', False)
+
+        if is_reply and recipient:
+            log_activity("LINKEDIN_SEND", f"Sending LinkedIn DM to {recipient}", self.vault_path)
+            result = send_linkedin_dm(recipient, message)
+            action_label = f"LinkedIn DM to {recipient}"
         else:
-            task.content += f"\n\n## LinkedIn Post Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            log_activity("LINKEDIN_SEND", f"Sending LinkedIn post", self.vault_path)
+            result = send_linkedin_post(message)
+            action_label = "LinkedIn post"
+
+        if result.get('success'):
+            log_activity("LINKEDIN_SENT", f"{action_label} sent", self.vault_path)
+            task.content += f"\n\n## {action_label} Sent ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## {action_label} Failed ⚠️\n- **Error**: {result.get('error')}\n"
         task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_facebook_message(self, task, action: dict):
-        """Send Facebook message via unified sender."""
-        from src.services.direct_social_sender import send_facebook_post
+        """Send Facebook message via unified sender — DM for replies, post for outbound."""
+        from src.services.direct_social_sender import send_facebook_dm, send_facebook_post
+        recipient = action.get('to', '')
         message = action.get('message', 'Hello')
-        log_activity("FACEBOOK_SEND", f"Sending Facebook post", self.vault_path)
-        result = send_facebook_post(message)
-        if result.get('success'):
-            log_activity("FACEBOOK_SENT", "Facebook posted", self.vault_path)
-            task.content += f"\n\n## Facebook Post Sent ✅\n- **Message**: {message}\n"
+        is_reply = action.get('is_reply', False)
+
+        if is_reply and recipient:
+            log_activity("FACEBOOK_SEND", f"Sending Facebook DM to {recipient}", self.vault_path)
+            result = send_facebook_dm(recipient, message)
+            action_label = f"Facebook DM to {recipient}"
         else:
-            task.content += f"\n\n## Facebook Post Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            log_activity("FACEBOOK_SEND", f"Sending Facebook post", self.vault_path)
+            result = send_facebook_post(message)
+            action_label = "Facebook post"
+
+        if result.get('success'):
+            log_activity("FACEBOOK_SENT", f"{action_label} sent", self.vault_path)
+            task.content += f"\n\n## {action_label} Sent ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## {action_label} Failed ⚠️\n- **Error**: {result.get('error')}\n"
         task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_twitter_message(self, task, action: dict):
-        """Send tweet via unified sender."""
-        from src.services.direct_social_sender import send_tweet
+        """Send Twitter message via unified sender — DM for replies, tweet for outbound."""
+        from src.services.direct_social_sender import send_twitter_dm, send_tweet
+        recipient = action.get('to', '')
         message = action.get('message', 'Hello')
-        log_activity("TWITTER_SEND", f"Posting tweet", self.vault_path)
-        result = send_tweet(message)
-        if result.get('success'):
-            log_activity("TWITTER_SENT", "Tweet posted", self.vault_path)
-            task.content += f"\n\n## Tweet Posted ✅\n- **Message**: {message}\n"
+        is_reply = action.get('is_reply', False)
+
+        if is_reply and recipient:
+            log_activity("TWITTER_SEND", f"Sending Twitter DM to {recipient}", self.vault_path)
+            result = send_twitter_dm(recipient, message)
+            action_label = f"Twitter DM to {recipient}"
         else:
-            task.content += f"\n\n## Tweet Failed ⚠️\n- **Error**: {result.get('error')}\n"
+            log_activity("TWITTER_SEND", f"Posting tweet", self.vault_path)
+            result = send_tweet(message)
+            action_label = "Tweet"
+
+        if result.get('success'):
+            log_activity("TWITTER_SENT", f"{action_label} sent", self.vault_path)
+            task.content += f"\n\n## {action_label} Sent ✅\n- **Message**: {message}\n"
+        else:
+            task.content += f"\n\n## {action_label} Failed ⚠️\n- **Error**: {result.get('error')}\n"
         task.filepath.write_text(task.content, encoding='utf-8')
 
     def _send_instagram_message(self, task, action: dict):
