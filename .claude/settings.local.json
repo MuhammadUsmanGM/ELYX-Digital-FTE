@@ -32,7 +32,23 @@
       "Bash(python3:*)",
       "WebSearch",
       "WebFetch(domain:www.thecaio.ai)",
-      "WebFetch(domain:playbooks.com)"
+      "WebFetch(domain:playbooks.com)",
+      "Bash(cd:*)",
+      "Bash(grep:*)",
+      "Bash(node:*)"
+    ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python scripts/ralph_stop_hook.py"
+          }
+        ]
+      }
     ]
   },
   "mcpServers": {

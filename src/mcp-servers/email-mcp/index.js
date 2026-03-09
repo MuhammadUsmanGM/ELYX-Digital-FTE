@@ -411,43 +411,51 @@ async function readEmail(args) {
 
 async function markAsRead(args) {
   const { email_ids } = args;
-  
+
   if (!gmail) {
     throw new Error('Gmail not initialized');
   }
-  
-  await gmail.users.messages.modify({
-    userId: 'me',
-    id: email_ids,
-    requestBody: {
-      removeLabelIds: ['UNREAD']
-    }
-  });
-  
+
+  const ids = Array.isArray(email_ids) ? email_ids : [email_ids];
+
+  for (const id of ids) {
+    await gmail.users.messages.modify({
+      userId: 'me',
+      id: id,
+      requestBody: {
+        removeLabelIds: ['UNREAD']
+      }
+    });
+  }
+
   return {
     success: true,
-    message: `Marked ${email_ids.length} email(s) as read`
+    message: `Marked ${ids.length} email(s) as read`
   };
 }
 
 async function archiveEmail(args) {
   const { email_ids } = args;
-  
+
   if (!gmail) {
     throw new Error('Gmail not initialized');
   }
-  
-  await gmail.users.messages.modify({
-    userId: 'me',
-    id: email_ids,
-    requestBody: {
-      removeLabelIds: ['INBOX']
-    }
-  });
-  
+
+  const ids = Array.isArray(email_ids) ? email_ids : [email_ids];
+
+  for (const id of ids) {
+    await gmail.users.messages.modify({
+      userId: 'me',
+      id: id,
+      requestBody: {
+        removeLabelIds: ['INBOX']
+      }
+    });
+  }
+
   return {
     success: true,
-    message: `Archived ${email_ids.length} email(s)`
+    message: `Archived ${ids.length} email(s)`
   };
 }
 

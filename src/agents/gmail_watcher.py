@@ -33,7 +33,7 @@ class GmailWatcher(BaseWatcher):
         else:
             self.logger.warning(f"Gmail credentials not found at {self.credentials_path}")
             
-        self.processed_ids = set()
+        self.processed_ids = self._load_processed_ids("gmail")
 
     def check_for_updates(self) -> list:
         if not self.service:
@@ -95,6 +95,7 @@ thread_id: "{thread_id}"
             filepath = self.needs_action / f'EMAIL_{message["id"]}.md'
             filepath.write_text(content, encoding='utf-8')
             self.processed_ids.add(message['id'])
+            self._save_processed_ids("gmail", self.processed_ids)
             return filepath
         except Exception as e:
             self.logger.error(f"Error creating action file: {e}")

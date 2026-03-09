@@ -16,7 +16,7 @@ class FacebookWatcher(BaseWatcher):
         interval = int(os.getenv('FACEBOOK_CHECK_INTERVAL', 7200))
         super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path('./sessions/facebook_session')
-        self.processed_items: set = set()
+        self.processed_items: set = self._load_processed_ids("facebook")
 
         self._playwright: Playwright | None = None
         self._browser: BrowserContext | None = None
@@ -100,6 +100,7 @@ class FacebookWatcher(BaseWatcher):
                         'timestamp': str(page.evaluate("new Date().toISOString()")),
                     })
                     self.processed_items.add(u_id)
+                    self._save_processed_ids("facebook", self.processed_items)
 
         except Exception as e:
             self.logger.error(f"Facebook watcher error: {e}")

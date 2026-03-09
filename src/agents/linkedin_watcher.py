@@ -18,7 +18,7 @@ class LinkedInWatcher(BaseWatcher):
         super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path('./sessions/linkedin_session')
         self.keywords = ['urgent', 'asap', 'meeting', 'proposal', 'opportunity', 'help', 'important']
-        self.processed_messages: set = set()
+        self.processed_messages: set = self._load_processed_ids("linkedin")
 
         self._playwright: Playwright | None = None
         self._browser: BrowserContext | None = None
@@ -123,7 +123,8 @@ class LinkedInWatcher(BaseWatcher):
                             'timestamp': datetime.now().isoformat(),
                         })
                         self.processed_messages.add(t_id)
-                        
+                        self._save_processed_ids("linkedin", self.processed_messages)
+
                         # Add stealth interaction: hover over thread
                         thread.hover()
                         self.human_delay(0.5, 1.5)

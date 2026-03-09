@@ -26,7 +26,7 @@ class OdooWatcher(BaseWatcher):
         interval = int(os.getenv('ODOO_CHECK_INTERVAL', 3600))
         super().__init__(vault_path, check_interval=interval, use_chrome_profile=False)
         self.odoo = get_odoo_service()
-        self.processed_invoices = set()
+        self.processed_invoices = self._load_processed_ids("odoo")
         self.last_revenue_check = None
     
     def check_for_updates(self) -> list:
@@ -94,7 +94,10 @@ class OdooWatcher(BaseWatcher):
                     })
                     
                     self.logger.warning(f"Overdue invoice detected: {inv.get('name')} - ${amount:.2f} ({partner})")
-        
+
+            if updates:
+                self._save_processed_ids("odoo", self.processed_invoices)
+
         except Exception as e:
             self.logger.error(f"Error checking overdue invoices: {e}")
         
@@ -138,25 +141,57 @@ class OdooWatcher(BaseWatcher):
                     })
                     
                     self.logger.info(f"New vendor bill: {bill.get('name')} - ${amount:.2f} ({partner})")
-        
+
+            if updates:
+                self._save_processed_ids("odoo", self.processed_invoices)
+
         except Exception as e:
             self.logger.error(f"Error checking new invoices: {e}")
         
         return updates
     
     def _check_payments(self) -> list:
-        """Check for recently paid invoices"""
+        """Check for recently paid invoices (received payments in last 24 hours)"""
         updates = []
-        
+
         try:
-            # This would need a more sophisticated check
-            # For now, we'll skip automatic payment detection
-            # and rely on manual reconciliation
-            pass
-        
+            yesterday = (datetime.now() - timedelta(hours=24)).strftime('%Y-%m-%d')
+
+            # Query customer invoices that were paid recently
+            domain = [
+                ['move_type', '=', 'out_invoice'],
+                ['payment_state', 'in', ['paid', 'in_payment']],
+                ['write_date', '>=', yesterday],
+            ]
+
+            paid_invoices = self.odoo.get_invoices(domain=domain)
+
+            for inv in paid_invoices:
+                inv_id = f"payment_{inv.get('id')}"
+                if inv_id not in self.processed_invoices:
+                    self.processed_invoices.add(inv_id)
+
+                    partner = inv.get('partner_id', ['Unknown', ''])[1] if inv.get('partner_id') else 'Unknown'
+                    amount = inv.get('amount_total', 0)
+
+                    updates.append({
+                        'type': 'payment_received',
+                        'priority': 'low',
+                        'invoice_id': inv.get('id'),
+                        'invoice_name': inv.get('name', 'N/A'),
+                        'partner': partner,
+                        'amount': amount,
+                        'timestamp': datetime.now().isoformat()
+                    })
+
+                    self.logger.info(f"Payment received: {inv.get('name')} - ${amount:.2f} ({partner})")
+
+            if updates:
+                self._save_processed_ids("odoo", self.processed_invoices)
+
         except Exception as e:
             self.logger.error(f"Error checking payments: {e}")
-        
+
         return updates
     
     def _check_weekly_revenue(self) -> dict:

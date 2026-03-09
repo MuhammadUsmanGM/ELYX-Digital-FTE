@@ -13,16 +13,140 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from src.services.communication_channel import ChannelType as CommunicationChannel
-from src.services.direct_social_sender import send_message
+from src.services.direct_social_sender import (
+    send_message,
+    send_linkedin_post, send_linkedin_dm,
+    send_facebook_post, send_facebook_dm,
+    send_tweet, send_twitter_dm,
+    send_instagram_post, send_instagram_dm,
+)
 from src.utils.logger import log_activity
+
+
+class CommunicationChannel:
+    """Platform identifiers for social media routing."""
+    LINKEDIN = "linkedin"
+    FACEBOOK = "facebook"
+    TWITTER = "twitter"
+    INSTAGRAM = "instagram"
+
+
+class SocialPostingService:
+    """
+    Bridges social media skills to the unified direct_social_sender.
+    Manages post history and scheduled posts via the Obsidian vault.
+    """
+
+    def __init__(self, vault_path: str):
+        self.vault_path = Path(vault_path)
+        self.social_posts_dir = self.vault_path / "Social_Posts"
+        self.published_dir = self.social_posts_dir / "Published"
+        self.scheduled_dir = self.social_posts_dir / "Scheduled"
+        self.failed_dir = self.social_posts_dir / "Failed"
+
+        # Ensure directories exist
+        for d in (self.published_dir, self.scheduled_dir, self.failed_dir):
+            d.mkdir(parents=True, exist_ok=True)
+
+    async def post_to_platform(
+        self, platform: str, content: str, requires_approval: bool = True, **kwargs
+    ) -> Dict[str, Any]:
+        if requires_approval:
+            return self._create_approval_request(platform, content, **kwargs)
+
+        result = send_message(platform, "", content, **kwargs)
+        self._record_post(platform, content, result)
+        return result
+
+    async def post_to_all_platforms(
+        self, content: str, platforms: list, image_path: str = None,
+        requires_approval: bool = True
+    ) -> Dict[str, Any]:
+        import uuid
+        campaign_id = str(uuid.uuid4())[:8]
+        results = {}
+        for plat in platforms:
+            result = await self.post_to_platform(
+                plat, content, requires_approval=requires_approval,
+                image_path=image_path
+            )
+            results[plat] = result
+        return {"campaign_id": campaign_id, "results": results}
+
+    def _create_approval_request(self, platform: str, content: str, **kwargs) -> Dict[str, Any]:
+        import time as _t
+        filename = f"SOCIAL_APPROVAL_{platform}_{int(_t.time())}.md"
+        approval_content = f"""---
+type: approval_request
+action: social_post
+platform: {platform}
+created: {datetime.now().isoformat()}
+expires: {(datetime.now() + __import__('datetime').timedelta(hours=24)).isoformat()}
+status: pending
+---
+
+## Social Media Post Approval
+
+**Platform**: {platform.title()}
+**Content**: {content[:500]}
+
+## To Approve
+Move this file to /Approved folder.
+
+## To Reject
+Move this file to /Rejected folder.
+"""
+        approval_path = self.vault_path / "Pending_Approval" / filename
+        approval_path.parent.mkdir(parents=True, exist_ok=True)
+        approval_path.write_text(approval_content, encoding="utf-8")
+        return {"status": "pending_approval", "file": str(approval_path)}
+
+    def _record_post(self, platform: str, content: str, result: dict):
+        import time as _t
+        ts = datetime.now()
+        filename = f"{platform}_{int(_t.time())}.md"
+        record = f"""---
+platform: {platform}
+posted: {ts.isoformat()}
+success: {result.get('success', False)}
+---
+
+## {platform.title()} Post
+
+{content[:1000]}
+
+## Result
+{result.get('message', result.get('error', 'unknown'))}
+"""
+        if result.get("success"):
+            (self.published_dir / filename).write_text(record, encoding="utf-8")
+        else:
+            (self.failed_dir / filename).write_text(record, encoding="utf-8")
+
+    def get_post_history(self, platform=None, limit=50) -> list:
+        posts = []
+        for f in sorted(self.published_dir.glob("*.md"), reverse=True)[:limit]:
+            if platform and not f.name.startswith(platform):
+                continue
+            posts.append({"file": f.name, "content": f.read_text(encoding="utf-8")[:200]})
+        return posts
+
+    def get_scheduled_posts(self) -> list:
+        return [{"file": f.name} for f in self.scheduled_dir.glob("*.md")]
+
+    def cancel_scheduled_post(self, post_id: str) -> bool:
+        target = self.scheduled_dir / post_id
+        if target.exists():
+            target.unlink()
+            return True
+        return False
 
 
 class SocialMediaSkills:
     """
     Social media posting and engagement skills for ELYX
     """
-    
+
     def __init__(self, vault_path: str):
         self.vault_path = Path(vault_path)
         self.posting_service = SocialPostingService(vault_path)

@@ -17,7 +17,7 @@ class InstagramWatcher(BaseWatcher):
         interval = int(os.getenv('INSTAGRAM_CHECK_INTERVAL', 7200))
         super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path('./sessions/instagram_session')
-        self.processed_ids: set = set()
+        self.processed_ids: set = self._load_processed_ids("instagram")
 
         self._playwright: Playwright | None = None
         self._browser: BrowserContext | None = None
@@ -125,6 +125,7 @@ class InstagramWatcher(BaseWatcher):
                         'timestamp': str(page.evaluate("new Date().toISOString()")),
                     })
                     self.processed_ids.add(u_id)
+                    self._save_processed_ids("instagram", self.processed_ids)
 
         except Exception as e:
             self.logger.error(f"Instagram watcher error: {e}")

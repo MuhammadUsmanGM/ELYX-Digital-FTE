@@ -17,7 +17,7 @@ class WhatsAppWatcher(BaseWatcher):
         super().__init__(vault_path, check_interval=interval)
         self.session_path = Path(session_path) if session_path else Path('./sessions/whatsapp_session')
         self.keywords = os.getenv('WHATSAPP_KEYWORDS', 'urgent,asap,invoice,payment,help').split(',')
-        self.processed_messages: set = set()
+        self.processed_messages: set = self._load_processed_ids("whatsapp")
 
         # Persistent browser state — opened once, reused across checks
         self._playwright: Playwright | None = None
@@ -160,6 +160,7 @@ class WhatsAppWatcher(BaseWatcher):
                                     'timestamp': datetime.now().isoformat(),
                                 })
                                 self.processed_messages.add(msg_id)
+                                self._save_processed_ids("whatsapp", self.processed_messages)
 
                 except Exception as e:
                     self.logger.error(f"WhatsApp: error processing chat: {e}")

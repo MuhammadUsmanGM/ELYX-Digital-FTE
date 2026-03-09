@@ -112,14 +112,31 @@ def get_pending_tasks(vault_path):
 
 def move_file_to_folder(file_path, target_folder, vault_path):
     """
-    Move a file from one vault folder to another
+    Move a file from one vault folder to another.
+    Handles WinError 183 (file already exists) by appending a timestamp suffix.
     """
+    import time
+
     vault_path = Path(vault_path)
+    file_path = Path(file_path)
     target_path = vault_path / target_folder
     target_path.mkdir(exist_ok=True)
 
     target_file = target_path / file_path.name
-    file_path.rename(target_file)
+
+    # If target already exists, add a timestamp suffix to avoid collision
+    if target_file.exists():
+        stem = file_path.stem
+        suffix = file_path.suffix
+        target_file = target_path / f"{stem}_{int(time.time())}{suffix}"
+
+    try:
+        file_path.rename(target_file)
+    except OSError:
+        # Fallback: copy + delete (handles cross-drive moves on Windows)
+        import shutil
+        shutil.copy2(str(file_path), str(target_file))
+        file_path.unlink()
 
     return target_file
 

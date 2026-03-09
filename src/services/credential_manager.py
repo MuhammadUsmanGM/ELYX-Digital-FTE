@@ -9,6 +9,9 @@ import getpass
 
 
 class CredentialManager:
+    # File to persist the random salt (generated once, reused across sessions)
+    _SALT_FILE = os.path.join(os.path.dirname(__file__), '..', '..', 'secure_credentials', '.salt')
+
     def __init__(self, password: Optional[str] = None):
         """
         Initialize the credential manager
@@ -22,9 +25,34 @@ class CredentialManager:
         else:
             self.password = password
 
+        # Load or generate a random salt
+        self.salt = self._load_or_create_salt()
+
         # Generate encryption key from password
         self.key = self._derive_key(self.password.encode())
         self.cipher_suite = Fernet(self.key)
+
+    def _load_or_create_salt(self) -> bytes:
+        """Load existing salt from disk, or generate and persist a new random one."""
+        salt_path = os.path.normpath(self._SALT_FILE)
+        try:
+            if os.path.exists(salt_path):
+                with open(salt_path, 'rb') as f:
+                    salt = f.read()
+                if len(salt) == 32:
+                    return salt
+        except Exception:
+            pass
+
+        # Generate a cryptographically random 32-byte salt
+        salt = os.urandom(32)
+        try:
+            os.makedirs(os.path.dirname(salt_path), exist_ok=True)
+            with open(salt_path, 'wb') as f:
+                f.write(salt)
+        except Exception:
+            pass  # If we can't persist, at least use it for this session
+        return salt
 
     def _derive_key(self, password: bytes) -> bytes:
         """
@@ -36,11 +64,10 @@ class CredentialManager:
         Returns:
             Derived key as bytes
         """
-        salt = b'salt_32_byte_length_for_cryptography'  # In production, use random salt
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=salt,
+            salt=self.salt,
             iterations=100000,
         )
         key = base64.urlsafe_b64encode(kdf.derive(password))
