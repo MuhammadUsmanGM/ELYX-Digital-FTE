@@ -1,3 +1,4 @@
+import hashlib
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -150,7 +151,7 @@ class WhatsAppWatcher(BaseWatcher):
                         text_lower = text.lower()
 
                         if any(kw in text_lower for kw in self.keywords):
-                            msg_id = hash(f"{sender_name}_{text}")
+                            msg_id = hashlib.sha256(f"{sender_name}_{text}".encode()).hexdigest()[:16]
                             if msg_id not in self.processed_messages:
                                 messages.append({
                                     'type': 'whatsapp_urgent',
@@ -200,7 +201,7 @@ keywords: {", ".join(item["keywords_found"])}
 '''
         # Create a unique but readable filename
         safe_name = "".join([c if c.isalnum() else "_" for c in item['sender'][:15]])
-        filepath = self.needs_action / f'WHATSAPP_{safe_name}_{hash(item["text"]) % 10000}.md'
+        filepath = self.needs_action / f'WHATSAPP_{safe_name}_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

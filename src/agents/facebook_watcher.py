@@ -1,4 +1,5 @@
 import re
+import hashlib
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -92,7 +93,7 @@ class FacebookWatcher(BaseWatcher):
 
             for u in unread[:5]:
                 text = u.text_content()[:200]
-                u_id = hash(text)
+                u_id = hashlib.sha256(text.encode()).hexdigest()[:16]
                 if u_id not in self.processed_items:
                     updates.append({
                         'type': 'facebook_message',
@@ -128,7 +129,7 @@ received: {item["timestamp"]}
 - [ ] Respond if needed
 - [ ] Archive if spam
 '''
-        filepath = self.needs_action / f'FACEBOOK_{hash(item["text"])}.md'
+        filepath = self.needs_action / f'FACEBOOK_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

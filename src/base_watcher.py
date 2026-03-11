@@ -40,8 +40,13 @@ class BaseWatcher(ABC):
             return
         
         try:
-            lock_file = Path(self.chrome_user_data_dir) / 'SingletonLock'
-            
+            chrome_data_dir = Path(self.chrome_user_data_dir)
+            # SingletonLock is Linux-only; on Windows, check for lockfile or Local State
+            if os.name == 'nt':
+                lock_file = chrome_data_dir / 'lockfile'
+            else:
+                lock_file = chrome_data_dir / 'SingletonLock'
+
             if not lock_file.exists():
                 self.logger.info("Chrome profile not detected. Launching Chrome...")
                 self.launch_chrome()
@@ -184,7 +189,8 @@ class BaseWatcher(ABC):
         ids_file = self.vault_path / "Logs" / f"{platform_name}_processed_ids.json"
         if ids_file.exists():
             try:
-                return set(json.load(open(ids_file, 'r')))
+                with open(ids_file, 'r') as f:
+                    return set(json.load(f))
             except Exception:
                 return set()
         return set()
@@ -218,18 +224,23 @@ class BaseWatcher(ABC):
         if self.use_chrome_profile:
             self.ensure_chrome_running()
         
+        last_chrome_check = time.time()
         while True:
             try:
-                if self.use_chrome_profile and int(time.time()) % 300 == 0:
+                if self.use_chrome_profile and (time.time() - last_chrome_check) >= 300:
                     self.ensure_chrome_running()
+                    last_chrome_check = time.time()
                 
                 items = self.execute_with_retry(self.check_for_updates)
                 
                 if items:
                     for item in items:
-                        action_file = self.create_action_file(item)
-                        self.logger.info(f'Created action file: {action_file}')
-                        self.items_processed += 1
+                        try:
+                            action_file = self.create_action_file(item)
+                            self.logger.info(f'Created action file: {action_file}')
+                            self.items_processed += 1
+                        except Exception as e:
+                            self.logger.error(f'Failed to create action file for item: {e}')
                 
                 self.report_status(len(items) if items else 0)
                 

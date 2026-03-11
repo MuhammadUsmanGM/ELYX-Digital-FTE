@@ -1,4 +1,5 @@
 import re
+import hashlib
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -94,7 +95,7 @@ class TwitterWatcher(BaseWatcher):
 
             for n in notifications[:5]:
                 text = n.inner_text()
-                n_id = hash(text)
+                n_id = hashlib.sha256(text.encode()).hexdigest()[:16]
                 if n_id not in self.processed_ids:
                     updates.append({
                         'type': 'twitter_notification',
@@ -130,7 +131,7 @@ received: {item["timestamp"]}
 - [ ] Respond if needed
 - [ ] Archive if spam
 '''
-        filepath = self.needs_action / f'TWITTER_{hash(item["text"])}.md'
+        filepath = self.needs_action / f'TWITTER_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

@@ -1,4 +1,5 @@
 import re
+import hashlib
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -93,7 +94,7 @@ class InstagramWatcher(BaseWatcher):
             self.logger.info(f"Instagram: found {len(unread)} unread DMs")
 
             for u in unread[:5]:
-                u_id = hash(u.inner_html())
+                u_id = hashlib.sha256(u.inner_html().encode()).hexdigest()[:16]
                 if u_id not in self.processed_ids:
                     sender = "Instagram User"
                     text = "Unread message in thread"
@@ -153,7 +154,7 @@ received: {item["timestamp"]}
 - [ ] Respond if business-related
 - [ ] Archive if personal/spam
 '''
-        filepath = self.needs_action / f'INSTAGRAM_{hash(item["text"])}.md'
+        filepath = self.needs_action / f'INSTAGRAM_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

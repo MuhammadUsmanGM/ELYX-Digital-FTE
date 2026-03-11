@@ -18,6 +18,7 @@ import time
 import threading
 import subprocess
 import signal
+import atexit
 from pathlib import Path
 from datetime import datetime
 
@@ -61,13 +62,13 @@ def commit_vault_changes(message: str = "Auto-commit: Vault changes"):
         vault_path = Path("obsidian_vault")
         
         # Check if there are changes
-        success, stdout, stderr = run_command("git status --porcelain", cwd=vault_path)
+        success, stdout, stderr = run_command(["git", "status", "--porcelain"], cwd=vault_path)
         if not stdout.strip():
             return False  # No changes
-        
+
         # Add, commit, push
-        run_command("git add .", cwd=vault_path)
-        run_command(f'git commit -m "{message}"', cwd=vault_path)
+        run_command(["git", "add", "."], cwd=vault_path)
+        run_command(["git", "commit", "-m", message], cwd=vault_path)
         
         # Don't push automatically (let GitHub Actions handle it)
         # run_command("git push origin main", cwd=vault_path)
@@ -80,7 +81,12 @@ def commit_vault_changes(message: str = "Auto-commit: Vault changes"):
 def run_command(cmd, cwd=None):
     """Run shell command"""
     try:
-        result = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True, text=True, timeout=10)
+        # Use list form when possible to avoid shell injection
+        if isinstance(cmd, str):
+            cmd_list = cmd.split()
+        else:
+            cmd_list = cmd
+        result = subprocess.run(cmd_list, shell=False, cwd=cwd, capture_output=True, text=True, timeout=10)
         return result.returncode == 0, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)
@@ -144,29 +150,35 @@ def start_frontend():
         print(f"  {Colors.FAIL}✗ Failed to start frontend: {e}{Colors.ENDC}")
         return False
 
+_cleanup_done = False
+
 def cleanup(signum=0, frame=None):
     """Clean shutdown of all processes"""
+    global _cleanup_done
+    if _cleanup_done:
+        return
+    _cleanup_done = True
+
     print(f"\n\n{Colors.WARNING}{'='*80}{Colors.ENDC}")
     print(f"{Colors.BOLD}Shutting Down ELYX...{Colors.ENDC}")
     print(f"{Colors.WARNING}{'='*80}{Colors.ENDC}")
-    
+
     print(f"\n  Stopping services...")
-    
+
     for proc in processes:
         try:
             proc.terminate()
             proc.wait(timeout=5)
             print(f"    ✓ Service stopped")
-        except:
+        except Exception:
             try:
                 proc.kill()
                 print(f"    ✓ Service killed")
-            except:
+            except Exception:
                 print(f"    ⚠ Service force closed")
-    
+
     print(f"\n  {Colors.OKGREEN}✓ All services stopped{Colors.ENDC}")
     print(f"  {Colors.BOLD}ELYX shutdown complete. Goodbye!{Colors.ENDC}\n")
-    sys.exit(0)
 
 def print_banner():
     """Print ELYX startup banner with ASCII art"""
@@ -272,7 +284,12 @@ def main():
 
     # Register signal handlers for clean shutdown
     signal.signal(signal.SIGINT, cleanup)
-    signal.signal(signal.SIGTERM, cleanup)
+    # SIGTERM is not reliably delivered on Windows (Task Manager sends SIGKILL),
+    # but register it where available for Unix compatibility
+    if hasattr(signal, 'SIGTERM'):
+        signal.signal(signal.SIGTERM, cleanup)
+    # Use atexit as a fallback to ensure cleanup runs on normal exit
+    atexit.register(cleanup)
 
     # Initialize vault
     vault_path = Path("obsidian_vault")
@@ -353,6 +370,7 @@ def main():
             print(f"\n{Colors.BOLD}[AUTO-COMMIT]{Colors.ENDC} Final vault commit before shutdown...")
             commit_vault_changes(f"Final commit: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         cleanup()
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()

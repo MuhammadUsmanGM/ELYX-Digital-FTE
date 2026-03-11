@@ -178,6 +178,20 @@ Move this file to the /Rejected/ folder.
         # Read the approval details
         content = approved_file.read_text()
 
+        # Check expiration before executing
+        try:
+            expiration_str = content.split("expires: ")[1].split("\n")[0]
+            expiration_time = datetime.fromisoformat(expiration_str)
+            if expiration_time < datetime.now():
+                # Expired — move to rejected folder and refuse execution
+                expired_content = content.replace("status: pending", "status: expired")
+                rejected_file = self.rejected_dir / f"EXPIRED_APPROVAL_{approval_id}.md"
+                rejected_file.write_text(expired_content)
+                approved_file.unlink()
+                return False
+        except (IndexError, ValueError):
+            pass  # If no expiration field, proceed (backwards compatibility)
+
         # Extract action details from YAML frontmatter
         lines = content.split('\n')
         yaml_start = -1

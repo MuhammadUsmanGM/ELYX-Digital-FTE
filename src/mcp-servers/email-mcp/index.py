@@ -327,17 +327,27 @@ class EmailMCPServer:
         if bcc:
             message['bcc'] = ', '.join(bcc) if isinstance(bcc, list) else bcc
         
-        # Add attachments
+        # Add attachments (with path sandboxing)
         if attachments:
+            # Only allow attachments from the project directory or vault
+            allowed_roots = [
+                Path.cwd().resolve(),
+                Path(os.getenv('OBSIDIAN_VAULT_PATH', 'obsidian_vault')).resolve(),
+            ]
             for file_path in attachments:
                 try:
-                    with open(file_path, "rb") as f:
+                    resolved = Path(file_path).resolve()
+                    # Verify the file is within an allowed directory
+                    if not any(str(resolved).startswith(str(root)) for root in allowed_roots):
+                        print(f"Warning: Attachment path outside allowed directories, skipping: {file_path}", file=sys.stderr)
+                        continue
+                    with open(resolved, "rb") as f:
                         part = MIMEBase('application', "octet-stream")
                         part.set_payload(f.read())
                         encoders.encode_base64(part)
                         part.add_header(
                             'Content-Disposition',
-                            f"attachment; filename={Path(file_path).name}"
+                            f"attachment; filename={resolved.name}"
                         )
                         message.attach(part)
                 except Exception as e:

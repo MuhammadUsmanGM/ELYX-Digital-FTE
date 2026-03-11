@@ -10,6 +10,7 @@ Monitors all social media platforms using shared Chrome profile
 All platforms use the same Chrome profile - login once, ELYX reuses session!
 """
 
+import hashlib
 from playwright.sync_api import sync_playwright
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -33,7 +34,7 @@ class SocialMediaWatcher(BaseWatcher):
         """
         super().__init__(vault_path, check_interval=60, use_chrome_profile=True)
         self.platform = platform
-        self.processed_items = {}
+        self.processed_items = self._load_all_platform_ids()
         
         # Platform-specific configurations
         self.platform_configs = {
@@ -65,6 +66,19 @@ class SocialMediaWatcher(BaseWatcher):
             }
         }
     
+    def _load_all_platform_ids(self) -> dict:
+        """Load processed IDs for all platforms from disk"""
+        result = {}
+        for platform in self.platform_configs:
+            ids = self._load_processed_ids(f"social_{platform}")
+            result[platform] = ids
+        return result
+
+    def _persist_platform_ids(self, platform: str):
+        """Save processed IDs for a specific platform to disk"""
+        ids = self.processed_items.get(platform, set())
+        self._save_processed_ids(f"social_{platform}", ids)
+
     def check_platform(self, platform: str, page) -> list:
         """
         Check a specific platform for new activity
@@ -107,8 +121,8 @@ class SocialMediaWatcher(BaseWatcher):
             
             for n in notifications[:5]:
                 text = n.inner_text()
-                n_id = hash(text)
-                
+                n_id = hashlib.sha256(text.encode()).hexdigest()[:16]
+
                 if n_id not in self.processed_items.get('twitter', set()):
                     updates.append({
                         'platform': 'twitter',
@@ -117,6 +131,7 @@ class SocialMediaWatcher(BaseWatcher):
                         'timestamp': datetime.now().isoformat()
                     })
                     self.processed_items.setdefault('twitter', set()).add(n_id)
+                    self._persist_platform_ids('twitter')
         except Exception as e:
             self.logger.warning(f"Twitter check failed: {e}")
         
@@ -135,8 +150,8 @@ class SocialMediaWatcher(BaseWatcher):
             
             for thread in unread_threads[:5]:
                 text = thread.text_content()[:200]
-                t_id = hash(text)
-                
+                t_id = hashlib.sha256(text.encode()).hexdigest()[:16]
+
                 if t_id not in self.processed_items.get('linkedin', set()):
                     updates.append({
                         'platform': 'linkedin',
@@ -145,6 +160,7 @@ class SocialMediaWatcher(BaseWatcher):
                         'timestamp': datetime.now().isoformat()
                     })
                     self.processed_items.setdefault('linkedin', set()).add(t_id)
+                    self._persist_platform_ids('linkedin')
         except Exception as e:
             self.logger.warning(f"LinkedIn check failed: {e}")
         
@@ -163,8 +179,8 @@ class SocialMediaWatcher(BaseWatcher):
             
             for u in unread[:5]:
                 text = u.text_content()[:200]
-                u_id = hash(text)
-                
+                u_id = hashlib.sha256(text.encode()).hexdigest()[:16]
+
                 if u_id not in self.processed_items.get('facebook', set()):
                     updates.append({
                         'platform': 'facebook',
@@ -173,6 +189,7 @@ class SocialMediaWatcher(BaseWatcher):
                         'timestamp': datetime.now().isoformat()
                     })
                     self.processed_items.setdefault('facebook', set()).add(u_id)
+                    self._persist_platform_ids('facebook')
         except Exception as e:
             self.logger.warning(f"Facebook check failed: {e}")
         
@@ -191,8 +208,8 @@ class SocialMediaWatcher(BaseWatcher):
             
             for u in unread[:5]:
                 text = "Unread message in thread"
-                u_id = hash(u.inner_html())
-                
+                u_id = hashlib.sha256(u.inner_html().encode()).hexdigest()[:16]
+
                 if u_id not in self.processed_items.get('instagram', set()):
                     updates.append({
                         'platform': 'instagram',
@@ -201,6 +218,7 @@ class SocialMediaWatcher(BaseWatcher):
                         'timestamp': datetime.now().isoformat()
                     })
                     self.processed_items.setdefault('instagram', set()).add(u_id)
+                    self._persist_platform_ids('instagram')
         except Exception as e:
             self.logger.warning(f"Instagram check failed: {e}")
         
@@ -228,7 +246,7 @@ class SocialMediaWatcher(BaseWatcher):
                         
                         # Check for urgent keywords
                         if any(kw in text for kw in keywords):
-                            msg_id = hash(text)
+                            msg_id = hashlib.sha256(text.encode()).hexdigest()[:16]
                             if msg_id not in self.processed_items.get('whatsapp', set()):
                                 updates.append({
                                     'platform': 'whatsapp',
@@ -238,6 +256,7 @@ class SocialMediaWatcher(BaseWatcher):
                                     'timestamp': datetime.now().isoformat()
                                 })
                                 self.processed_items.setdefault('whatsapp', set()).add(msg_id)
+                                self._persist_platform_ids('whatsapp')
                 except Exception as e:
                     self.logger.error(f"Error processing WhatsApp chat: {e}")
                     continue
@@ -308,7 +327,7 @@ received: {item["timestamp"]}
 - [ ] Archive if spam/irrelevant
 '''
         
-        filepath = self.needs_action / f'{platform.upper()}_{hash(item["text"])}.md'
+        filepath = self.needs_action / f'{platform.upper()}_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

@@ -43,15 +43,16 @@ class OdooService:
         # Authenticate on initialization
         self.authenticate()
     
-    def _json_rpc(self, endpoint: str, method: str, params: Dict = None) -> Dict:
+    def _json_rpc(self, endpoint: str, method: str, params: Dict = None, _retried: bool = False) -> Dict:
         """
         Make JSON-RPC call to Odoo API with proper authentication
-        
+
         Args:
             endpoint: API endpoint (e.g., '/jsonrpc')
             method: RPC method name
             params: Method parameters
-            
+            _retried: Internal flag to prevent infinite recursion on re-auth
+
         Returns:
             JSON-RPC response
         """
@@ -85,12 +86,12 @@ class OdooService:
             
             if "error" in result:
                 error = result["error"]
-                # If session expired, try to re-authenticate
-                if error.get('code') == 100 or 'Session Expired' in str(error):
+                # If session expired, try to re-authenticate (only once to prevent infinite recursion)
+                if not _retried and (error.get('code') == 100 or 'Session Expired' in str(error)):
                     logger.warning("Session expired, re-authenticating...")
                     if self.authenticate():
-                        # Retry the request
-                        return self._json_rpc(endpoint, method, params)
+                        # Retry the request once
+                        return self._json_rpc(endpoint, method, params, _retried=True)
                 
                 logger.error(f"Odoo API Error: {error}")
                 raise Exception(f"Odoo API Error: {error.get('message', 'Unknown error')}")
@@ -178,13 +179,15 @@ class OdooService:
                 raise Exception("Not authenticated to Odoo")
         
         # Odoo 19+ JSON-RPC format for execute_kw
+        # Use API key if configured, otherwise fall back to password
+        auth_credential = self.api_key if self.auth_method == 'api_key' else self.password
         params = {
             "service": "object",
             "method": "execute_kw",
             "args": [
                 self.db,
                 self.uid,
-                self.password,
+                auth_credential,
                 model,
                 method,
                 args or [],

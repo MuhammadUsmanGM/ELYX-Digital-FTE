@@ -1,5 +1,6 @@
 import subprocess
 import time
+import tempfile
 import psutil
 import logging
 from pathlib import Path
@@ -19,10 +20,8 @@ class WatchdogAgent:
     def __init__(self, vault_path="vault"):
         self.vault_path = Path(vault_path)
         self.processes = {}
-        self.pid_dir = Path("/tmp")  # Use appropriate temp directory for Windows
-        if not self.pid_dir.exists():
-            self.pid_dir = Path.cwd() / "temp"
-            self.pid_dir.mkdir(exist_ok=True)
+        self.pid_dir = Path(tempfile.gettempdir()) / "elyx_pids"
+        self.pid_dir.mkdir(parents=True, exist_ok=True)
 
     def register_process(self, name: str, process_cmd: list, auto_restart: bool = True):
         """
@@ -38,11 +37,16 @@ class WatchdogAgent:
 
     def is_process_running(self, pid: int) -> bool:
         """
-        Check if a process with the given PID is running
+        Check if a process with the given PID is running and is a Python process
+        (guards against PID reuse by unrelated processes)
         """
         try:
-            return psutil.pid_exists(pid)
-        except Exception:
+            if not psutil.pid_exists(pid):
+                return False
+            proc = psutil.Process(pid)
+            # Verify it's still a Python process (not a reused PID)
+            return 'python' in proc.name().lower()
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             return False
 
     def get_process_pid(self, name: str) -> int:

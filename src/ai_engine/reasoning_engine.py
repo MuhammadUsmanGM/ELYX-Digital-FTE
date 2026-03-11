@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Dict, List, Any, Optional, Tuple, Union
 from pathlib import Path
 import re
+import ast
 import math
 import operator
 from functools import reduce
@@ -80,16 +81,65 @@ class LogicalReasoningEngine:
 
             # Replace logical operators with Python equivalents
             expr = expr.replace('AND', 'and').replace('OR', 'or').replace('NOT', 'not')
-            expr = expr.replace('IMPLIES', 'or not').replace('IFF', '==').replace('XOR', '!=')
+            # IMPLIES(A, B) = (not A) or B — handled via operator dict, but string form needs care
+            expr = expr.replace('IMPLIES', 'or').replace('IFF', '==').replace('XOR', '!=')
 
-            # Evaluate the expression
-            result = eval(expr, {"__builtins__": {}}, {})
+            # Safely evaluate the boolean expression using AST parsing
+            result = self._safe_eval_bool(expr)
 
             log_activity("LOGICAL_EVALUATION", f"Evaluated '{expression}' as {result}", "obsidian_vault")
             return bool(result)
         except Exception as e:
             self.logger.error(f"Error evaluating logical expression: {e}")
             return False
+
+    def _safe_eval_bool(self, expr: str) -> bool:
+        """Safely evaluate a boolean expression using AST parsing.
+        Only allows: True, False, and, or, not, ==, !=, parentheses."""
+        try:
+            tree = ast.parse(expr, mode='eval')
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Expression, ast.BoolOp, ast.UnaryOp,
+                                     ast.Compare, ast.Constant, ast.Name,
+                                     ast.And, ast.Or, ast.Not, ast.Eq, ast.NotEq)):
+                    continue
+                raise ValueError(f"Unsafe expression node: {type(node).__name__}")
+            # Only allow True/False as names
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Name) and node.id not in ('True', 'False'):
+                    raise ValueError(f"Unsafe variable name: {node.id}")
+            code = compile(tree, '<bool_expr>', 'eval')
+            return bool(eval(code, {"__builtins__": {}}, {}))
+        except (ValueError, SyntaxError) as e:
+            self.logger.error(f"Unsafe boolean expression: {e}")
+            return False
+
+    def _safe_eval_math(self, expression: str):
+        """Safely evaluate a mathematical expression using AST parsing.
+        Allows: numbers, basic operators (+,-,*,/,**,//,%), math functions, parentheses."""
+        allowed_names = {
+            'abs': abs, 'round': round, 'min': min, 'max': max,
+            'sum': sum, 'pow': pow, 'int': int, 'float': float,
+            'math': math,
+        }
+        try:
+            tree = ast.parse(expression, mode='eval')
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.Expression, ast.BinOp, ast.UnaryOp,
+                                     ast.Constant, ast.Num, ast.Call, ast.Name,
+                                     ast.Attribute, ast.Add, ast.Sub, ast.Mult,
+                                     ast.Div, ast.FloorDiv, ast.Mod, ast.Pow,
+                                     ast.USub, ast.UAdd, ast.Tuple, ast.List)):
+                    continue
+                raise ValueError(f"Unsafe expression node: {type(node).__name__}")
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Name) and node.id not in allowed_names:
+                    raise ValueError(f"Unsafe name: {node.id}")
+            code = compile(tree, '<math_expr>', 'eval')
+            return eval(code, {"__builtins__": {}}, allowed_names)
+        except (ValueError, SyntaxError) as e:
+            self.logger.error(f"Unsafe math expression: {e}")
+            return None
 
     def solve_constraint_satisfaction_problem(self, constraints: List[Dict[str, Any]],
                                             variables: List[str],
@@ -185,17 +235,10 @@ class LogicalReasoningEngine:
             expression = self._extract_math_expression(problem)
 
             if expression:
-                # Evaluate the expression safely
-                result = eval(expression, {"__builtins__": {}}, {
-                    "__builtins__": {},
-                    "abs": abs,
-                    "round": round,
-                    "min": min,
-                    "max": max,
-                    "sum": sum,
-                    "pow": pow,
-                    "math": math
-                })
+                # Evaluate the expression safely using AST-based parser
+                result = self._safe_eval_math(expression)
+                if result is None:
+                    return None
 
                 log_activity("MATH_SOLVED", f"Solved mathematical problem: {problem} = {result}", "obsidian_vault")
                 return result

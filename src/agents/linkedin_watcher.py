@@ -1,4 +1,5 @@
 import re
+import hashlib
 from playwright.sync_api import sync_playwright, Playwright, BrowserContext, Page
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -112,7 +113,7 @@ class LinkedInWatcher(BaseWatcher):
                     # Process if it contains keywords OR if it's explicitly unread
                     is_urgent = any(kw in text_lower for kw in self.keywords)
                     
-                    t_id = hash(f"{sender_name}_{text[:100]}")
+                    t_id = hashlib.sha256(f"{sender_name}_{text[:100]}".encode()).hexdigest()[:16]
                     if t_id not in self.processed_messages:
                         messages.append({
                             'type': 'linkedin_message',
@@ -164,7 +165,7 @@ keywords: [{", ".join([f'"{kw}"' for kw in item["keywords_found"]])}]
 '''
         # Create a unique filename based on sender
         safe_sender = "".join([c if c.isalnum() else "_" for c in item['sender'][:15]])
-        filepath = self.needs_action / f'LINKEDIN_{safe_sender}_{hash(item["text"]) % 10000}.md'
+        filepath = self.needs_action / f'LINKEDIN_{safe_sender}_{hashlib.sha256(item["text"].encode()).hexdigest()[:8]}.md'
         filepath.write_text(content, encoding='utf-8')
         return filepath
 

@@ -4,7 +4,6 @@ Implements persistent memory, learning, and knowledge retention
 """
 import os
 import json
-import pickle
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, List, Any, Optional, Tuple, Union
@@ -113,6 +112,24 @@ class MemorySystem:
 
         self.logger.info(f"Memory database initialized at {self.memory_db_path}")
 
+    @staticmethod
+    def _serialize_embeddings(embeddings: np.ndarray) -> bytes:
+        """Serialize numpy embeddings to JSON bytes (safe alternative to pickle)"""
+        if embeddings is None:
+            return None
+        return json.dumps(embeddings.tolist()).encode('utf-8')
+
+    @staticmethod
+    def _deserialize_embeddings(blob: bytes) -> np.ndarray:
+        """Deserialize embeddings from JSON bytes (safe alternative to pickle)"""
+        if blob is None:
+            return None
+        try:
+            data = json.loads(blob)
+            return np.array(data, dtype='float32')
+        except (json.JSONDecodeError, ValueError):
+            return None
+
     def _load_memories_into_index(self):
         """Load existing memories into the vector index"""
         conn = sqlite3.connect(self.memory_db_path)
@@ -130,10 +147,13 @@ class MemorySystem:
             # Load embeddings from blob if available
             if embeddings_blob:
                 try:
-                    embeddings = pickle.loads(embeddings_blob)
-                    embeddings_list.append(embeddings)
-                    ids_list.append(memory_id)
-                except:
+                    embeddings = self._deserialize_embeddings(embeddings_blob)
+                    if embeddings is not None:
+                        embeddings_list.append(embeddings)
+                        ids_list.append(memory_id)
+                    else:
+                        ids_list.append(memory_id)
+                except Exception:
                     # If embeddings are corrupted, skip this memory
                     continue
             else:
@@ -248,8 +268,8 @@ class MemorySystem:
         context_json = json.dumps(memory_entry.context) if memory_entry.context else '{}'
         tags_json = json.dumps(memory_entry.tags) if memory_entry.tags else '[]'
 
-        # Serialize embeddings
-        embeddings_blob = pickle.dumps(memory_entry.embeddings) if memory_entry.embeddings is not None else None
+        # Serialize embeddings safely (JSON instead of pickle)
+        embeddings_blob = self._serialize_embeddings(memory_entry.embeddings)
 
         cursor.execute('''
             INSERT OR REPLACE INTO memories
@@ -302,7 +322,7 @@ class MemorySystem:
                 timestamp=datetime.fromisoformat(row[3]) if isinstance(row[3], str) else row[3],
                 importance=row[4],
                 context=json.loads(row[5]) if row[5] else {},
-                embeddings=pickle.loads(row[6]) if row[6] else None,
+                embeddings=self._deserialize_embeddings(row[6]),
                 tags=json.loads(row[7]) if row[7] else [],
                 access_count=row[8],
                 last_accessed=datetime.fromisoformat(row[9]) if row[9] and isinstance(row[9], str) else row[9],
@@ -427,7 +447,7 @@ class MemorySystem:
                 timestamp=datetime.fromisoformat(row[3]) if isinstance(row[3], str) else row[3],
                 importance=row[4],
                 context=json.loads(row[5]) if row[5] else {},
-                embeddings=pickle.loads(row[6]) if row[6] else None,
+                embeddings=self._deserialize_embeddings(row[6]),
                 tags=json.loads(row[7]) if row[7] else [],
                 access_count=row[8],
                 last_accessed=datetime.fromisoformat(row[9]) if row[9] and isinstance(row[9], str) else row[9],

@@ -26,8 +26,20 @@ class VaultAPI:
     def __init__(self, vault_path: str = "obsidian_vault"):
         self.vault_path = Path(vault_path)
     
+    ALLOWED_FOLDERS = {"Needs_Action", "Plans", "Pending_Approval", "Approved", "Rejected", "Done", "Logs", "Inbox", "Briefings", "Responses"}
+
+    def _validate_folder(self, folder: str) -> bool:
+        """Validate that the folder name is allowed and doesn't contain path traversal"""
+        # Block path separators and traversal patterns
+        if '..' in folder or '/' in folder or '\\' in folder:
+            return False
+        # Must be in the allowed set
+        return folder in self.ALLOWED_FOLDERS
+
     def get_tasks(self, folder: str = "Needs_Action") -> list:
         """Get all tasks from a folder"""
+        if not self._validate_folder(folder):
+            return []
         folder_path = self.vault_path / folder
         if not folder_path.exists():
             return []
@@ -84,8 +96,16 @@ class VaultAPI:
     def _move_task(self, filename: str, from_folder: str, to_folder: str) -> dict:
         """Move a task file between folders"""
         try:
+            # Sanitize filename - block path traversal
+            if '..' in filename or '/' in filename or '\\' in filename:
+                return {"success": False, "error": "Invalid filename"}
             from_path = self.vault_path / from_folder / filename
             to_path = self.vault_path / to_folder / filename
+            # Verify resolved paths are within the vault
+            if not str(from_path.resolve()).startswith(str(self.vault_path.resolve())):
+                return {"success": False, "error": "Invalid path"}
+            if not str(to_path.resolve()).startswith(str(self.vault_path.resolve())):
+                return {"success": False, "error": "Invalid path"}
             
             if not from_path.exists():
                 return {"success": False, "error": f"File not found: {filename}"}
