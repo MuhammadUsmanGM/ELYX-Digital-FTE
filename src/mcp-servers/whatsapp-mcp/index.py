@@ -147,8 +147,8 @@ class WhatsAppMCPServer:
             for chat_id in chat_ids:
                 # Click on chat to mark as read (simplified)
                 chat_element = self.page.locator(f'[data-testid="{chat_id}"]')
-                if chat_element:
-                    chat_element.click()
+                if chat_element.count() > 0:
+                    chat_element.first.click()
                     marked_count += 1
             
             return {

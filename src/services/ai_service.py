@@ -820,9 +820,26 @@ class AIService:
             {"factor": "Resource constraints", "likelihood": 0.5, "impact": "high", "mitigation": "Optimize allocation"}
         ]
 
+    # Map string impact labels to numeric scores (#57)
+    _IMPACT_SCORES = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
+
     def _perform_comprehensive_risk_assessment(self, risk_factors: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Perform comprehensive risk assessment"""
-        overall_risk = np.mean([rf['likelihood'] * rf['impact'] for rf in risk_factors]) if risk_factors else 0.25
+        if not risk_factors:
+            return {"overall_risk_score": 0.25, "risk_level": "medium", "confidence": 0.75}
+
+        scores = []
+        for rf in risk_factors:
+            likelihood = rf.get('likelihood', 0.5)
+            impact_raw = rf.get('impact', 0.5)
+            # Convert string impact labels to numeric values
+            if isinstance(impact_raw, str):
+                impact = self._IMPACT_SCORES.get(impact_raw.lower(), 0.5)
+            else:
+                impact = float(impact_raw)
+            scores.append(likelihood * impact)
+
+        overall_risk = np.mean(scores)
         return {"overall_risk_score": overall_risk, "risk_level": "medium", "confidence": 0.75}
 
     def _suggest_mitigation_strategies(self, risk_factors: List[Dict[str, Any]]) -> List[str]:

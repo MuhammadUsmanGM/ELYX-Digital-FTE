@@ -91,26 +91,26 @@ class SocialMediaMCPServer:
             
             # Click on post creation
             start_post = self.page.locator('button:has-text("Start a post")')
-            if start_post:
-                start_post.click()
-            
+            if start_post.count() > 0:
+                start_post.first.click()
+
             # Type content
             textbox = self.page.locator('div[role="textbox"]')
-            if textbox:
-                textbox.fill(content)
-                
+            if textbox.count() > 0:
+                textbox.first.fill(content)
+
                 # Add image if provided
                 if image_url:
                     # Click media icon and add image
                     media_btn = self.page.locator('button[aria-label*="photo"]')
-                    if media_btn:
-                        media_btn.click()
+                    if media_btn.count() > 0:
+                        media_btn.first.click()
                         # Would need file upload handling here
-                
+
                 # Click post button
                 post_btn = self.page.locator('button:has-text("Post")')
-                if post_btn:
-                    post_btn.click()
+                if post_btn.count() > 0:
+                    post_btn.first.click()
                     
                     return {
                         "success": True,
@@ -156,20 +156,20 @@ class SocialMediaMCPServer:
             
             # Type tweet
             textarea = self.page.locator('[data-testid="tweetTextarea_0"]')
-            if textarea:
-                textarea.fill(content)
-                
+            if textarea.count() > 0:
+                textarea.first.fill(content)
+
                 # Add media if provided
                 if media_urls:
                     # Click media upload button
                     media_btn = self.page.locator('[data-testid="addImageButton"]')
-                    if media_btn:
-                        media_btn.click()
-                
+                    if media_btn.count() > 0:
+                        media_btn.first.click()
+
                 # Click tweet button
                 tweet_btn = self.page.locator('[data-testid="tweetButton"]')
-                if tweet_btn:
-                    tweet_btn.click()
+                if tweet_btn.count() > 0:
+                    tweet_btn.first.click()
                     
                     return {
                         "success": True,
@@ -215,14 +215,14 @@ class SocialMediaMCPServer:
             
             # Click on post creation
             post_input = self.page.locator('[placeholder="What\'s on your mind?"]')
-            if post_input:
-                post_input.click()
-                post_input.fill(content)
-                
+            if post_input.count() > 0:
+                post_input.first.click()
+                post_input.first.fill(content)
+
                 # Click post button
                 post_btn = self.page.locator('button:has-text("Post")')
-                if post_btn:
-                    post_btn.click()
+                if post_btn.count() > 0:
+                    post_btn.first.click()
                     
                     return {
                         "success": True,
@@ -268,8 +268,8 @@ class SocialMediaMCPServer:
             
             # Click new post
             new_post_btn = self.page.locator('svg[aria-label="New post"]')
-            if new_post_btn:
-                new_post_btn.click()
+            if new_post_btn.count() > 0:
+                new_post_btn.first.click()
                 
                 # Upload image (would need file input handling)
                 # For now, just return info

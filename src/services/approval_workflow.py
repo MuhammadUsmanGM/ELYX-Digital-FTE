@@ -29,6 +29,16 @@ class ApprovalWorkflow:
         self.approved_dir.mkdir(exist_ok=True)
         self.rejected_dir.mkdir(exist_ok=True)
 
+    @staticmethod
+    def _sanitize_id(approval_id: str) -> str:
+        """Sanitize approval_id to prevent path traversal (#55)."""
+        import re
+        # Only allow UUID-like characters (alphanumeric and hyphens)
+        sanitized = re.sub(r'[^a-zA-Z0-9\-]', '', approval_id)
+        if not sanitized or sanitized != approval_id:
+            raise ValueError(f"Invalid approval ID: contains disallowed characters")
+        return sanitized
+
     def create_approval_request(
         self,
         message_type: MessageType,
@@ -52,7 +62,7 @@ class ApprovalWorkflow:
         Returns:
             ID of the created approval request
         """
-        approval_id = str(uuid.uuid4())
+        approval_id = str(uuid.uuid4())  # always safe, but sanitize on read paths
         expiration_time = datetime.now() + timedelta(hours=expiration_hours)
 
         content = f"""---
@@ -104,6 +114,7 @@ Move this file to the /Rejected/ folder.
         Returns:
             Current status of the approval request
         """
+        approval_id = self._sanitize_id(approval_id)
         # Check each folder for the approval file
         pending_file = self.pending_approval_dir / f"APPROVAL_{approval_id}.md"
         approved_file = self.approved_dir / f"APPROVAL_{approval_id}.md"
@@ -134,6 +145,7 @@ Move this file to the /Rejected/ folder.
         Returns:
             True if successful, False otherwise
         """
+        approval_id = self._sanitize_id(approval_id)
         pending_file = self.pending_approval_dir / f"APPROVAL_{approval_id}.md"
         approved_file = self.approved_dir / f"APPROVAL_{approval_id}.md"
 
@@ -152,6 +164,7 @@ Move this file to the /Rejected/ folder.
         Returns:
             True if successful, False otherwise
         """
+        approval_id = self._sanitize_id(approval_id)
         pending_file = self.pending_approval_dir / f"APPROVAL_{approval_id}.md"
         rejected_file = self.rejected_dir / f"APPROVAL_{approval_id}.md"
 
@@ -170,6 +183,7 @@ Move this file to the /Rejected/ folder.
         Returns:
             True if successful, False otherwise
         """
+        approval_id = self._sanitize_id(approval_id)
         approved_file = self.approved_dir / f"APPROVAL_{approval_id}.md"
 
         if not approved_file.exists():
@@ -276,6 +290,7 @@ Move this file to the /Rejected/ folder.
         Returns:
             True if successful, False otherwise
         """
+        approval_id = self._sanitize_id(approval_id)
         pending_file = self.pending_approval_dir / f"APPROVAL_{approval_id}.md"
         rejected_file = self.rejected_dir / f"EXPIRED_APPROVAL_{approval_id}.md"
 

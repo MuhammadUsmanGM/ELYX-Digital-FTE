@@ -1,9 +1,9 @@
 """
 Approval Workflow API routes for Silver Tier Personal AI Employee System
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from datetime import datetime
 
 from ...services.database import get_db_session
@@ -34,11 +34,14 @@ async def get_pending_approvals(
 @approval_router.post("/{approval_id}/approve", response_model=TaskResponse)
 async def approve_request(
     approval_id: str,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db_session),
+    x_user: Optional[str] = Header(None, alias="X-User")
 ):
     """
     Approve a specific approval request
     """
+    actor = x_user or "api_user"
+
     # Find the approval request in the database
     approval_request = db.query(ApprovalRequest).filter(
         ApprovalRequest.id == approval_id
@@ -52,7 +55,7 @@ async def approve_request(
 
     # Update the approval request status
     approval_request.status = "approved"
-    approval_request.approved_by = "current_user"  # This would come from authentication in a real implementation
+    approval_request.approved_by = actor
     approval_request.approved_at = datetime.utcnow()
 
     # Update the associated task status to processing
@@ -87,11 +90,14 @@ async def approve_request(
 @approval_router.post("/{approval_id}/reject", response_model=TaskResponse)
 async def reject_request(
     approval_id: str,
-    db: Session = Depends(get_db_session)
+    db: Session = Depends(get_db_session),
+    x_user: Optional[str] = Header(None, alias="X-User")
 ):
     """
     Reject a specific approval request
     """
+    actor = x_user or "api_user"
+
     # Find the approval request in the database
     approval_request = db.query(ApprovalRequest).filter(
         ApprovalRequest.id == approval_id
@@ -105,7 +111,7 @@ async def reject_request(
 
     # Update the approval request status
     approval_request.status = "rejected"
-    approval_request.rejected_by = "current_user"  # This would come from authentication in a real implementation
+    approval_request.rejected_by = actor
     approval_request.rejected_at = datetime.utcnow()
 
     # Update the associated task status to failed

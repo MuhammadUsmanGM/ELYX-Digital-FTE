@@ -21,13 +21,14 @@ import time
 
 class SocialMediaWatcher(BaseWatcher):
     """
-    Monitors multiple social media platforms using shared Chrome profile
+    Monitors multiple social media platforms using shared Chrome profile.
+    Keeps a single Playwright browser open across all check cycles.
     """
-    
+
     def __init__(self, vault_path: str, platform: str = 'all'):
         """
         Initialize social media watcher
-        
+
         Args:
             vault_path: Path to Obsidian vault
             platform: Which platform to monitor ('twitter', 'linkedin', 'facebook', 'instagram', 'whatsapp', or 'all')
@@ -35,6 +36,11 @@ class SocialMediaWatcher(BaseWatcher):
         super().__init__(vault_path, check_interval=60, use_chrome_profile=True)
         self.platform = platform
         self.processed_items = self._load_all_platform_ids()
+
+        # Persistent browser context (reused across check cycles)
+        self._playwright = None
+        self._browser = None
+        self._page = None
         
         # Platform-specific configurations
         self.platform_configs = {
@@ -265,35 +271,67 @@ class SocialMediaWatcher(BaseWatcher):
         
         return updates
     
+    def _open_browser(self):
+        """Open a persistent browser context (reused across check cycles)."""
+        self._playwright = sync_playwright().start()
+        browser_args = self.get_browser_args()
+        self._browser = self._playwright.chromium.launch_persistent_context(**browser_args)
+        self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
+
+    def _is_browser_alive(self) -> bool:
+        """Check if the persistent browser is still usable."""
+        try:
+            return self._page is not None and not self._page.is_closed()
+        except Exception:
+            return False
+
+    def _close_browser(self):
+        """Close the persistent browser and Playwright instance."""
+        try:
+            if self._browser:
+                self._browser.close()
+        except Exception:
+            pass
+        try:
+            if self._playwright:
+                self._playwright.stop()
+        except Exception:
+            pass
+        self._playwright = None
+        self._browser = None
+        self._page = None
+
+    def cleanup(self):
+        """Clean up browser resources."""
+        self._close_browser()
+
     def check_for_updates(self) -> list:
         """
-        Check all configured platforms for updates
+        Check all configured platforms for updates.
+        Reuses a single persistent browser across cycles.
         """
         all_updates = []
-        
+
         try:
-            with sync_playwright() as p:
-                # Launch browser with existing Chrome profile
-                browser_args = self.get_browser_args()
-                browser = p.chromium.launch_persistent_context(**browser_args)
-                
-                page = browser.new_page()
-                
-                # Check each platform
-                platforms_to_check = [self.platform] if self.platform != 'all' else self.platform_configs.keys()
-                
-                for platform in platforms_to_check:
-                    if platform in self.platform_configs:
-                        self.logger.info(f"Checking {platform}...")
-                        updates = self.check_platform(platform, page)
-                        all_updates.extend(updates)
-                        self.logger.info(f"Found {len(updates)} new {platform} items")
-                
-                browser.close()
-                
+            if not self._is_browser_alive():
+                self._open_browser()
+
+            page = self._page
+
+            # Check each platform
+            platforms_to_check = [self.platform] if self.platform != 'all' else self.platform_configs.keys()
+
+            for platform in platforms_to_check:
+                if platform in self.platform_configs:
+                    self.logger.info(f"Checking {platform}...")
+                    updates = self.check_platform(platform, page)
+                    all_updates.extend(updates)
+                    self.logger.info(f"Found {len(updates)} new {platform} items")
+
         except Exception as e:
             self.logger.error(f"Error in social media checking: {e}")
-        
+            self._close_browser()
+
         return all_updates
     
     def create_action_file(self, item) -> Path:
@@ -334,24 +372,14 @@ received: {item["timestamp"]}
 
 def run_social_media_watcher(vault_path: str, platform: str = 'all'):
     """
-    Convenience function to run the social media watcher
+    Convenience function to run the social media watcher.
+    Delegates to BaseWatcher.run() for retry logic, error recovery,
+    status reporting, and Chrome health-checks (#50).
     """
     watcher = SocialMediaWatcher(vault_path, platform)
-    
     watcher.logger.info(f"Starting Social Media Watcher (platform: {platform})")
     watcher.logger.info(f"Chrome Profile: {watcher.chrome_user_data_dir}")
-    
-    while True:
-        try:
-            items = watcher.check_for_updates()
-            for item in items:
-                action_file = watcher.create_action_file(item)
-                watcher.logger.info(f'Created action file: {action_file}')
-        except Exception as e:
-            watcher.logger.error(f'Error in Social Media Watcher: {e}')
-        
-        # Sleep based on platform check intervals
-        if platform == 'all':
-            time.sleep(60)  # Check every minute for all platforms
-        else:
-            time.sleep(watcher.check_interval)
+    try:
+        watcher.run()
+    finally:
+        watcher.cleanup()

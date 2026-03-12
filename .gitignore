@@ -85,6 +85,13 @@ obsidian_vault/.obsidian/workspace.json
 
 GUIDE.md
 node_modules/
-DOCKER_DEPLOYMENT.md-e "\n# Browser sessions (binary cache - don't commit)\nsessions/\n*_session/\nwhatsapp_session/\nlinkedin_session/\nfacebook_session/\ntwitter_session/\ninstagram_session/"  
+DOCKER_DEPLOYMENT.md
 
+# Browser sessions (binary cache - don't commit)
 sessions/
+*_session/
+whatsapp_session/
+linkedin_session/
+facebook_session/
+twitter_session/
+instagram_session/

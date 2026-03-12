@@ -61,7 +61,8 @@ class RateLimiter:
 
     def wait_if_needed(self, service: str) -> float:
         """
-        Wait if needed to respect rate limits
+        Wait if needed to respect rate limits.
+        Calculates wait time under lock, then sleeps outside the lock (#65).
 
         Args:
             service: Name of the service
@@ -72,6 +73,7 @@ class RateLimiter:
         if self.is_allowed(service):
             return 0.0
 
+        wait_time = 0.0
         with self.lock:
             if service not in self.limits or not self.request_times[service]:
                 return 0.0
@@ -79,13 +81,13 @@ class RateLimiter:
             limit_config = self.limits[service]
             time_window = limit_config['time_window']
 
-            # Calculate when the earliest request was made
             earliest_request = self.request_times[service][0]
             wait_time = time_window - (time.time() - earliest_request)
 
-            if wait_time > 0:
-                time.sleep(wait_time)
-                return wait_time
+        # Sleep OUTSIDE the lock so other threads aren't blocked
+        if wait_time > 0:
+            time.sleep(wait_time)
+            return wait_time
 
         return 0.0
 

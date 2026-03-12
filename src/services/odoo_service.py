@@ -148,9 +148,7 @@ class OdooService:
                 if 'session_id' in response.cookies:
                     self.session_id = response.cookies['session_id']
                 
-                logger.info(f"[OK] Odoo authenticated as user ID: {self.uid}")
-                logger.info(f"Auth method: {self.auth_method.upper()}")
-                logger.info(f"Session ID: {self.session_id[:20] if self.session_id else 'N/A'}...")
+                logger.info(f"[OK] Odoo authenticated (uid={self.uid}, method={self.auth_method.upper()})")
                 return True
             else:
                 logger.error("[ERROR] Odoo authentication failed - no UID returned")
@@ -331,7 +329,6 @@ def test_odoo_connection():
             print("[ERROR] Failed to authenticate with Odoo")
             print(f"URL: {service.url}")
             print(f"DB: {service.db}")
-            print(f"Username: {service.username}")
             return False
         
         print(f"[OK] Authenticated successfully!")

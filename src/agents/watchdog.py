@@ -1,4 +1,5 @@
 import subprocess
+import sys
 import time
 import tempfile
 import psutil
@@ -22,6 +23,9 @@ class WatchdogAgent:
         self.processes = {}
         self.pid_dir = Path(tempfile.gettempdir()) / "elyx_pids"
         self.pid_dir.mkdir(parents=True, exist_ok=True)
+
+    # Maximum number of restarts allowed before giving up (#52)
+    MAX_RESTARTS = 10
 
     def register_process(self, name: str, process_cmd: list, auto_restart: bool = True):
         """
@@ -72,7 +76,7 @@ class WatchdogAgent:
 
     def restart_process(self, name: str):
         """
-        Restart a failed process
+        Restart a failed process (with max-restart protection)
         """
         if name not in self.processes:
             logger.error(f"Process {name} not registered")
@@ -81,6 +85,14 @@ class WatchdogAgent:
         process_info = self.processes[name]
         if not process_info['auto_restart']:
             logger.info(f"Auto-restart disabled for {name}")
+            return False
+
+        if process_info['restart_count'] >= self.MAX_RESTARTS:
+            logger.error(
+                f"Process {name} exceeded max restarts ({self.MAX_RESTARTS}). "
+                f"Disabling auto-restart. Manual intervention required."
+            )
+            process_info['auto_restart'] = False
             return False
 
         try:
@@ -141,30 +153,17 @@ class WatchdogAgent:
 
     def start_system_monitoring(self):
         """
-        Start monitoring the complete AI Employee system
+        Start monitoring the complete AI Employee system.
+
+        NOTE (#51): The orchestrator (run_elyx.py) runs watchers as threads
+        internally. This watchdog is for standalone process-based deployment
+        only. Do NOT run both the orchestrator and this watchdog simultaneously
+        or watchers will be double-launched.
         """
-        # Register the main orchestrator process
+        # Register only the orchestrator — it manages watchers internally
         self.register_process(
             "orchestrator",
-            ["python", str(Path(__file__).parent / "orchestrator.py")]
-        )
-
-        # Register the Gmail watcher process
-        self.register_process(
-            "gmail_watcher",
-            ["python", str(Path(__file__).parent / "gmail_watcher.py")]
-        )
-
-        # Register the file system watcher process
-        self.register_process(
-            "filesystem_watcher",
-            ["python", str(Path(__file__).parent / "filesystem_watcher.py")]
-        )
-
-        # Register the WhatsApp watcher process
-        self.register_process(
-            "whatsapp_watcher",
-            ["python", str(Path(__file__).parent / "whatsapp_watcher.py")]
+            [sys.executable, str(Path(__file__).parent / "orchestrator.py")]
         )
 
 

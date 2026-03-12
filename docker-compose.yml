@@ -6,7 +6,6 @@ services:
     container_name: ai-employee-system
     ports:
       - "8000:8000"  # API server
-      - "3000:3000"  # Frontend (if running)
     volumes:
       - ./obsidian_vault:/app/obsidian_vault  # Mount vault for persistent data
       - ./config:/app/config  # Mount config directory

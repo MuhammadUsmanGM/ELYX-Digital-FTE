@@ -51,8 +51,9 @@ class CEOBriefingService:
         Returns:
             Briefing data dictionary
         """
-        if period_start is None:
+        if period_end is None:
             period_end = datetime.now()
+        if period_start is None:
             period_start = period_end - timedelta(days=7)
         
         # Get revenue data from Odoo

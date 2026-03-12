@@ -22,11 +22,13 @@ class FileSystemWatcher(FileSystemEventHandler):
     def on_created(self, event):
         if event.is_directory:
             return
-        if event.src_path in self.processed_files:
+        # Normalize to consistent Path representation for comparison (#47)
+        normalized = str(Path(event.src_path))
+        if normalized in self.processed_files:
             return
 
         source = Path(event.src_path)
-        self.processed_files.add(str(source))
+        self.processed_files.add(normalized)
 
         # Create action file for the new file
         self.create_action_file(source)
@@ -35,11 +37,13 @@ class FileSystemWatcher(FileSystemEventHandler):
     def on_modified(self, event):
         if event.is_directory:
             return
-        if event.src_path in self.processed_files:
+        # Normalize to consistent Path representation for comparison (#47)
+        normalized = str(Path(event.src_path))
+        if normalized in self.processed_files:
             return
 
         source = Path(event.src_path)
-        self.processed_files.add(str(source))
+        self.processed_files.add(normalized)
 
         # Create action file for the modified file
         self.create_action_file(source)
@@ -53,13 +57,22 @@ class FileSystemWatcher(FileSystemEventHandler):
         action_filename = f'FILE_{source.name}_{int(time.time())}.md'
         action_path = self.needs_action / action_filename
 
+        # Stat the file once to avoid race conditions (#48)
+        try:
+            stat_info = source.stat()
+            file_size = stat_info.st_size
+            file_mtime = time.ctime(stat_info.st_mtime)
+        except (OSError, FileNotFoundError):
+            file_size = 0
+            file_mtime = time.ctime()
+
         # Create the action file content
         content = f'''---
 type: file_drop
 original_name: {source.name}
 full_path: {str(source.absolute())}
-size: {source.stat().st_size if source.exists() else 0}
-modified: {time.ctime(source.stat().st_mtime) if source.exists() else time.ctime()}
+size: {file_size}
+modified: {file_mtime}
 ---
 
 ## New File Dropped for Processing
@@ -68,8 +81,8 @@ A new file has been detected in the monitored directory:
 
 - **Original Name**: {source.name}
 - **Full Path**: {str(source.absolute())}
-- **Size**: {source.stat().st_size if source.exists() else 0} bytes
-- **Modified**: {time.ctime(source.stat().st_mtime) if source.exists() else time.ctime()}
+- **Size**: {file_size} bytes
+- **Modified**: {file_mtime}
 
 ## Suggested Actions
 - [ ] Review the file content
@@ -114,17 +127,23 @@ class DropFolderHandler(FileSystemEventHandler):
         source = Path(event.src_path)
         dest = self.needs_action / f'FILE_{source.name}'
 
+        # Stat the file once to avoid race conditions (#48)
+        try:
+            file_size = source.stat().st_size
+        except (OSError, FileNotFoundError):
+            file_size = 0
+
         # Create metadata file with action instructions
         meta_content = f'''---
 type: file_drop
 original_name: {source.name}
-size: {source.stat().st_size if source.exists() else 0}
+size: {file_size}
 ---
 
 ## New File Dropped for Processing
 
 File: {source.name}
-Size: {source.stat().st_size if source.exists() else 0} bytes
+Size: {file_size} bytes
 
 ## Processing Instructions
 Review this file and determine appropriate action based on Company Handbook.

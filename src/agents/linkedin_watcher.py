@@ -96,8 +96,10 @@ class LinkedInWatcher(BaseWatcher):
             unread_threads = page.query_selector_all('[data-test-id="messaging-thread"]:has([aria-label*="unread"]), [data-test-id="messaging-thread"]:has(.msg-conversation-card__unread-count)')
             
             if not unread_threads:
-                # Fallback: check all recent threads if unread selector fails
-                unread_threads = page.query_selector_all('[data-test-id="messaging-thread"]')[:3]
+                # No unread threads found — skip this cycle instead of
+                # processing arbitrary read threads (#49)
+                self.logger.debug("LinkedIn: no unread threads found, skipping")
+                return messages
 
             self.logger.info(f"LinkedIn: evaluating {len(unread_threads)} threads")
 

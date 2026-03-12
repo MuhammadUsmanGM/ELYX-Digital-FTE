@@ -79,11 +79,12 @@ def commit_vault_changes(message: str = "Auto-commit: Vault changes"):
         return False
 
 def run_command(cmd, cwd=None):
-    """Run shell command"""
+    """Run shell command safely using list form only (#53)"""
     try:
-        # Use list form when possible to avoid shell injection
         if isinstance(cmd, str):
-            cmd_list = cmd.split()
+            # Use shlex.split for correct handling of quoted paths/spaces
+            import shlex
+            cmd_list = shlex.split(cmd)
         else:
             cmd_list = cmd
         result = subprocess.run(cmd_list, shell=False, cwd=cwd, capture_output=True, text=True, timeout=10)

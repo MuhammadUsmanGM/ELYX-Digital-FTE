@@ -22,7 +22,8 @@ import os
 import tempfile
 from pathlib import Path
 
-VAULT_PATH = Path(__file__).parent.parent / "obsidian_vault"
+# Use VAULT_PATH env var if set (e.g. in Docker), otherwise default (#54)
+VAULT_PATH = Path(os.getenv("VAULT_PATH", str(Path(__file__).parent.parent / "obsidian_vault")))
 NEEDS_ACTION = VAULT_PATH / "Needs_Action"
 MAX_ITERATIONS_FILE = VAULT_PATH / "Logs" / ".ralph_iteration_count"
 
