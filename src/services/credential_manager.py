@@ -33,7 +33,11 @@ class CredentialManager:
         self.cipher_suite = Fernet(self.key)
 
     def _load_or_create_salt(self) -> bytes:
-        """Load existing salt from disk, or generate and persist a new random one."""
+        """Load existing salt from disk, or generate and persist a new random one.
+
+        Raises RuntimeError if a new salt cannot be persisted, since a
+        non-persistent salt would silently break decryption in future sessions.
+        """
         salt_path = os.path.normpath(self._SALT_FILE)
         try:
             if os.path.exists(salt_path):
@@ -50,8 +54,17 @@ class CredentialManager:
             os.makedirs(os.path.dirname(salt_path), exist_ok=True)
             with open(salt_path, 'wb') as f:
                 f.write(salt)
-        except Exception:
-            pass  # If we can't persist, at least use it for this session
+            # Verify the write succeeded by reading it back
+            with open(salt_path, 'rb') as f:
+                saved = f.read()
+            if saved != salt:
+                raise IOError("Salt verification failed after write")
+        except Exception as e:
+            raise RuntimeError(
+                f"Cannot persist encryption salt to {salt_path}: {e}. "
+                "Future sessions will be unable to decrypt data. "
+                "Ensure the directory is writable."
+            )
         return salt
 
     def _derive_key(self, password: bytes) -> bytes:
