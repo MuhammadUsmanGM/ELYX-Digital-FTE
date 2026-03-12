@@ -347,30 +347,22 @@ class SocialMediaSkills:
     async def follow_instagram_user(self, username: str) -> Dict[str, Any]:
         """Follow a user on Instagram"""
         log_activity("SOCIAL", f"Following Instagram user: {username}", str(self.vault_path))
-        
-        result = await self.posting_service.instagram_handler.follow_user(username)
-        return result
-    
+        return {"status": "not_implemented", "message": "Instagram follow not yet implemented via unified sender"}
+
     async def like_instagram_post(self, post_url: str) -> Dict[str, Any]:
         """Like an Instagram post"""
         log_activity("SOCIAL", f"Liking Instagram post: {post_url}", str(self.vault_path))
-        
-        result = await self.posting_service.instagram_handler.like_post(post_url)
-        return result
-    
+        return {"status": "not_implemented", "message": "Instagram like not yet implemented via unified sender"}
+
     async def like_twitter_post(self, tweet_url: str) -> Dict[str, Any]:
         """Like a tweet"""
         log_activity("SOCIAL", f"Liking tweet: {tweet_url}", str(self.vault_path))
-        
-        result = await self.posting_service.twitter_handler.like_tweet(tweet_url)
-        return result
-    
+        return {"status": "not_implemented", "message": "Twitter like not yet implemented via unified sender"}
+
     async def retweet(self, tweet_url: str) -> Dict[str, Any]:
         """Retweet a tweet"""
         log_activity("SOCIAL", f"Retweeting: {tweet_url}", str(self.vault_path))
-        
-        result = await self.posting_service.twitter_handler.retweet(tweet_url)
-        return result
+        return {"status": "not_implemented", "message": "Retweet not yet implemented via unified sender"}
     
     def get_post_history(self, platform: Optional[str] = None, limit: int = 50) -> list:
         """

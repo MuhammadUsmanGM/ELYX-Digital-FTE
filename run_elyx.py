@@ -167,12 +167,18 @@ def cleanup(signum=0, frame=None):
 
     for proc in processes:
         try:
-            proc.terminate()
-            proc.wait(timeout=5)
-            print(f"    ✓ Service stopped")
+            if hasattr(proc, 'cleanup'):
+                # Orchestrator object — call its cleanup method
+                proc.cleanup()
+                print(f"    ✓ Orchestrator cleaned up")
+            elif hasattr(proc, 'terminate'):
+                proc.terminate()
+                proc.wait(timeout=5)
+                print(f"    ✓ Service stopped")
         except Exception:
             try:
-                proc.kill()
+                if hasattr(proc, 'kill'):
+                    proc.kill()
                 print(f"    ✓ Service killed")
             except Exception:
                 print(f"    ⚠ Service force closed")
@@ -310,9 +316,10 @@ def main():
         orchestrator = Orchestrator(vault_path=str(vault_path))
         print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator initialized")
 
-        # Run orchestrator in background thread
-        orch_thread = threading.Thread(target=orchestrator.run, daemon=True)
+        # Run orchestrator in background thread (non-daemon so cleanup runs)
+        orch_thread = threading.Thread(target=orchestrator.run, daemon=False, name="orchestrator")
         orch_thread.start()
+        processes.append(orchestrator)  # Track for cleanup
         print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator started (monitoring active)")
 
     except Exception as e:

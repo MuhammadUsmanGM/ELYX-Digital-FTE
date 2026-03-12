@@ -6,6 +6,7 @@ Provides JSON-RPC 2.0 communication with MCP servers via stdio or HTTP.
 """
 
 import json
+import os
 import subprocess
 import requests
 from typing import Dict, Any, Optional, List
@@ -94,7 +95,7 @@ class MCPClient:
                 capture_output=True,
                 text=True,
                 timeout=timeout,
-                env={**self.env}
+                env={**os.environ, **self.env}
             )
             
             if result.returncode != 0:

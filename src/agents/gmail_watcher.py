@@ -1,4 +1,5 @@
 from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request as GoogleAuthRequest
 from googleapiclient.discovery import build
 from ..base_watcher import BaseWatcher
 from pathlib import Path
@@ -27,6 +28,7 @@ class GmailWatcher(BaseWatcher):
         if self.credentials_path and os.path.exists(self.credentials_path):
             try:
                 self.creds = Credentials.from_authorized_user_file(self.credentials_path)
+                self._refresh_credentials_if_needed()
                 self.service = build('gmail', 'v1', credentials=self.creds)
             except Exception as e:
                 self.logger.error(f"Failed to initialize Gmail service: {e}")
@@ -35,17 +37,41 @@ class GmailWatcher(BaseWatcher):
             
         self.processed_ids = self._load_processed_ids("gmail")
 
+    def _refresh_credentials_if_needed(self):
+        """Refresh OAuth token if expired or about to expire."""
+        if self.creds and self.creds.expired and self.creds.refresh_token:
+            try:
+                self.creds.refresh(GoogleAuthRequest())
+                # Persist refreshed token back to disk
+                if self.credentials_path:
+                    with open(self.credentials_path, 'w') as f:
+                        f.write(self.creds.to_json())
+                self.logger.info("Gmail OAuth token refreshed successfully")
+            except Exception as e:
+                self.logger.error(f"Failed to refresh Gmail OAuth token: {e}")
+
     def check_for_updates(self) -> list:
         if not self.service:
             return []
 
         try:
-            # Check for unread and important messages
-            results = self.service.users().messages().list(
-                userId='me', q='is:unread is:important'
-            ).execute()
-            messages = results.get('messages', [])
-            return [m for m in messages if m['id'] not in self.processed_ids]
+            # Refresh token before each check cycle
+            self._refresh_credentials_if_needed()
+
+            # Paginate through all unread important messages
+            all_messages = []
+            page_token = None
+            while True:
+                kwargs = {'userId': 'me', 'q': 'is:unread is:important', 'maxResults': 100}
+                if page_token:
+                    kwargs['pageToken'] = page_token
+                results = self.service.users().messages().list(**kwargs).execute()
+                all_messages.extend(results.get('messages', []))
+                page_token = results.get('nextPageToken')
+                if not page_token:
+                    break
+
+            return [m for m in all_messages if m['id'] not in self.processed_ids]
         except Exception as e:
             self.logger.error(f"Error checking for Gmail updates: {e}")
             return []

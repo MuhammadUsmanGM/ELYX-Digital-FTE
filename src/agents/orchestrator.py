@@ -51,17 +51,17 @@ class TaskTriggerHandler(FileSystemEventHandler):
             # Initialize database
             session_factory, _ = init_db(self.config["database"]["url"])
 
-            # Create session for services
-            db_session = session_factory()
+            # Store session so it can be referenced/closed later
+            self._db_session = session_factory()
 
             if self.config["silver_tier_features"]["enable_learning"]:
-                self.learning_service = AdaptiveLearningService(db_session)
+                self.learning_service = AdaptiveLearningService(self._db_session)
 
             if self.config["silver_tier_features"]["enable_analytics"]:
-                self.analytics_service = PredictiveAnalyticsService(db_session)
+                self.analytics_service = PredictiveAnalyticsService(self._db_session)
 
             if self.config["integrations"]["calendar_enabled"]:
-                self.calendar_service = CalendarService(db_session)
+                self.calendar_service = CalendarService(self._db_session)
 
             log_activity("SILVER_SERVICES_INITIALIZED",
                         "Silver Tier services initialized successfully",
@@ -137,17 +137,17 @@ class Orchestrator:
             # Initialize database
             session_factory, _ = init_db(self.config["database"]["url"])
 
-            # Create session for services
-            db_session = session_factory()
+            # Create session for services — stored on self so it can be closed in cleanup()
+            self._db_session = session_factory()
 
             if self.config["silver_tier_features"]["enable_learning"]:
-                self.learning_service = AdaptiveLearningService(db_session)
+                self.learning_service = AdaptiveLearningService(self._db_session)
 
             if self.config["silver_tier_features"]["enable_analytics"]:
-                self.analytics_service = PredictiveAnalyticsService(db_session)
+                self.analytics_service = PredictiveAnalyticsService(self._db_session)
 
             if self.config["integrations"]["calendar_enabled"]:
-                self.calendar_service = CalendarService(db_session)
+                self.calendar_service = CalendarService(self._db_session)
 
             self.silver_services_initialized = True
             log_activity("SILVER_SERVICES_INITIALIZED",
@@ -334,30 +334,48 @@ class Orchestrator:
             self.logger.error(f"Error starting communication watchers: {e}")
 
     def _run_watcher(self, name: str, watcher):
-        """Helper method to run a watcher continuously"""
-        try:
-            self.logger.info(f"Starting {name} watcher...")
-            while True:
-                try:
-                    items = watcher.check_for_updates()
-                    for item in items:
-                        action_file = watcher.create_action_file(item)
-                        self.logger.info(f"Created action file: {action_file}")
-                except Exception as e:
-                    self.logger.error(f"Error in {name} watcher: {e}")
+        """Helper method to run a watcher continuously with automatic recovery"""
+        import random
+        max_consecutive_failures = 5
+        consecutive_failures = 0
+        backoff_base = 30  # seconds
 
-                # 🕵️ Stealth Mode: Add jitter for social platforms to look human
-                sleep_time = watcher.check_interval
-                if name in ["LinkedIn", "WhatsApp", "Facebook", "Twitter", "Instagram"]:
-                    import random
-                    # Add +/- 20% random jitter to the interval
-                    jitter = random.uniform(-0.2, 0.2) * sleep_time
-                    sleep_time = max(60, sleep_time + jitter) # Don't go below 60s
-                    self.logger.info(f"{name} stealth wait: {sleep_time/60:.1f} minutes")
-                
-                time.sleep(sleep_time)
-        except Exception as e:
-            self.logger.error(f"Fatal error in {name} watcher: {e}")
+        while True:
+            try:
+                self.logger.info(f"Starting {name} watcher...")
+                while True:
+                    try:
+                        items = watcher.check_for_updates()
+                        for item in items:
+                            try:
+                                action_file = watcher.create_action_file(item)
+                                self.logger.info(f"Created action file: {action_file}")
+                            except Exception as e:
+                                self.logger.error(f"Error creating action file in {name}: {e}")
+                        consecutive_failures = 0  # Reset on success
+                    except Exception as e:
+                        consecutive_failures += 1
+                        self.logger.error(f"Error in {name} watcher (failure {consecutive_failures}): {e}")
+                        if consecutive_failures >= max_consecutive_failures:
+                            self.logger.error(f"{name} watcher hit {max_consecutive_failures} consecutive failures, restarting...")
+                            break  # Break inner loop to trigger recovery in outer loop
+
+                    # Stealth Mode: Add jitter for social platforms
+                    sleep_time = watcher.check_interval
+                    if name in ["LinkedIn", "WhatsApp", "Facebook", "Twitter", "Instagram"]:
+                        jitter = random.uniform(-0.2, 0.2) * sleep_time
+                        sleep_time = max(60, sleep_time + jitter)
+                        self.logger.info(f"{name} stealth wait: {sleep_time/60:.1f} minutes")
+
+                    time.sleep(sleep_time)
+
+            except Exception as e:
+                self.logger.error(f"Fatal error in {name} watcher: {e}")
+
+            # Recovery: exponential backoff before restarting
+            backoff = min(backoff_base * (2 ** min(consecutive_failures, 5)), 600)
+            self.logger.info(f"Restarting {name} watcher in {backoff}s...")
+            time.sleep(backoff)
 
     def _start_silver_services(self):
         """Start Silver Tier services"""
@@ -412,10 +430,12 @@ class Orchestrator:
         if self.config.get("integrations", {}).get("use_claude_cli", False):
             self.logger.info(f"Using [{brain_label}] CLI (Autonomous Loop Mode)")
             try:
-                # Initialize and start the Ralph Loop (brain-aware)
+                # Initialize and start the Ralph Loop in a separate thread
+                # to avoid blocking the Observer/file-watcher thread
                 loop = RalphLoop(vault_path=str(self.vault_path))
-                loop.start()
-                
+                ralph_thread = threading.Thread(target=loop.start, daemon=True)
+                ralph_thread.start()
+
                 # Update dashboard to reflect CLI processing
                 self.processor.update_dashboard()
                 return
@@ -626,6 +646,13 @@ class Orchestrator:
         for watcher in self.running_watchers:
             if hasattr(watcher, 'join'):
                 watcher.join()
+
+        # Close DB session if it was created
+        if hasattr(self, '_db_session') and self._db_session:
+            try:
+                self._db_session.close()
+            except Exception:
+                pass
 
 if __name__ == "__main__":
     # Create default vault structure if it doesn't exist

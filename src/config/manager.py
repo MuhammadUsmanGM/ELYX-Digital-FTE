@@ -351,7 +351,7 @@ class ConfigManager:
                 "port": int(os.getenv("POSTGRES_PORT", "5432")),
                 "db": os.getenv("POSTGRES_DB", "enterprise_analytics"),
                 "user": os.getenv("POSTGRES_USER", "analytics_user"),
-                "password": os.getenv("POSTGRES_PASSWORD", "secure_password"),
+                "password": os.getenv("POSTGRES_PASSWORD", ""),  # Must be set via env var
             },
             # Advanced AI configuration
             "ai": {

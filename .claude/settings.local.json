@@ -35,7 +35,8 @@
       "WebFetch(domain:playbooks.com)",
       "Bash(cd:*)",
       "Bash(grep:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(ls:*)"
     ]
   },
   "hooks": {

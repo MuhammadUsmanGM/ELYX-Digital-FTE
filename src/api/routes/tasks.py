@@ -96,7 +96,7 @@ async def create_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail="Error creating task"
         )
 
 
@@ -196,7 +196,7 @@ async def retry_failed_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail="Error retrying task"
         )
 
 

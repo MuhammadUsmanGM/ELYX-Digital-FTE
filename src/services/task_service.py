@@ -137,7 +137,7 @@ class TaskService(BaseService[Task]):
         # If changing to completed, set completion time
         if new_status == "completed" and old_status != "completed":
             task.completed_at = datetime.utcnow()
-            task.actual_duration = (task.completed_at - task.created_at).seconds // 60  # in minutes
+            task.actual_duration = int((task.completed_at - task.created_at).total_seconds()) // 60  # in minutes
 
         # If changing from completed, clear completion time
         if old_status == "completed" and new_status != "completed":
@@ -351,13 +351,19 @@ class TaskService(BaseService[Task]):
         hierarchical_tasks.extend(get_children(root_task_id))
         return hierarchical_tasks
 
+    # Fields that are safe to update via bulk operations
+    BULK_UPDATABLE_FIELDS = {
+        'title', 'description', 'status', 'priority', 'category',
+        'assigned_to', 'due_date', 'estimated_duration', 'task_metadata',
+    }
+
     def bulk_update_tasks(self, task_ids: List[str], updates: Dict[str, Any]) -> Dict[str, Any]:
         """
         Update multiple tasks at once
 
         Args:
             task_ids: List of task IDs to update
-            updates: Dictionary of fields to update
+            updates: Dictionary of fields to update (only allowlisted fields accepted)
 
         Returns:
             Dictionary with results of the bulk update
@@ -372,9 +378,9 @@ class TaskService(BaseService[Task]):
             try:
                 task = self.get_by_id(task_id)
                 if task:
-                    # Update the task
+                    # Update only allowlisted fields
                     for key, value in updates.items():
-                        if hasattr(task, key):
+                        if key in self.BULK_UPDATABLE_FIELDS and hasattr(task, key):
                             setattr(task, key, value)
 
                     task.updated_at = datetime.utcnow()

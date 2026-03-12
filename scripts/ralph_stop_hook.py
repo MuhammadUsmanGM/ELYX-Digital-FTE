@@ -18,6 +18,8 @@ Usage in .claude/settings.local.json:
 """
 
 import sys
+import os
+import tempfile
 from pathlib import Path
 
 VAULT_PATH = Path(__file__).parent.parent / "obsidian_vault"
@@ -36,9 +38,19 @@ def get_iteration_count() -> int:
 
 
 def increment_iteration():
+    """Atomically increment the iteration counter using atomic write (write-then-rename)."""
     MAX_ITERATIONS_FILE.parent.mkdir(parents=True, exist_ok=True)
     count = get_iteration_count() + 1
-    MAX_ITERATIONS_FILE.write_text(str(count))
+    # Write to temp file then rename for atomicity (prevents partial reads)
+    try:
+        fd, tmp_path = tempfile.mkstemp(dir=str(MAX_ITERATIONS_FILE.parent), suffix='.tmp')
+        with os.fdopen(fd, 'w') as f:
+            f.write(str(count))
+        # Atomic rename (on same filesystem)
+        os.replace(tmp_path, str(MAX_ITERATIONS_FILE))
+    except Exception:
+        # Fallback: direct write
+        MAX_ITERATIONS_FILE.write_text(str(count))
     return count
 
 

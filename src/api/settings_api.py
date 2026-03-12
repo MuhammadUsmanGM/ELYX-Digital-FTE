@@ -162,11 +162,9 @@ class SettingsAPI:
         return flags
     
     def get_settings(self) -> dict:
-        """Get all settings"""
+        """Get all settings (filtered to exclude sensitive data)"""
         return {
             "feature_flags": self.get_all_flags(),
-            "env_vars": {k: v for k, v in self.env_vars.items() if k.startswith('ENABLE_')},
-            "config": self.config
         }
     
     def update_setting(self, key: str, value: any) -> dict:

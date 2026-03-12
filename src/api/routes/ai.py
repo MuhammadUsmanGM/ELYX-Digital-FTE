@@ -74,7 +74,7 @@ async def process_enhanced_task(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error processing enhanced task: {str(e)}"
+            detail="Error processing enhanced task"
         )
 
 
@@ -94,7 +94,7 @@ async def get_strategic_insights(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error generating strategic insights: {str(e)}"
+            detail="Error generating strategic insights"
         )
 
 
@@ -113,7 +113,7 @@ async def assist_with_decision(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error providing decision assistance: {str(e)}"
+            detail="Error providing decision assistance"
         )
 
 
@@ -139,7 +139,7 @@ async def start_collaboration(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error starting collaboration: {str(e)}"
+            detail="Error starting collaboration"
         )
 
 
@@ -157,7 +157,7 @@ async def get_personalized_dashboard(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error generating personalized dashboard: {str(e)}"
+            detail="Error generating personalized dashboard"
         )
 
 
@@ -188,7 +188,7 @@ async def learn_from_interaction(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error learning from interaction: {str(e)}"
+            detail="Error learning from interaction"
         )
 
 
@@ -205,7 +205,7 @@ async def get_system_analytics(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error getting system analytics: {str(e)}"
+            detail="Error getting system analytics"
         )
 
 
@@ -231,7 +231,7 @@ async def generate_bi_report(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error generating BI report: {str(e)}"
+            detail="Error generating BI report"
         )
 
 

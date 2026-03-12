@@ -61,7 +61,7 @@ async def complete_onboarding(request: OnboardingRequest, db: Session = Depends(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to save onboarding data: {str(e)}"
+            detail="Failed to save onboarding data"
         )
 
 @router.get("/status/{user_id}", response_model=Dict[str, Any])

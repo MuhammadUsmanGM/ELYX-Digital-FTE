@@ -12,11 +12,14 @@ from typing import Any, Dict, List, Optional
 import uvicorn
 from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Query, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from starlette.middleware.base import BaseHTTPMiddleware
 
 # Database imports for dependency injection
 from sqlalchemy.orm import Session
 from src.services.database import SessionLocal, init_db
+from src.utils.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)
 
@@ -27,10 +30,31 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# --- Rate-limiting middleware (Issue #26 / #39) ---
+_api_rate_limiter = RateLimiter()
+_api_rate_limiter.set_limit("api_global", max_requests=200, time_window=60)
+
+
+class RateLimitMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request: Request, call_next):
+        if not _api_rate_limiter.is_allowed("api_global"):
+            return JSONResponse(
+                status_code=429,
+                content={"detail": "Too many requests. Please slow down."},
+            )
+        return await call_next(request)
+
+
+app.add_middleware(RateLimitMiddleware)
+
 # Add CORS middleware
+# When using allow_credentials=True, origins cannot be "*" (wildcard).
+# Default to localhost origins for development; set ALLOWED_ORIGINS in production.
+_default_origins = "http://localhost:3000,http://localhost:8080,http://localhost:8081"
+_allowed_origins = os.getenv("ALLOWED_ORIGINS", _default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "*").split(","),
+    allow_origins=[o.strip() for o in _allowed_origins if o.strip() != "*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

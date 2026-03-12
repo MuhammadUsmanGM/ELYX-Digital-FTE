@@ -236,22 +236,47 @@ class MemorySystem:
         return hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
     def _generate_embeddings(self, content: str) -> Optional[np.ndarray]:
-        """Generate semantic embeddings for content"""
+        """Generate semantic embeddings for content.
+
+        Tries sentence-transformers first. If unavailable, falls back to a
+        deterministic hash-based projection so that identical content always
+        produces the same vector (unlike the previous random approach).
+        """
         try:
             # Check cache first
             content_hash = hashlib.md5(content.encode()).hexdigest()
             if content_hash in self.embedding_cache:
                 return self.embedding_cache[content_hash]
 
-            # Generate embeddings using sentence transformers
-            # For this implementation, we'll simulate embeddings
-            # In a real implementation, we would use the sentence transformer model
-            import random
-            # Generate random embeddings for demonstration
-            embeddings = np.random.rand(1, self.vector_dimension).astype('float32')
+            embeddings = None
+
+            # Try real sentence-transformer model
+            if not hasattr(self, '_st_model'):
+                try:
+                    from sentence_transformers import SentenceTransformer
+                    self._st_model = SentenceTransformer('all-MiniLM-L6-v2')
+                except ImportError:
+                    self._st_model = None
+                    self.logger.warning("sentence-transformers not installed; using deterministic hash embeddings")
+
+            if self._st_model is not None:
+                raw = self._st_model.encode([content])
+                embeddings = np.array(raw, dtype='float32')
+                # Resize to match expected dimension if needed
+                if embeddings.shape[1] != self.vector_dimension:
+                    embeddings = np.resize(embeddings, (1, self.vector_dimension)).astype('float32')
+            else:
+                # Deterministic fallback: derive a reproducible vector from content hash
+                full_hash = hashlib.sha512(content.encode()).digest()
+                # Extend hash bytes to fill vector_dimension floats
+                needed_bytes = self.vector_dimension * 4  # 4 bytes per float32
+                repeated = full_hash * (needed_bytes // len(full_hash) + 1)
+                byte_array = repeated[:needed_bytes]
+                embeddings = np.frombuffer(byte_array, dtype=np.uint8).astype('float32')[:self.vector_dimension]
+                embeddings = embeddings.reshape(1, self.vector_dimension) / 255.0  # Normalize to 0-1
 
             # Add to cache
-            if len(self.embedding_cache) < self.cache_size_limit:
+            if embeddings is not None and len(self.embedding_cache) < self.cache_size_limit:
                 self.embedding_cache[content_hash] = embeddings
 
             return embeddings

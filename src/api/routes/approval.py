@@ -80,7 +80,7 @@ async def approve_request(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error approving request: {str(e)}"
+            detail="Error approving request"
         )
 
 
@@ -134,7 +134,7 @@ async def reject_request(
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error rejecting request: {str(e)}"
+            detail="Error rejecting request"
         )
 
 

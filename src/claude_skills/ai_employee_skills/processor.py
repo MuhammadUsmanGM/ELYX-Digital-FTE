@@ -710,7 +710,7 @@ subject: Response to your request
         return {
             "to": phones[0],  # First phone number found
             "message": message,
-            "requires_approval": False,  # Can be changed to True for safety
+            "requires_approval": True,
         }
 
     def _detect_linkedin_message(self, task) -> dict:
@@ -858,7 +858,7 @@ subject: Response to your request
         return {
             "platforms": platforms,
             "content": content_to_post,
-            "requires_approval": False,
+            "requires_approval": True,
         }
 
     def _extract_post_content(self, email_content: str) -> str:
@@ -1126,7 +1126,8 @@ subject: Response to your request
         while True:
             try:
                 # Process pending tasks
-                processed_count = self.process_pending_tasks()
+                processed_tasks = self.process_pending_tasks()
+                processed_count = len(processed_tasks) if isinstance(processed_tasks, list) else 0
 
                 # Process approval requests
                 self.process_approval_requests()

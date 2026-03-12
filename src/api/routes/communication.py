@@ -2,7 +2,8 @@
 Communication API routes for AI Employee response system.
 Uses the unified sender (direct_social_sender) for all platforms.
 """
-from fastapi import APIRouter, HTTPException, status
+import os
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from typing import Dict, Any
 from datetime import datetime
 
@@ -22,6 +23,21 @@ from src.api.models.response_models import (
 communication_router = APIRouter(prefix="/communication", tags=["communication"])
 
 
+async def _verify_api_key(x_api_key: str = Header(..., alias="X-API-Key")):
+    """Verify API key for communication endpoints that send messages."""
+    expected_key = os.getenv("ELYX_API_KEY", "")
+    if not expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="API key not configured on server (set ELYX_API_KEY env var)",
+        )
+    if x_api_key != expected_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+        )
+
+
 def _get_vault_path() -> str:
     from src.config.manager import get_config
     config = get_config()
@@ -29,7 +45,7 @@ def _get_vault_path() -> str:
 
 
 @communication_router.post("/send-response", response_model=SendResponseResponse)
-async def send_response(request: SendResponseRequest):
+async def send_response(request: SendResponseRequest, _key=Depends(_verify_api_key)):
     """Send a response through the unified sender."""
     try:
         from src.services.direct_social_sender import send_message
@@ -56,7 +72,7 @@ async def send_response(request: SendResponseRequest):
 
 
 @communication_router.post("/send-direct", response_model=SendResponseResponse)
-async def send_direct_response(request: SendResponseRequest):
+async def send_direct_response(request: SendResponseRequest, _key=Depends(_verify_api_key)):
     """Send a response directly (same as send-response — unified sender is always direct)."""
     return await send_response(request)
 

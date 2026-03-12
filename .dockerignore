@@ -18,12 +18,17 @@ __pycache__/
 *.pyd
 .Python
 
-# Ignore local configuration
+# Ignore local configuration and secrets
 .env
 .env.local
 .env.production
 .env.development
 *.env*
+config.json
+secure_credentials/
+*.enc
+*.pem
+*.key
 
 # Ignore node modules
 node_modules/

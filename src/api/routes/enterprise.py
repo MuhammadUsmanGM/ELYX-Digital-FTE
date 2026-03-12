@@ -67,7 +67,7 @@ async def create_strategic_objective(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating strategic objective: {str(e)}"
+            detail="Error creating strategic objective"
         )
 
 
@@ -129,7 +129,7 @@ async def get_strategic_objectives(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving strategic objectives: {str(e)}"
+            detail="Error retrieving strategic objectives"
         )
 
 
@@ -193,7 +193,7 @@ async def create_risk_assessment(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating risk assessment: {str(e)}"
+            detail="Error creating risk assessment"
         )
 
 
@@ -255,7 +255,7 @@ async def get_risk_assessments(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving risk assessments: {str(e)}"
+            detail="Error retrieving risk assessments"
         )
 
 
@@ -302,7 +302,7 @@ async def create_compliance_record(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating compliance record: {str(e)}"
+            detail="Error creating compliance record"
         )
 
 
@@ -362,7 +362,7 @@ async def get_compliance_records(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving compliance records: {str(e)}"
+            detail="Error retrieving compliance records"
         )
 
 
@@ -412,7 +412,7 @@ async def create_resource_allocation(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error creating resource allocation: {str(e)}"
+            detail="Error creating resource allocation"
         )
 
 
@@ -482,7 +482,7 @@ async def get_resource_allocations(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving resource allocations: {str(e)}"
+            detail="Error retrieving resource allocations"
         )
 
 
@@ -556,7 +556,7 @@ async def get_enterprise_analytics(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving enterprise analytics: {str(e)}"
+            detail="Error retrieving enterprise analytics"
         )
 
 
@@ -618,7 +618,7 @@ async def get_enterprise_policies(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error retrieving governance policies: {str(e)}"
+            detail="Error retrieving governance policies"
         )
 
 
@@ -669,7 +669,7 @@ async def generate_demand_forecast(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Error generating demand forecast: {str(e)}"
+            detail="Error generating demand forecast"
         )
 
 

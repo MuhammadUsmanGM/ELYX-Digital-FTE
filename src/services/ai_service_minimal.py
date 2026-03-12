@@ -20,6 +20,7 @@ class MinimalAIService:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
         self.dependencies_loaded = False
+        self._full_service = None  # Cached full AIService instance
 
         # Try to load advanced AI components if dependencies are available
         try:
@@ -43,14 +44,20 @@ class MinimalAIService:
             self.logger.warning(f"AI dependencies not available: {e}")
             self.dependencies_loaded = False
 
+    def _get_full_service(self):
+        """Get or create a cached full AIService instance (avoids re-loading models every call)."""
+        if self._full_service is None:
+            from .ai_service import AIService
+            self._full_service = AIService()
+        return self._full_service
+
     def process_task_request(self, task_data: Dict[str, Any], user_id: str = "default_user") -> Dict[str, Any]:
         """
         Process a task request with available AI capabilities
         """
         if self.dependencies_loaded:
             # Use full AI service
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.process_task_request(task_data, user_id)
         else:
             # Return minimal processing
@@ -79,8 +86,7 @@ class MinimalAIService:
         Generate strategic insights with available capabilities
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.generate_strategic_insights(user_id, time_window)
         else:
             # Return minimal insights
@@ -99,8 +105,7 @@ class MinimalAIService:
         Assist with decision making using available capabilities
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.assist_with_decision_making(decision_data, user_id)
         else:
             # Return minimal decision support
@@ -118,8 +123,7 @@ class MinimalAIService:
         Engage in human-AI collaboration for a task
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.engage_in_collaboration(task_description, user_id)
         else:
             # Return minimal collaboration
@@ -138,8 +142,7 @@ class MinimalAIService:
         Generate a personalized dashboard based on available capabilities
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.generate_personalized_dashboard(user_id)
         else:
             # Return minimal dashboard
@@ -164,8 +167,7 @@ class MinimalAIService:
         Learn from an interaction (minimal implementation)
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.learn_from_interaction(user_input, system_response, user_id, positive_feedback)
         else:
             # Return minimal learning
@@ -181,8 +183,7 @@ class MinimalAIService:
         Get system analytics (minimal implementation)
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.get_system_analytics()
         else:
             # Return minimal analytics
@@ -203,8 +204,7 @@ class MinimalAIService:
         Generate a business intelligence report (minimal implementation)
         """
         if self.dependencies_loaded:
-            from .ai_service import AIService
-            full_service = AIService()
+            full_service = self._get_full_service()
             return full_service.generate_business_intelligence_report(user_id, report_type, time_period)
         else:
             # Return minimal report
