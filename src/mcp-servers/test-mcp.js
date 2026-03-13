@@ -23,11 +23,11 @@ async function testOdooMCP() {
     const odoo = spawn('node', ['src/mcp-servers/odoo-mcp/index.js'], {
       env: {
         ...process.env,
-        ODOO_URL: 'https://elyx-ai.odoo.com',
-        ODOO_DB: 'elyx-ai',
-        ODOO_USERNAME: 'elyx.ai.employ@gmail.com',
-        ODOO_PASSWORD: 'a1tt2i1t1u1d1e1',
-        ODOO_API_KEY: '1c79ef86c05e4e16f5867fbe6e64c83b799c3e2d'
+        ODOO_URL: process.env.ODOO_URL || '',
+        ODOO_DB: process.env.ODOO_DB || '',
+        ODOO_USERNAME: process.env.ODOO_USERNAME || '',
+        ODOO_PASSWORD: process.env.ODOO_PASSWORD || '',
+        ODOO_API_KEY: process.env.ODOO_API_KEY || ''
       }
     });
     

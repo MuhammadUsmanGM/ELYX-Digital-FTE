@@ -7,20 +7,30 @@ Add social media credentials to .env file
 with open('.env', 'r', encoding='utf-8') as f:
     content = f.read()
 
+import os
+
 # Add credentials if not present
 credentials_to_add = []
 
 if 'TWITTER_USERNAME=' not in content:
-    credentials_to_add.append('\n# Twitter/X Credentials\nTWITTER_USERNAME=ELYXo0\nTWITTER_PASSWORD=a1tti1t1u1d1e1\n')
+    twitter_username = os.getenv('TWITTER_USERNAME', 'your_twitter_username')
+    twitter_password = os.getenv('TWITTER_PASSWORD', 'your_twitter_password')
+    credentials_to_add.append(f'\n# Twitter/X Credentials\nTWITTER_USERNAME={twitter_username}\nTWITTER_PASSWORD={twitter_password}\n')
 
 if 'LINKEDIN_USERNAME=' not in content:
-    credentials_to_add.append('\n# LinkedIn Credentials\nLINKEDIN_USERNAME=elyx.ai.employ@gmail.com\nLINKEDIN_PASSWORD=a1tti1t1u1d1e1\n')
+    linkedin_username = os.getenv('LINKEDIN_USERNAME', 'your_linkedin_username')
+    linkedin_password = os.getenv('LINKEDIN_PASSWORD', 'your_linkedin_password')
+    credentials_to_add.append(f'\n# LinkedIn Credentials\nLINKEDIN_USERNAME={linkedin_username}\nLINKEDIN_PASSWORD={linkedin_password}\n')
 
 if 'FACEBOOK_USERNAME=' not in content:
-    credentials_to_add.append('\n# Facebook Credentials\nFACEBOOK_USERNAME=elyx.ai.employ@gmail.com\nFACEBOOK_PASSWORD=a1tti1t1u1d1e1\n')
+    facebook_username = os.getenv('FACEBOOK_USERNAME', 'your_facebook_username')
+    facebook_password = os.getenv('FACEBOOK_PASSWORD', 'your_facebook_password')
+    credentials_to_add.append(f'\n# Facebook Credentials\nFACEBOOK_USERNAME={facebook_username}\nFACEBOOK_PASSWORD={facebook_password}\n')
 
 if 'INSTAGRAM_USERNAME=' not in content:
-    credentials_to_add.append('\n# Instagram Credentials\nINSTAGRAM_USERNAME=elyx.ai.employ\nINSTAGRAM_PASSWORD=a1tti1t1u1d1e1\n')
+    instagram_username = os.getenv('INSTAGRAM_USERNAME', 'your_instagram_username')
+    instagram_password = os.getenv('INSTAGRAM_PASSWORD', 'your_instagram_password')
+    credentials_to_add.append(f'\n# Instagram Credentials\nINSTAGRAM_USERNAME={instagram_username}\nINSTAGRAM_PASSWORD={instagram_password}\n')
 
 # Add credentials
 if credentials_to_add:

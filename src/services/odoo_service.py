@@ -24,9 +24,9 @@ class OdooService:
     
     def __init__(self):
         """Initialize Odoo service with configuration from .env"""
-        self.url = os.getenv('ODOO_URL', 'https://elyx-ai.odoo.com')
-        self.db = os.getenv('ODOO_DB', 'elyx-ai')
-        self.username = os.getenv('ODOO_USERNAME', 'elyx.ai.employ@gmail.com')
+        self.url = os.getenv('ODOO_URL', '')
+        self.db = os.getenv('ODOO_DB', '')
+        self.username = os.getenv('ODOO_USERNAME', '')
         self.password = os.getenv('ODOO_PASSWORD', '')
         self.api_key = os.getenv('ODOO_API_KEY', '')  # API Key for better security
         self.company_id = int(os.getenv('ODOO_COMPANY_ID', '1'))

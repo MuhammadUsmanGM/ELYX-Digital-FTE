@@ -172,15 +172,15 @@ def setup_odoo_credentials(page):
     print("\nNow we'll configure Odoo API access for ELYX.\n")
     
     # Get Odoo URL
-    default_url = "https://elyx-ai.odoo.com"
+    default_url = os.getenv("ODOO_URL", "")
     odoo_url = input(f"Odoo URL [{default_url}]: ").strip() or default_url
     
     # Get Database name
-    default_db = "elyx-ai"
+    default_db = os.getenv("ODOO_DB", "")
     odoo_db = input(f"Database name [{default_db}]: ").strip() or default_db
     
     # Get Username
-    default_user = "elyx.ai.employ@gmail.com"
+    default_user = os.getenv("ODOO_USERNAME", "")
     odoo_username = input(f"Username [{default_user}]: ").strip() or default_user
     
     # Get Password
