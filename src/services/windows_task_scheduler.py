@@ -206,7 +206,7 @@ class WindowsTaskScheduler:
             if start < now:
                 start += timedelta(days=1)
             return start.strftime('%Y-%m-%dT%H:%M:%S')
-        except:
+        except Exception:
             return now.strftime('%Y-%m-%dT%H:%M:%S')
     
     def _get_day_of_week(self, day_name: str) -> int:
@@ -560,7 +560,7 @@ class WindowsTaskScheduler:
         """Cleanup COM"""
         try:
             pythoncom.CoUninitialize()
-        except:
+        except Exception:
             pass
 
 

@@ -577,7 +577,7 @@ class MemorySystem:
                     embeddings = pickle.loads(embeddings_blob)
                     embeddings_list.append(embeddings)
                     ids_list.append(memory_id)
-                except:
+                except Exception:
                     continue
 
         if embeddings_list:

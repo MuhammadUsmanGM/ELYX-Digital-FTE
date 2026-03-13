@@ -226,7 +226,7 @@ class OdooWatcher(BaseWatcher):
             due_date = datetime.strptime(due_date_str, '%Y-%m-%d')
             delta = datetime.now() - due_date
             return max(0, delta.days)
-        except:
+        except Exception:
             return 0
     
     def create_action_file(self, item) -> Path:

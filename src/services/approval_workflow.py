@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+import yaml
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -28,6 +29,26 @@ class ApprovalWorkflow:
         self.pending_approval_dir.mkdir(exist_ok=True)
         self.approved_dir.mkdir(exist_ok=True)
         self.rejected_dir.mkdir(exist_ok=True)
+
+    @staticmethod
+    def _parse_expiration(content: str) -> Optional[datetime]:
+        """Parse the 'expires' field from YAML frontmatter. Returns None if missing/malformed."""
+        lines = content.split('\n')
+        if len(lines) < 3 or lines[0].strip() != '---':
+            return None
+        for i in range(1, len(lines)):
+            if lines[i].strip() == '---':
+                try:
+                    fm = yaml.safe_load('\n'.join(lines[1:i])) or {}
+                    expires = fm.get('expires')
+                    if expires is None:
+                        return None
+                    if isinstance(expires, datetime):
+                        return expires
+                    return datetime.fromisoformat(str(expires))
+                except (yaml.YAMLError, ValueError, TypeError):
+                    return None
+        return None
 
     @staticmethod
     def _sanitize_id(approval_id: str) -> str:
@@ -127,8 +148,8 @@ Move this file to the /Rejected/ folder.
         elif pending_file.exists():
             # Check if expired
             content = pending_file.read_text()
-            if f"expires: {datetime.now().isoformat()[:10]}" in content or \
-               datetime.fromisoformat(content.split("expires: ")[1].split("\n")[0]) < datetime.now():
+            expiration = self._parse_expiration(content)
+            if expiration is not None and expiration < datetime.now():
                 return ApprovalStatus.EXPIRED
             return ApprovalStatus.PENDING
         else:
@@ -193,18 +214,14 @@ Move this file to the /Rejected/ folder.
         content = approved_file.read_text()
 
         # Check expiration before executing
-        try:
-            expiration_str = content.split("expires: ")[1].split("\n")[0]
-            expiration_time = datetime.fromisoformat(expiration_str)
-            if expiration_time < datetime.now():
-                # Expired — move to rejected folder and refuse execution
-                expired_content = content.replace("status: pending", "status: expired")
-                rejected_file = self.rejected_dir / f"EXPIRED_APPROVAL_{approval_id}.md"
-                rejected_file.write_text(expired_content)
-                approved_file.unlink()
-                return False
-        except (IndexError, ValueError):
-            pass  # If no expiration field, proceed (backwards compatibility)
+        expiration_time = self._parse_expiration(content)
+        if expiration_time is not None and expiration_time < datetime.now():
+            # Expired — move to rejected folder and refuse execution
+            expired_content = content.replace("status: pending", "status: expired")
+            rejected_file = self.rejected_dir / f"EXPIRED_APPROVAL_{approval_id}.md"
+            rejected_file.write_text(expired_content)
+            approved_file.unlink()
+            return False
 
         # Extract action details from YAML frontmatter
         lines = content.split('\n')
@@ -265,17 +282,11 @@ Move this file to the /Rejected/ folder.
 
             # Check if expired
             content = file.read_text()
-            try:
-                expiration_str = content.split("expires: ")[1].split("\n")[0]
-                expiration_time = datetime.fromisoformat(expiration_str)
-
-                if expiration_time > datetime.now():
-                    approval_ids.append(approval_id)
-                else:
-                    # Move expired approval to rejected folder
-                    self.move_approval_to_expired(approval_id)
-            except (IndexError, ValueError):
-                # If unable to parse expiration time, consider it valid
+            expiration_time = self._parse_expiration(content)
+            if expiration_time is not None and expiration_time < datetime.now():
+                # Move expired approval to rejected folder
+                self.move_approval_to_expired(approval_id)
+            else:
                 approval_ids.append(approval_id)
 
         return approval_ids

@@ -64,4 +64,4 @@ External Source → Watcher → Needs_Action/ → Brain → Plan/ → Execute �
 - `src/services/odoo_service.py` - Odoo ERP integration
 - `src/services/approval_workflow.py` - HITL approval system
 - `src/services/response_coordinator.py` - Bidirectional communication
-- `src/services/database.py` - SQLite database (silver_tier.db)
+- `src/services/database.py` - SQLite database (elyx.db)

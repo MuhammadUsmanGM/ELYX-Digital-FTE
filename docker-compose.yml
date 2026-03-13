@@ -23,7 +23,7 @@ services:
       - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
       - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
       - WHATSAPP_VERIFY_TOKEN=${WHATSAPP_VERIFY_TOKEN}
-      - DATABASE_URL=sqlite:////app/obsidian_vault/employee_system.db
+      - DATABASE_URL=sqlite:////app/elyx.db
     networks:
       - ai-network
     restart: unless-stopped

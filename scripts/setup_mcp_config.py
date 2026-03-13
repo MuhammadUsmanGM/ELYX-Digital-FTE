@@ -80,7 +80,7 @@ def setup_claude_config():
         try:
             with open(config_file, 'r') as f:
                 config = json.load(f)
-        except:
+        except Exception:
             config = {"mcpServers": {}}
     else:
         config = {"mcpServers": {}}

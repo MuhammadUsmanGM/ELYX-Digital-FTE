@@ -193,8 +193,8 @@ class Orchestrator:
                 self.logger.warning("Odoo Accounting service initialization failed (check credentials)")
 
             # Initialize Briefing Service
-            from src.services.briefing_service import BriefingService
-            self.briefing_service = BriefingService(str(self.vault_path))
+            from src.services.briefing_service import CEOBriefingService
+            self.briefing_service = CEOBriefingService(str(self.vault_path))
             self.last_briefing_date = None
 
             self.platinum_services_initialized = True
@@ -628,7 +628,7 @@ class Orchestrator:
             if self.last_briefing_date != current_date:
                 try:
                     self.logger.info("Scheduled task: Generating Weekly CEO Briefing")
-                    self.briefing_service.generate_weekly_briefing()
+                    self.briefing_service.generate_briefing()
                     self.last_briefing_date = current_date
                 except Exception as e:
                     self.logger.error(f"Error generating scheduled briefing: {e}")

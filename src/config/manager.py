@@ -222,7 +222,7 @@ class ConfigManager:
                 "cors_origins": os.getenv("CORS_ORIGINS", "*").split(","),
             },
             "database": {
-                "url": os.getenv("DATABASE_URL", "sqlite:///silver_tier.db"),
+                "url": os.getenv("DATABASE_URL", "sqlite:///elyx.db"),
                 "pool_size": int(os.getenv("DB_POOL_SIZE", "20")),
                 "pool_overflow": int(os.getenv("DB_POOL_OVERFLOW", "10")),
                 "echo": os.getenv("DB_ECHO", "false").lower() == "true",

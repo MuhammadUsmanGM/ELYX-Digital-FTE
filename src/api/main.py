@@ -19,6 +19,9 @@ from starlette.middleware.base import BaseHTTPMiddleware
 # Database imports for dependency injection
 from sqlalchemy.orm import Session
 from src.services.database import SessionLocal, init_db
+from src.services.task_service import TaskService
+from src.services.preference_service import UserPreferenceService
+from src.services.interaction_service import InteractionService
 from src.utils.rate_limiter import RateLimiter
 
 logger = logging.getLogger(__name__)

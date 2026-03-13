@@ -208,7 +208,7 @@ Thumbs.db
                               cwd=self.vault_path, check=True, capture_output=True, timeout=60)
                 print("[OK] Changes pushed to remote")
                 return True
-            except:
+            except Exception:
                 print(f"[ERROR] Failed to push: {e}")
                 print("[INFO] Make sure you have a remote repository configured")
                 return False

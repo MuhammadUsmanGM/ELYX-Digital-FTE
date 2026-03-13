@@ -60,4 +60,4 @@ RUN adduser --disabled-password --gecos '' appuser && \
 USER appuser
 
 # Run the complete system
-CMD ["python", "run_complete_system.py"]
+CMD ["python", "run_elyx.py"]

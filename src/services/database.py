@@ -200,7 +200,7 @@ class TeamMember(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-def init_db(database_url: str = "sqlite:///silver_tier.db"):
+def init_db(database_url: str = "sqlite:///elyx.db"):
     """
     Initialize the database with all tables
     """

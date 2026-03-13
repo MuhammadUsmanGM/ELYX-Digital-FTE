@@ -57,11 +57,13 @@
     "port": 8000,
     "workers": 4,
     "cors_origins": [
-      "*"
+      "http://localhost:3000",
+      "http://localhost:8080",
+      "http://localhost:8081"
     ]
   },
   "database": {
-    "url": "sqlite:///silver_tier.db",
+    "url": "sqlite:///elyx.db",
     "pool_size": 20,
     "pool_overflow": 10,
     "echo": false

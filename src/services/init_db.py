@@ -18,7 +18,7 @@ def init_database(database_url: str = None):
         database_url: Database connection URL (defaults to environment variable or sqlite)
     """
     if database_url is None:
-        database_url = os.getenv("DATABASE_URL", "sqlite:///silver_tier.db")
+        database_url = os.getenv("DATABASE_URL", "sqlite:///elyx.db")
 
     print(f"Initializing database with URL: {database_url}")
 
@@ -262,7 +262,7 @@ def main():
     print("Starting Silver Tier database initialization...")
 
     # Use DATABASE_URL from environment or default to SQLite
-    database_url = os.getenv("DATABASE_URL", "sqlite:///silver_tier.db")
+    database_url = os.getenv("DATABASE_URL", "sqlite:///elyx.db")
 
     try:
         init_database(database_url)

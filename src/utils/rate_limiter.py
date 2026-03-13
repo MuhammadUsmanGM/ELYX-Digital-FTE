@@ -61,8 +61,12 @@ class RateLimiter:
 
     def wait_if_needed(self, service: str) -> float:
         """
-        Wait if needed to respect rate limits.
-        Calculates wait time under lock, then sleeps outside the lock (#65).
+        Wait if rate-limited, then record the request atomically.
+
+        Calculates wait time under lock, sleeps outside, then re-acquires
+        the lock to record the request — avoiding the TOCTOU race where
+        is_allowed() and the actual recording happened in separate critical
+        sections.
 
         Args:
             service: Name of the service
@@ -70,26 +74,35 @@ class RateLimiter:
         Returns:
             Number of seconds waited, or 0 if no wait was needed
         """
-        if self.is_allowed(service):
-            return 0.0
+        while True:
+            with self.lock:
+                if service not in self.limits:
+                    return 0.0
 
-        wait_time = 0.0
-        with self.lock:
-            if service not in self.limits or not self.request_times[service]:
-                return 0.0
+                limit_config = self.limits[service]
+                max_requests = limit_config['max_requests']
+                time_window = limit_config['time_window']
+                current_time = time.time()
 
-            limit_config = self.limits[service]
-            time_window = limit_config['time_window']
+                # Clean up old request times
+                while (self.request_times[service] and
+                       current_time - self.request_times[service][0] > time_window):
+                    self.request_times[service].popleft()
 
-            earliest_request = self.request_times[service][0]
-            wait_time = time_window - (time.time() - earliest_request)
+                if len(self.request_times[service]) < max_requests:
+                    # Slot available — record and return immediately
+                    self.request_times[service].append(current_time)
+                    return 0.0
 
-        # Sleep OUTSIDE the lock so other threads aren't blocked
-        if wait_time > 0:
-            time.sleep(wait_time)
-            return wait_time
+                # Compute how long until the oldest request expires
+                earliest_request = self.request_times[service][0]
+                wait_time = time_window - (current_time - earliest_request)
 
-        return 0.0
+            # Sleep OUTSIDE the lock so other threads aren't blocked
+            if wait_time > 0:
+                time.sleep(wait_time)
+                # Loop back to re-check and atomically record under lock
+            # If wait_time <= 0 the window just expired; loop will succeed
 
     def get_remaining_quota(self, service: str) -> int:
         """
@@ -165,10 +178,13 @@ class ServiceRateLimiters:
         for name in ('gmail', 'linkedin', 'whatsapp', 'facebook', 'twitter', 'instagram'):
             if svc == name:
                 return getattr(self, name)
-        # Default conservative limits
-        default = RateLimiter()
-        default.set_limit(service, max_requests=10, time_window=60)
-        return default
+        # Create and persist a default limiter so the same instance is
+        # returned on every call — otherwise limits are never enforced.
+        if not hasattr(self, f'_dynamic_{svc}'):
+            default = RateLimiter()
+            default.set_limit(svc, max_requests=10, time_window=60)
+            setattr(self, f'_dynamic_{svc}', default)
+        return getattr(self, f'_dynamic_{svc}')
 
 
 # Global instance for easy access

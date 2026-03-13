@@ -4,7 +4,7 @@
 - **Python**: 3.13+, type hints required for function signatures
 - **JavaScript/Node**: ES modules, v24+ LTS
 - **FastAPI**: For all API endpoints
-- **SQLAlchemy**: For database operations (SQLite via `silver_tier.db`)
+- **SQLAlchemy**: For database operations (SQLite via `elyx.db`)
 
 ## Code Style
 - Keep functions small and focused (max ~50 lines)

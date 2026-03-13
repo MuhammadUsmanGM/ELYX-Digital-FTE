@@ -246,7 +246,7 @@ class PredictiveAnalyticsService:
                         return pref_value["value"]
                     elif isinstance(pref_value, str):
                         return pref_value
-                except:
+                except Exception:
                     continue
 
         return category
@@ -270,7 +270,7 @@ class PredictiveAnalyticsService:
                         return pref_value["value"]
                     elif isinstance(pref_value, str):
                         return pref_value
-                except:
+                except Exception:
                     continue
 
         return priority
@@ -397,7 +397,7 @@ class PredictiveAnalyticsService:
                     elif isinstance(pref_value, str):
                         if 'communication' in pref.preference_key:
                             style['tone'] = pref_value
-                except:
+                except Exception:
                     continue
 
         # Analyze from interactions

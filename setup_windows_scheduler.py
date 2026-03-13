@@ -76,7 +76,7 @@ def check_prerequisites():
             print(f"  {Colors.OKGREEN}[OK]{Colors.ENDC} Running as Administrator")
         else:
             print(f"  {Colors.WARNING}[!]{Colors.ENDC} Not running as Administrator (some features may be limited)")
-    except:
+    except Exception:
         print(f"  {Colors.WARNING}[!]{Colors.ENDC} Could not determine admin status")
     
     return True

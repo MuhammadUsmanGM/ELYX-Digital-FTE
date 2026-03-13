@@ -182,17 +182,32 @@ class SettingsAPI:
             }
 
 
+_ALLOWED_ORIGINS = os.getenv(
+    "ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:8080,http://localhost:8081"
+).split(",")
+
+
 class SettingsAPIHandler(BaseHTTPRequestHandler):
     """HTTP request handler for Settings API"""
-    
+
     def __init__(self, *args, settings_api: SettingsAPI = None, **kwargs):
         self.settings_api = settings_api or SettingsAPI()
         super().__init__(*args, **kwargs)
-    
+
+    def _get_cors_origin(self):
+        """Return the request Origin if it is in the allowed list, else empty."""
+        origin = self.headers.get('Origin', '')
+        if origin in _ALLOWED_ORIGINS:
+            return origin
+        return ''
+
     def _set_headers(self, status=200, content_type="application/json"):
         self.send_response(status)
         self.send_header('Content-Type', content_type)
-        self.send_header('Access-Control-Allow-Origin', '*')
+        cors_origin = self._get_cors_origin()
+        if cors_origin:
+            self.send_header('Access-Control-Allow-Origin', cors_origin)
+            self.send_header('Vary', 'Origin')
         self.send_header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS')
         self.send_header('Access-Control-Allow-Headers', 'Content-Type')
         self.end_headers()

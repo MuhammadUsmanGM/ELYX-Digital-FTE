@@ -217,7 +217,7 @@ class CEOBriefingService:
                         'issue': f'{len(overdue)} overdue invoices totaling ${total_overdue:.2f}',
                         'severity': 'high'
                     })
-            except:
+            except Exception:
                 pass
         
         return bottlenecks
