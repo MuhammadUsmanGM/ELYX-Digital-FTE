@@ -334,41 +334,69 @@ Move this file to /Rejected folder.
 
     def _should_respond_to_task(self, task) -> bool:
         """
-        Determine if a response should be sent back to the original sender
+        Determine if a response should be sent back to the original sender.
 
-        Args:
-            task: The task to evaluate
+        Uses two checks:
+        1. Frontmatter opt-out: if ``auto_reply: false`` is set, never reply.
+        2. Content heuristic: look for explicit request *phrases* (not bare
+           question words like "what" or "how" which appear in almost every
+           email).
 
         Returns:
             True if a response should be sent, False otherwise
         """
-        # Check if the original message indicated it expects a response
-        # This could be based on the content, message type, or other indicators
+        # ── Frontmatter opt-out ──────────────────────────────────────────
+        auto_reply = task.frontmatter.get("auto_reply")
+        if auto_reply is not None and str(auto_reply).lower() in ("false", "no", "0"):
+            return False
+
+        # Skip known no-reply / notification senders
+        sender = (task.frontmatter.get("from") or "").lower()
+        no_reply_patterns = [
+            "noreply", "no-reply", "no_reply",
+            "notifications@", "mailer-daemon",
+            "donotreply", "do-not-reply",
+            "newsletter", "digest@",
+        ]
+        if any(pat in sender for pat in no_reply_patterns):
+            return False
+
         content_lower = task.content.lower()
 
-        # Keywords that suggest a response is expected
-        response_indicators = [
-            "please",
+        # ── Explicit request phrases (multi-word to reduce false positives) ──
+        request_phrases = [
             "can you",
             "could you",
             "would you",
-            "analyze",
-            "summarize",
-            "create",
-            "generate",
-            "send",
-            "provide",
+            "please help",
+            "please send",
+            "please provide",
+            "please analyze",
+            "please review",
+            "please create",
+            "please generate",
+            "please summarize",
             "tell me",
-            "help",
-            "suggest",
-            "what",
-            "how",
-            "when",
-            "where",
-            "why",
+            "let me know",
+            "i need",
+            "i would like",
+            "i'd like",
+            "looking forward to your",
+            "waiting for your",
+            "respond",
+            "get back to me",
+            "your thoughts",
+            "your feedback",
+            "your input",
+            "your opinion",
         ]
 
-        return any(indicator in content_lower for indicator in response_indicators)
+        # ── Direct questions ending with '?' ─────────────────────────────
+        has_question = "?" in task.content
+
+        return has_question or any(
+            phrase in content_lower for phrase in request_phrases
+        )
 
     def _generate_response_content(self, task) -> str:
         """
@@ -514,15 +542,20 @@ subject: Response to your request
         return s
 
     def _detect_email_reply(self, task) -> dict:
-        """Detect if this task is an email that needs a reply."""
+        """Detect if this task is an email that needs a reply.
+
+        Only triggers for emails that actually expect a response
+        (checked via _should_respond_to_task) so that informational
+        or notification-only emails are not auto-replied to.
+        """
         task_type = task.frontmatter.get("type", "")
         if "email" in task_type:
             sender = task.frontmatter.get("from", "")
             subject = task.frontmatter.get("subject", "")
-            if sender:
+            if sender and self._should_respond_to_task(task):
                 response = self._generate_response_content(task)
                 return {"to": sender, "subject": subject, "message": response}
-        # Also detect email-sending requests in content
+        # Also detect explicit email-sending requests in content
         content_lower = task.content.lower()
         if "send" in content_lower and (
             "email" in content_lower or "mail" in content_lower

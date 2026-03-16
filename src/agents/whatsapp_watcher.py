@@ -43,6 +43,13 @@ class WhatsAppWatcher(BaseWatcher):
         self._page.goto('https://web.whatsapp.com', wait_until='domcontentloaded', timeout=90000)
         self._ensure_logged_in()
 
+        # Register with shared browser registry so the sender reuses this browser
+        try:
+            from src.services.browser_registry import register
+            register(str(self.session_path), self._playwright, self._browser, self._page)
+        except Exception as e:
+            self.logger.warning(f"Could not register browser in registry: {e}")
+
     def _is_whatsapp_logged_in(self, timeout: int = 15000) -> bool:
         """Try multiple selectors to detect if WhatsApp is logged in."""
         selectors = [
@@ -87,6 +94,12 @@ class WhatsAppWatcher(BaseWatcher):
             return False
 
     def _close_browser(self):
+        # Unregister from shared browser registry before closing
+        try:
+            from src.services.browser_registry import unregister
+            unregister(str(self.session_path))
+        except Exception:
+            pass
         try:
             if self._browser:
                 self._browser.close()

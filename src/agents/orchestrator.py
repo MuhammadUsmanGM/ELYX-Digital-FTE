@@ -109,6 +109,10 @@ class Orchestrator:
 
         # Response sending handled directly by processor via unified sender
 
+        # Ralph Loop singleton guard
+        self._ralph_lock = threading.Lock()
+        self._ralph_running = False
+
         # Initialize Odoo Accounting Service
         self.odoo_service = None
 
@@ -429,17 +433,38 @@ class Orchestrator:
         # Check if we should use the Autonomous CLI Loop (Hackathon Mode)
         if self.config.get("integrations", {}).get("use_claude_cli", False):
             self.logger.info(f"Using [{brain_label}] CLI (Autonomous Loop Mode)")
+
+            # Singleton guard: only one Ralph Loop instance at a time
+            if not self._ralph_lock.acquire(blocking=False):
+                self.logger.info("Ralph Loop already running, skipping duplicate trigger")
+                return
+
             try:
-                # Initialize and start the Ralph Loop in a separate thread
-                # to avoid blocking the Observer/file-watcher thread
-                loop = RalphLoop(vault_path=str(self.vault_path))
-                ralph_thread = threading.Thread(target=loop.start, daemon=True)
+                if self._ralph_running:
+                    self.logger.info("Ralph Loop already running (flag), skipping")
+                    self._ralph_lock.release()
+                    return
+
+                self._ralph_running = True
+                self._ralph_lock.release()
+
+                def _run_ralph():
+                    try:
+                        loop = RalphLoop(vault_path=str(self.vault_path))
+                        loop.start()
+                    except Exception as e:
+                        self.logger.error(f"Error in [{brain_label}] CLI Loop: {e}")
+                    finally:
+                        self._ralph_running = False
+
+                ralph_thread = threading.Thread(target=_run_ralph, daemon=True)
                 ralph_thread.start()
 
                 # Update dashboard to reflect CLI processing
                 self.processor.update_dashboard()
                 return
             except Exception as e:
+                self._ralph_running = False
                 self.logger.error(f"Error in [{brain_label}] CLI Loop: {e}")
                 self.logger.info("Falling back to API TaskProcessor...")
 
@@ -473,22 +498,100 @@ class Orchestrator:
             log_activity("ERROR", f"Error processing tasks: {e}", str(self.vault_path))
 
     def _handle_responses_after_processing(self, processed_count: int):
-        """Move any leftover RESPONSE_*.md files to Done/ (transitional cleanup)."""
+        """Send any RESPONSE_*.md files via the appropriate channel, then archive to Done/."""
         try:
             response_dir = self.vault_path / "Responses"
             if not response_dir.exists():
                 return
             response_files = list(response_dir.glob("RESPONSE_*.md"))
+            if not response_files:
+                return
+
             done_dir = self.vault_path / "Done"
             done_dir.mkdir(parents=True, exist_ok=True)
+
             for rf in response_files:
                 try:
-                    rf.rename(done_dir / rf.name)
-                    self.logger.info(f"Moved leftover response file to Done: {rf.name}")
+                    content = rf.read_text(encoding="utf-8")
+                    meta, body = self._parse_response_file(content)
+
+                    channel = (meta.get("channel") or "").upper()
+                    recipient = (meta.get("recipient") or "").strip()
+                    subject = meta.get("subject", "")
+
+                    sent = False
+                    if channel and recipient:
+                        sent = self._deliver_response(channel, recipient, body, subject)
+
+                    if sent:
+                        log_activity("RESPONSE_SENT",
+                                     f"Sent {channel} response to {recipient} ({rf.name})",
+                                     str(self.vault_path))
+                    else:
+                        self.logger.warning(
+                            f"Could not deliver response {rf.name} "
+                            f"(channel={channel}, recipient={recipient}). Archiving as unsent."
+                        )
+
+                    # Archive to Done/ regardless (avoid infinite retry)
+                    target = done_dir / rf.name
+                    if target.exists():
+                        import time as _t
+                        target = done_dir / f"{rf.stem}_{int(_t.time())}{rf.suffix}"
+                    rf.rename(target)
+
                 except Exception as e:
-                    self.logger.warning(f"Could not move response file {rf.name}: {e}")
+                    self.logger.warning(f"Error processing response file {rf.name}: {e}")
         except Exception as e:
-            self.logger.error(f"Error in response cleanup: {e}")
+            self.logger.error(f"Error in response handling: {e}")
+
+    @staticmethod
+    def _parse_response_file(content: str) -> tuple:
+        """Extract YAML frontmatter dict and body text from a response file."""
+        import yaml as _yaml
+        meta = {}
+        body = content
+        lines = content.split("\n")
+        if lines and lines[0].strip() == "---":
+            for i in range(1, len(lines)):
+                if lines[i].strip() == "---":
+                    try:
+                        meta = _yaml.safe_load("\n".join(lines[1:i])) or {}
+                    except Exception:
+                        pass
+                    body = "\n".join(lines[i + 1:]).strip()
+                    break
+        return meta, body
+
+    def _deliver_response(self, channel: str, recipient: str, body: str, subject: str = "") -> bool:
+        """Attempt to send a response via the unified sender. Returns True on success."""
+        from src.services.direct_social_sender import send_message, send_gmail_via_browser, send_gmail_via_api
+
+        channel = channel.upper()
+        try:
+            if channel == "EMAIL":
+                # Try browser first, then API — same fallback chain as processor
+                result = send_gmail_via_browser(to=recipient, subject=subject, body=body)
+                if not result.get("success"):
+                    result = send_gmail_via_api(to=recipient, subject=subject, body=body)
+            elif channel == "WHATSAPP":
+                result = send_message("whatsapp", recipient, body)
+            elif channel == "LINKEDIN":
+                result = send_message("linkedin-dm", recipient, body)
+            elif channel == "FACEBOOK":
+                result = send_message("facebook-dm", recipient, body)
+            elif channel == "TWITTER":
+                result = send_message("twitter-dm", recipient, body)
+            elif channel == "INSTAGRAM":
+                result = send_message("instagram-dm", recipient, body)
+            else:
+                self.logger.warning(f"Unknown response channel: {channel}")
+                return False
+
+            return bool(result.get("success"))
+        except Exception as e:
+            self.logger.error(f"Failed to deliver {channel} response to {recipient}: {e}")
+            return False
 
     def _apply_silver_tier_features(self, processed_count: int):
         """
@@ -672,7 +775,7 @@ if __name__ == "__main__":
     # Create Company_Handbook.md if it doesn't exist
     handbook_path = vault_root / "Company_Handbook.md"
     if not handbook_path.exists():
-        from utils.handbook_parser import HandbookParser
+        from src.utils.handbook_parser import HandbookParser
         parser = HandbookParser(str(handbook_path))
 
     # Start the orchestrator

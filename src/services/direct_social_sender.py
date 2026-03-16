@@ -50,8 +50,35 @@ except ImportError:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
+def _try_registry(session_path: str):
+    """
+    Check if a watcher already owns a browser for this session path.
+    Returns (page, release_fn) or (None, None).
+    """
+    try:
+        from src.services.browser_registry import acquire_page
+        return acquire_page(session_path)
+    except Exception:
+        return None, None
+
+
 def _launch_browser(session_path: str, headless: bool = False):
-    """Launch a persistent browser context with anti-detection flags."""
+    """
+    Launch a persistent browser context with anti-detection flags.
+
+    If a watcher already holds a browser open for this session_path,
+    returns a borrowed reference instead of launching a second instance.
+    Callers receive (p, browser, page) for a new browser or
+    (None, None, page) for a borrowed one.  _safe_close handles both.
+    """
+    # Try to borrow from a running watcher first
+    page, release_fn = _try_registry(session_path)
+    if page is not None:
+        logger.info(f"Reusing watcher browser for {session_path}")
+        # Stash the release callback on the page object so _safe_close can call it
+        page._sender_release_fn = release_fn  # type: ignore[attr-defined]
+        return None, None, page
+
     p = sync_playwright().start()
     Path(session_path).mkdir(parents=True, exist_ok=True)
     browser = p.chromium.launch_persistent_context(
@@ -100,8 +127,22 @@ def _find_element(
     return None
 
 
-def _safe_close(p, browser):
-    """Close browser and playwright without raising."""
+def _safe_close(p, browser, page=None):
+    """
+    Close browser and playwright without raising.
+    If the page was borrowed from a watcher (p is None, browser is None),
+    just release the registry lock — do NOT close the browser.
+    """
+    if p is None and browser is None:
+        # Borrowed from watcher — release the lock
+        if page is not None:
+            release_fn = getattr(page, "_sender_release_fn", None)
+            if release_fn:
+                try:
+                    release_fn()
+                except Exception:
+                    pass
+        return
     try:
         browser.close()
     except Exception:
@@ -248,8 +289,7 @@ def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str =
         logger.exception("Gmail send failed")
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 def send_gmail_via_api(to: str, subject: str, body: str):
@@ -370,8 +410,7 @@ def send_linkedin_post(message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 def send_linkedin_dm(recipient_name: str, message: str, session_path: str = None):
@@ -463,8 +502,7 @@ def send_linkedin_dm(recipient_name: str, message: str, session_path: str = None
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -545,8 +583,7 @@ def send_facebook_post(message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 def send_facebook_dm(recipient: str, message: str, session_path: str = None):
@@ -623,8 +660,7 @@ def send_facebook_dm(recipient: str, message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -686,8 +722,7 @@ def send_tweet(message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 def send_twitter_dm(username: str, message: str, session_path: str = None):
@@ -802,8 +837,7 @@ def send_twitter_dm(username: str, message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -922,8 +956,7 @@ def send_instagram_post(message: str, image_path: str = None, session_path: str 
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 def send_instagram_dm(recipient: str, message: str, session_path: str = None):
@@ -1037,8 +1070,7 @@ def send_instagram_dm(recipient: str, message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1152,8 +1184,7 @@ def send_whatsapp_message(phone: str, message: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1188,6 +1219,7 @@ def send_message(platform: str, recipient: str, content: str, **kwargs) -> dict:
         "facebook-post": lambda: send_facebook_post(content),
         "facebook-dm": lambda: send_facebook_dm(recipient, content),
         "twitter": lambda: send_tweet(content),
+        "twitter-post": lambda: send_tweet(content),
         "tweet": lambda: send_tweet(content),
         "twitter-dm": lambda: send_twitter_dm(recipient, content),
         "whatsapp": lambda: send_whatsapp_message(recipient, content),
@@ -1261,8 +1293,7 @@ def verify_session(platform: str, session_path: str = None):
     except Exception as e:
         return {"success": False, "error": str(e)}
     finally:
-        if p:
-            _safe_close(p, browser)
+        _safe_close(p, browser, page)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

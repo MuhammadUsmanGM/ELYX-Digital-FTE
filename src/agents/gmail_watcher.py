@@ -93,6 +93,15 @@ class GmailWatcher(BaseWatcher):
             snippet = msg.get('snippet', '')
             thread_id = msg.get('threadId', 'unknown')
 
+            # Detect no-reply / notification senders
+            sender_lower = sender.lower()
+            no_reply_signals = [
+                'noreply', 'no-reply', 'no_reply', 'donotreply',
+                'do-not-reply', 'notifications@', 'mailer-daemon',
+                'newsletter', 'digest@',
+            ]
+            auto_reply = 'false' if any(s in sender_lower for s in no_reply_signals) else 'true'
+
             content = f'''---
 type: email
 from: "{sender}"
@@ -101,6 +110,7 @@ received: "{date_sent}"
 detected_at: "{datetime.now().isoformat()}"
 priority: high
 status: pending
+auto_reply: {auto_reply}
 message_id: "{message['id']}"
 thread_id: "{thread_id}"
 ---
