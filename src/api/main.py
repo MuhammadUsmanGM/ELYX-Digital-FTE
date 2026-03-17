@@ -93,6 +93,7 @@ from .routes.approval import approval_router
 from .routes.ai import ai_router
 from .routes.enterprise import enterprise_router
 from .routes.communication import communication_router
+from .routes.finance import finance_router
 
 app.include_router(dashboard_router, prefix="/api", tags=["dashboard"])
 app.include_router(task_router, prefix="/api", tags=["tasks"])
@@ -100,6 +101,7 @@ app.include_router(approval_router, prefix="/api", tags=["approvals"])
 app.include_router(ai_router, prefix="/api", tags=["ai"])
 app.include_router(enterprise_router, prefix="/api", tags=["enterprise"])
 app.include_router(communication_router, prefix="/api", tags=["communication"])
+app.include_router(finance_router, prefix="/api", tags=["finance"])
 
 try:
     from .routes.users import router as users_router

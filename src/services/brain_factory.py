@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import logging
+import shutil
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 
@@ -29,6 +30,19 @@ class BrainAdapter:
         """Build the full subprocess command list for this brain."""
         cmd = [self.command] + self.args + [prompt]
         return cmd
+
+    def is_available(self) -> bool:
+        """
+        Return True if the configured command is available on PATH.
+        If `command` is an absolute/relative path, it must exist.
+        """
+        try:
+            p = Path(self.command)
+            if p.is_absolute() or str(p).endswith((".exe", ".cmd", ".bat")) or ("/" in self.command) or ("\\" in self.command):
+                return p.exists()
+        except Exception:
+            pass
+        return shutil.which(self.command) is not None
 
     def process(self, prompt: str, timeout: int = 300) -> Dict[str, Any]:
         """
@@ -107,7 +121,7 @@ class BrainFactory:
         },
         "codex": {
             "command": "codex",
-            "args": ["exec"],
+            "args": ["exec", "-p"],
             "description": "OpenAI Codex CLI - Code generation and refactoring"
         }
     }
@@ -159,7 +173,28 @@ class BrainFactory:
         if self.active_brain_name not in self.brains:
             logger.warning(f"Active brain '{self.active_brain_name}' not found. Falling back to 'claude'.")
             self.active_brain_name = "claude"
-        return self.brains[self.active_brain_name]
+
+        active = self.brains[self.active_brain_name]
+        if active.is_available():
+            return active
+
+        # If the selected brain isn't installed, fall back to the first available option.
+        preferred_order = ["claude", "qwen", "gemini", "codex"]
+        for name in preferred_order:
+            adapter = self.brains.get(name)
+            if adapter and adapter.is_available():
+                logger.warning(
+                    f"Active brain '{self.active_brain_name}' command '{active.command}' not available. "
+                    f"Falling back to '{name}'."
+                )
+                self.active_brain_name = name
+                return adapter
+
+        logger.warning(
+            f"No configured brains appear to be installed (active '{self.active_brain_name}'). "
+            f"Continuing with '{self.active_brain_name}' and expecting runtime failure."
+        )
+        return active
 
     def get_brain(self, name: str) -> Optional[BrainAdapter]:
         """Get a specific brain adapter by name."""

@@ -19,6 +19,17 @@ logger = logging.getLogger(__name__)
 class MCPClient:
     """Client for communicating with MCP servers"""
     
+    @staticmethod
+    def _default_http_url_for_server(server: str) -> str:
+        host = os.getenv("MCP_HOST", "localhost")
+        if server == "email":
+            port = int(os.getenv("EMAIL_MCP_PORT", "8090"))
+        elif server == "browser":
+            port = int(os.getenv("BROWSER_MCP_PORT", "8091"))
+        else:
+            port = int(os.getenv("MCP_HTTP_PORT", "8090"))
+        return f"http://{host}:{port}/rpc"
+
     def __init__(self, server: str, transport: str = "stdio", 
                  server_path: str = None, http_url: str = None,
                  env: Optional[Dict] = None):
@@ -35,7 +46,7 @@ class MCPClient:
         self.server = server
         self.transport = transport
         self.server_path = server_path
-        self.http_url = http_url or "http://localhost:8080/rpc"
+        self.http_url = http_url or self._default_http_url_for_server(server)
         self.env = env or {}
         
         # Auto-detect server path if not provided

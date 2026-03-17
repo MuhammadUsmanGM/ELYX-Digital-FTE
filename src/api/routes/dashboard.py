@@ -1,6 +1,9 @@
 """
 Dashboard API routes for Silver Tier Personal AI Employee System
 """
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from typing import Optional, List
@@ -19,6 +22,7 @@ from ..api_models import (
     UserPreferenceResponse,
     UserPreferenceCreateRequest
 )
+from ...config.manager import ConfigManager
 
 # Create router for dashboard endpoints
 dashboard_router = APIRouter(prefix="/dashboard", tags=["dashboard"])
@@ -302,3 +306,46 @@ async def update_user_preference(
 
 
 # Additional dashboard endpoints can be added here
+
+
+@dashboard_router.get("/activity", response_model=dict)
+async def get_recent_activity(
+    limit: int = Query(20, ge=1, le=200, description="Max number of activities"),
+):
+    """
+    Return recent activity events from the vault audit trail.
+
+    The audit trail is newline-delimited JSON at `<vault_path>/Logs/audit_trail.json`.
+    """
+    cfg = ConfigManager().config
+    vault_path = cfg.get("vault_path", "obsidian_vault")
+    audit_file = Path(vault_path) / "Logs" / "audit_trail.json"
+
+    if not audit_file.exists():
+        return {"source": "none", "activities": []}
+
+    activities: List[dict] = []
+    try:
+        lines = audit_file.read_text(encoding="utf-8", errors="ignore").splitlines()
+        for line in reversed(lines):
+            if not line.strip():
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            activities.append(
+                {
+                    "timestamp": entry.get("timestamp"),
+                    "action_type": entry.get("action_type"),
+                    "message": entry.get("message"),
+                    "actor": entry.get("actor"),
+                }
+            )
+            if len(activities) >= limit:
+                break
+    except Exception:
+        return {"source": "error", "activities": []}
+
+    return {"source": "audit_trail", "activities": activities}

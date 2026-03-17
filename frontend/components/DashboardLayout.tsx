@@ -30,7 +30,7 @@ import {
   Inbox,
   FileCheck
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { DashboardData } from "@/lib/types";
 import { fetchDashboardData, fetchOnboardingStatus } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
@@ -48,6 +48,7 @@ export default function SidebarLayout({
   const [data, setData] = useState<DashboardData | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
+  const refreshInFlight = useRef(false);
   const router = useRouter();
 
   const sidebarItems = [
@@ -87,15 +88,34 @@ export default function SidebarLayout({
 
     const loadData = async () => {
       try {
+        if (refreshInFlight.current) return;
+        refreshInFlight.current = true;
         const dashData = await fetchDashboardData();
         setData(dashData);
       } catch (error) {
         console.error("Layout data fetch error:", error);
+      } finally {
+        refreshInFlight.current = false;
       }
     };
     loadData();
-    const interval = setInterval(loadData, 30000);
-    return () => clearInterval(interval);
+
+    const maybeAutoRefresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      loadData();
+    };
+
+    const interval = setInterval(maybeAutoRefresh, 60000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") maybeAutoRefresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, [pathname, router]);
 
   const handleSignOut = async () => {

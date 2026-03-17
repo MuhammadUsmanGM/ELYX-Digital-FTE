@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { 
   Activity, 
   BrainCircuit, 
@@ -23,32 +23,48 @@ import {
   Fingerprint,
   AlertTriangle
 } from "lucide-react";
-import { fetchDashboardData, fetchTasks, fetchApprovals } from "@/lib/api";
+import { fetchActivityLog, fetchApprovals, fetchDashboardData, fetchTasks } from "@/lib/api";
 import { DashboardData, Task, ApprovalRequest } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "react-hot-toast";
 import LoadingDots from "@/components/LoadingDots";
 import { motion, AnimatePresence } from "framer-motion";
 
+type ActivityItem = {
+  timestamp: string;
+  action_type: string;
+  message: string;
+  actor?: string;
+};
+
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const refreshInFlight = useRef(false);
 
-  const loadDashboard = async (isRefresh = false) => {
+  const loadDashboard = async (
+    { setIsRefreshing = false, showToast = false }: { setIsRefreshing?: boolean; showToast?: boolean } = {}
+  ) => {
     try {
-      if (isRefresh) setRefreshing(true);
-      const [dashData, taskList, approvalList] = await Promise.all([
+      if (refreshInFlight.current) return;
+      refreshInFlight.current = true;
+
+      if (setIsRefreshing) setRefreshing(true);
+      const [dashData, taskList, approvalList, activityLog] = await Promise.all([
         fetchDashboardData(),
         fetchTasks(),
-        fetchApprovals()
+        fetchApprovals(),
+        fetchActivityLog(12),
       ]);
       setData(dashData);
       setTasks(taskList);
       setApprovals(approvalList);
-      if (isRefresh) {
+      setActivity(activityLog);
+      if (showToast) {
         toast.success("System Core Synchronized", {
           id: 'sync-success',
           icon: '⚡',
@@ -60,13 +76,29 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
       setRefreshing(false);
+      refreshInFlight.current = false;
     }
   };
 
   useEffect(() => {
     loadDashboard();
-    const interval = setInterval(() => loadDashboard(true), 15000);
-    return () => clearInterval(interval);
+
+    const maybeAutoRefresh = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+      loadDashboard({ setIsRefreshing: true, showToast: false });
+    };
+
+    const interval = setInterval(maybeAutoRefresh, 60000);
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") maybeAutoRefresh();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
   }, []);
 
   const containerVariants = {
@@ -82,6 +114,20 @@ export default function DashboardPage() {
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 }
+  };
+
+  const getLogStatus = (actionType: string) => {
+    const t = (actionType || "").toUpperCase();
+    if (t.includes("ERROR") || t.includes("FAILED")) return "warning";
+    if (t.includes("APPROVAL") || t.includes("GATE")) return "caution";
+    if (t.includes("SENT") || t.includes("COMPLETED") || t.includes("INITIALIZED")) return "success";
+    return "info";
+  };
+
+  const formatLogTime = (iso: string) => {
+    const ts = new Date(iso);
+    if (Number.isNaN(ts.getTime())) return "—";
+    return ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
   };
 
   return (
@@ -134,7 +180,7 @@ export default function DashboardPage() {
              <motion.button 
                whileHover={{ scale: 1.02, translateY: -2 }}
                whileTap={{ scale: 0.98 }}
-               onClick={() => loadDashboard(true)}
+               onClick={() => loadDashboard({ setIsRefreshing: true, showToast: true })}
                disabled={refreshing}
                className="relative overflow-hidden group btn-premium-primary !px-8 !py-5 shadow-2xl shadow-primary/20 min-w-[240px] border border-white/10"
              >
@@ -172,7 +218,7 @@ export default function DashboardPage() {
               </p>
             </div>
             <button
-              onClick={() => loadDashboard(true)}
+              onClick={() => loadDashboard({ setIsRefreshing: true, showToast: true })}
               className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:bg-amber-500/20 transition-all"
             >
               Retry
@@ -321,34 +367,22 @@ export default function DashboardPage() {
                  ) : (
                     <div className="relative pl-6 space-y-2">
                        <div className="absolute left-3 top-0 bottom-0 w-px bg-gradient-to-b from-primary/40 via-white/5 to-transparent" />
-                       <LogItem 
-                        type="SYSTEM" 
-                        title="Drafting response to Client A" 
-                        desc="Synthesizing operational context from Company_Handbook.md for high-priority reply." 
-                        time="Active" 
-                        status="success"
-                      />
-                       <LogItem 
-                        type="SYSTEM" 
-                        title="Scanning Action Items" 
-                        desc="Synchronizing local business logic states with system cache. 2 new tasks identified." 
-                        time="01m ago" 
-                        status="info"
-                      />
-                      <LogItem 
-                        type="ODOO" 
-                        title="Financial Sync Completed" 
-                        desc="Verified 14 pending invoices via JSON-RPC. Cross-referencing with /Invoices/ system storage." 
-                        time="12m ago" 
-                        status="success"
-                      />
-                      <LogItem 
-                        type="SYSTEM" 
-                        title="Permission Gate Triggered" 
-                        desc="Invoice over $5,000 detected. Moved to /Pending_Approval for human oversight." 
-                        time="42m ago" 
-                        status="warning"
-                      />
+                       {activity.length === 0 ? (
+                         <div className="py-10 text-center text-xs text-slate-500 font-bold uppercase tracking-[0.3em] opacity-70">
+                           No activity yet
+                         </div>
+                       ) : (
+                         activity.map((a, idx) => (
+                           <LogItem
+                             key={`${a.timestamp}-${idx}`}
+                             type={a.action_type || "SYSTEM"}
+                             title={a.message || "—"}
+                             desc={a.actor ? `Actor: ${a.actor}` : "Actor: elyx_ai_employee"}
+                             time={formatLogTime(a.timestamp)}
+                             status={getLogStatus(a.action_type)}
+                           />
+                         ))
+                       )}
                     </div>
                  )}
                </div>

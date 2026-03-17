@@ -79,7 +79,38 @@ class SettingsAPI:
         self.env_path = Path(env_path)
         self.config_path = Path(config_path)
         self.load_settings()
-    
+
+    def _set_config_path_value(self, path: str, value: any) -> None:
+        """Set a nested config.json value using dot-path syntax."""
+        parts = [p for p in path.split(".") if p]
+        d = self.config
+        for p in parts[:-1]:
+            if p not in d or not isinstance(d[p], dict):
+                d[p] = {}
+            d = d[p]
+        d[parts[-1]] = value
+
+    def _persist_feature_flag_to_config(self, flag_name: str, value: bool) -> None:
+        """
+        Mirror feature flags into config.json where the runtime orchestrator reads them.
+        This allows live toggles (via Settings API) to be picked up without a full restart
+        once the orchestrator reloads config.json.
+        """
+        mapping = {
+            "ENABLE_ANALYTICS": ["silver_tier_features.enable_analytics"],
+            "ENABLE_LEARNING": ["silver_tier_features.enable_learning"],
+            "ENABLE_CALENDAR_INTEGRATION": [
+                "silver_tier_features.enable_calendar_integration",
+                "integrations.calendar_enabled",
+            ],
+            "ENABLE_AUDIT_LOGGING": ["audit.enable_audit_logging"],
+            "ENABLE_ACTION_SIGNING": ["audit.enable_action_signing"],
+            "ENABLE_WINDOWS_SCHEDULER": ["windows_scheduler.enabled"],
+        }
+
+        for config_path in mapping.get(flag_name, []):
+            self._set_config_path_value(config_path, bool(value))
+
     def load_settings(self):
         """Load current settings from .env and config.json"""
         self.env_vars = {}
@@ -137,6 +168,10 @@ class SettingsAPI:
         # Save to .env
         self.env_vars[flag_name] = str(value).upper()
         self.save_env()
+
+        # Also mirror into config.json for runtime consumers
+        self._persist_feature_flag_to_config(flag_name, value)
+        self.save_config()
         
         return {
             "success": True,

@@ -93,9 +93,20 @@ class Orchestrator:
         self.logger = setup_logger("orchestrator.main")
 
         # Initialize Silver Tier configuration
-        from src.config.manager import ConfigManager, get_config
-        config_manager = ConfigManager()
-        self.config = config_manager.config
+        from src.config.manager import ConfigManager
+        self.config_manager = ConfigManager()
+        self.config = self.config_manager.config
+        self._config_watch_files = [
+            project_root / "config.json",
+            project_root / ".env",
+        ]
+        self._config_watch_mtime = {}
+        for p in self._config_watch_files:
+            try:
+                self._config_watch_mtime[str(p)] = p.stat().st_mtime
+            except Exception:
+                self._config_watch_mtime[str(p)] = 0.0
+        self._last_config_check_ts = 0.0
 
         # Initialize Silver Tier services if enabled
         self.calendar_service = None
@@ -135,14 +146,76 @@ class Orchestrator:
         if self.config.get("platinum_tier_features", {}).get("enable_global_operations", False):
             self._initialize_platinum_services()
 
+    def _maybe_reload_runtime_config(self):
+        """
+        Reload config.json/.env when they change (e.g., via Settings API) and
+        apply toggles that should take effect at runtime.
+        """
+        now = time.time()
+        if now - self._last_config_check_ts < 2:
+            return
+        self._last_config_check_ts = now
+
+        changed = False
+        for p in self._config_watch_files:
+            key = str(p)
+            try:
+                mtime = p.stat().st_mtime
+            except Exception:
+                mtime = 0.0
+            if mtime != self._config_watch_mtime.get(key, 0.0):
+                self._config_watch_mtime[key] = mtime
+                changed = True
+
+        if not changed:
+            return
+
+        old_cfg = self.config or {}
+        old_silver = old_cfg.get("silver_tier_features", {}) or {}
+        old_enable_analytics = bool(old_silver.get("enable_analytics", False))
+        old_enable_learning = bool(old_silver.get("enable_learning", False))
+
+        try:
+            self.config_manager.reload()
+            self.config = self.config_manager.config
+        except Exception as e:
+            self.logger.warning(f"Config reload failed: {e}")
+            return
+
+        new_silver = (self.config or {}).get("silver_tier_features", {}) or {}
+        new_enable_analytics = bool(new_silver.get("enable_analytics", False))
+        new_enable_learning = bool(new_silver.get("enable_learning", False))
+
+        # Apply runtime toggles for Silver Tier services
+        if (new_enable_analytics or new_enable_learning) and not self.silver_services_initialized:
+            self._initialize_silver_services()
+
+        if old_enable_analytics and not new_enable_analytics:
+            self.analytics_service = None
+        if old_enable_learning and not new_enable_learning:
+            self.learning_service = None
+
+        if (
+            self.silver_services_initialized
+            and not new_enable_analytics
+            and not new_enable_learning
+            and not self.calendar_service
+        ):
+            self.silver_services_initialized = False
+
+        log_activity(
+            "CONFIG_RELOAD",
+            "Runtime config reloaded (config.json/.env change detected)",
+            str(self.vault_path),
+        )
+
     def _initialize_silver_services(self):
         """Initialize Silver Tier services"""
         try:
             # Initialize database
-            session_factory, _ = init_db(self.config["database"]["url"])
-
-            # Create session for services — stored on self so it can be closed in cleanup()
-            self._db_session = session_factory()
+            if not hasattr(self, "_db_session") or not self._db_session:
+                session_factory, _ = init_db(self.config["database"]["url"])
+                self._db_session = session_factory()
 
             if self.config["silver_tier_features"]["enable_learning"]:
                 self.learning_service = AdaptiveLearningService(self._db_session)
@@ -473,7 +546,7 @@ class Orchestrator:
             # Fallback or standard: Process tasks via API immediately
             processed_tasks = self.processor.process_pending_tasks()
             processed_count = len(processed_tasks)
-            self.logger.info(f"Claude Code (API) processed {processed_count} tasks")
+            self.logger.info(f"TaskProcessor (local) processed {processed_count} tasks")
 
             # Also process any approval requests
             self.processor.process_approval_requests()
@@ -709,6 +782,7 @@ class Orchestrator:
         try:
             # Keep orchestrator running
             while True:
+                self._maybe_reload_runtime_config()
                 self.check_for_scheduled_tasks()
                 time.sleep(1)
         except KeyboardInterrupt:

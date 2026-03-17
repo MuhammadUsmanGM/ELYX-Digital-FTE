@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import LoadingDots from "@/components/LoadingDots";
+import { fetchActivityLog } from "@/lib/api";
 
 interface SystemMetrics {
   cpu_usage: number;
@@ -31,6 +32,7 @@ interface SystemMetrics {
 
 export default function SystemMonitorPage() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
+  const [activity, setActivity] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -49,6 +51,9 @@ export default function SystemMonitorPage() {
         health_status: 'healthy'
       };
       setMetrics(simulatedMetrics);
+
+      const recent = await fetchActivityLog(10);
+      setActivity(recent);
     } catch (error) {
       console.error("System metrics fetch error:", error);
     } finally {
@@ -258,19 +263,25 @@ export default function SystemMonitorPage() {
                  Recent Activity Log
                </h3>
                <div className="space-y-6">
-                  {[
-                    { time: '10:24:03', event: 'Gmail watcher processed 3 new emails', type: 'success' },
-                    { time: '10:22:15', event: 'Odoo sync completed successfully', type: 'success' },
-                    { time: '10:20:00', event: 'WhatsApp watcher interval check', type: 'info' },
-                    { time: '10:18:42', event: 'Task #1247 moved to Done', type: 'success' },
-                    { time: '10:15:00', event: 'System health check passed', type: 'info' },
-                  ].map((log, i) => (
-                    <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/30 border border-card-border hover:bg-slate-900/50 transition-all">
-                       <span className="text-[10px] font-black text-slate-600 uppercase font-mono">{log.time}</span>
-                       <div className={`w-2 h-2 rounded-full ${log.type === 'success' ? 'bg-emerald-500' : 'bg-blue-500'}`} />
-                       <p className="text-sm text-slate-400 font-medium">{log.event}</p>
+                  {activity.length === 0 ? (
+                    <div className="text-xs text-slate-500 font-bold uppercase tracking-widest opacity-70">
+                      No recent activity
                     </div>
-                  ))}
+                  ) : activity.map((log: any, i: number) => {
+                    const ts = new Date(log.timestamp || "");
+                    const time = Number.isNaN(ts.getTime())
+                      ? "—"
+                      : ts.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+                    const t = String(log.action_type || "").toUpperCase();
+                    const isOk = !(t.includes("ERROR") || t.includes("FAILED"));
+                    return (
+                      <div key={i} className="flex items-center gap-4 p-4 rounded-2xl bg-slate-900/30 border border-card-border hover:bg-slate-900/50 transition-all">
+                         <span className="text-[10px] font-black text-slate-600 uppercase font-mono">{time}</span>
+                         <div className={`w-2 h-2 rounded-full ${isOk ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                         <p className="text-sm text-slate-400 font-medium">{log.message || "—"}</p>
+                      </div>
+                    );
+                  })}
                </div>
             </div>
           </>

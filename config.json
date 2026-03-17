@@ -87,12 +87,12 @@
   "mcp_servers": {
     "email_mcp": {
       "enabled": true,
-      "port": 8080,
+      "port": 8090,
       "host": "localhost"
     },
     "browser_mcp": {
       "enabled": true,
-      "port": 8081,
+      "port": 8091,
       "host": "localhost"
     }
   },
@@ -152,7 +152,8 @@
       "codex": {
         "command": "codex",
         "args": [
-          "exec"
+          "exec",
+          "-p"
         ],
         "description": "OpenAI Codex CLI - Alternative brain. Code generation. (Optional)"
       }

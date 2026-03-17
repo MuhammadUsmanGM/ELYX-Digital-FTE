@@ -6,7 +6,7 @@ from typing import Any, Dict, Optional
 import yaml
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# Load environment variables from .env file (can be re-run on reload)
 load_dotenv()
 
 
@@ -23,6 +23,9 @@ class ConfigManager:
         """
         Load configuration from file, create default if it doesn't exist
         """
+        # Re-load .env to pick up runtime Settings API changes
+        load_dotenv(override=True)
+
         if self.config_path.exists():
             with open(self.config_path, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
@@ -247,13 +250,13 @@ class ConfigManager:
             "mcp_servers": {
                 "email_mcp": {
                     "enabled": os.getenv("EMAIL_MCP_ENABLED", "true").lower() == "true",
-                    "port": int(os.getenv("EMAIL_MCP_PORT", "8080")),
+                    "port": int(os.getenv("EMAIL_MCP_PORT", "8090")),
                     "host": os.getenv("EMAIL_MCP_HOST", "localhost"),
                 },
                 "browser_mcp": {
                     "enabled": os.getenv("BROWSER_MCP_ENABLED", "true").lower()
                     == "true",
-                    "port": int(os.getenv("BROWSER_MCP_PORT", "8081")),
+                    "port": int(os.getenv("BROWSER_MCP_PORT", "8091")),
                     "host": os.getenv("BROWSER_MCP_HOST", "localhost"),
                 },
             },

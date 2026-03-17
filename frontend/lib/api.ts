@@ -201,6 +201,17 @@ export async function fetchApprovals(): Promise<ApprovalRequest[]> {
   }
 }
 
+export async function fetchActivityLog(limit: number = 20): Promise<any[]> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/dashboard/activity?limit=${encodeURIComponent(String(limit))}`);
+    if (!response.ok) throw new Error("Backend offline");
+    const data = await response.json();
+    return (data.activities || []) as any[];
+  } catch (error) {
+    return [] as any[];
+  }
+}
+
 export async function fetchCommunications(): Promise<Communication[]> {
   try {
     const response = await fetch(`${API_BASE_URL}/communication/conversations`);
@@ -301,13 +312,29 @@ export async function sendMessage(
 }
 
 export async function fetchTransactions(): Promise<Transaction[]> {
-  return [
-    { id: "T1", type: "income", amount: 4500.00, category: "Services", merchant: "Client A", date: new Date().toISOString(), status: "completed" }
-  ] as Transaction[];
+  try {
+    const response = await fetch(`${API_BASE_URL}/finance/transactions?limit=25&include_expenses=true`);
+    if (!response.ok) throw new Error("Finance API offline");
+    const data = await response.json();
+    return (data.transactions || []) as Transaction[];
+  } catch (error) {
+    console.warn("Using mock transactions");
+    return [
+      { id: "T1", type: "income", amount: 4500.00, category: "Services", merchant: "Client A", date: new Date().toISOString(), status: "completed" }
+    ] as Transaction[];
+  }
 }
 
 export async function fetchKPIs(): Promise<KPI[]> {
-  return MOCK_FALLBACKS.kpis as KPI[];
+  try {
+    const response = await fetch(`${API_BASE_URL}/finance/kpis`);
+    if (!response.ok) throw new Error("Finance API offline");
+    const data = await response.json();
+    return (data.kpis || []) as KPI[];
+  } catch (error) {
+    console.warn("Using mock KPIs");
+    return MOCK_FALLBACKS.kpis as KPI[];
+  }
 }
 
 export async function fetchWorkflows(): Promise<BusinessWorkflow[]> {
