@@ -193,10 +193,54 @@ export async function fetchApprovals(): Promise<ApprovalRequest[]> {
 }
 
 export async function fetchCommunications(): Promise<Communication[]> {
-  // In a real system, this would fetch from /comms or /dashboard/interactions
-  return [
-    { id: "COM_1", platform: "email", contact_name: "John Doe", contact_identifier: "john@example.com", last_message: "The proposal looks solid.", last_timestamp: new Date().toISOString(), unread_count: 0, sentiment_score: 0.85, status: "active", history: [] }
-  ] as Communication[];
+  try {
+    const response = await fetch(`${API_BASE_URL}/communication/conversations`);
+    if (!response.ok) throw new Error("Backend offline");
+    const data = await response.json();
+
+    return (data.conversations || []).map((conv: any) => {
+      const channelRaw = (conv.original_channel || "").toLowerCase();
+      const platformMap: Record<string, Communication["platform"]> = {
+        email: "email",
+        whatsapp: "whatsapp",
+        twitter: "twitter",
+        slack: "slack",
+        linkedin: "linkedin",
+        facebook: "facebook",
+        instagram: "instagram",
+      };
+      const platform = platformMap[channelRaw] || "email";
+
+      const responses: any[] = conv.responses || [];
+      const lastResp = responses[responses.length - 1];
+
+      const history: Message[] = responses.map((r: any, idx: number) => ({
+        id: r.id || `msg_${idx}`,
+        sender: r.sender || "Unknown",
+        content: r.content || "",
+        timestamp: r.timestamp || conv.last_activity,
+        is_ai: (r.sender || "").toUpperCase() === "ELYX",
+      }));
+
+      return {
+        id: conv.id,
+        platform,
+        contact_name: conv.original_sender || "Unknown",
+        contact_identifier: conv.original_sender || "",
+        last_message: lastResp?.content || conv.context_summary || "No messages yet",
+        last_timestamp: conv.last_activity || conv.created_at,
+        unread_count: 0,
+        sentiment_score: 0,
+        status: conv.active ? "active" : "archived",
+        history,
+      } as Communication;
+    });
+  } catch (error) {
+    console.warn("Using mock communications");
+    return [
+      { id: "COM_1", platform: "email", contact_name: "John Doe", contact_identifier: "john@example.com", last_message: "The proposal looks solid.", last_timestamp: new Date().toISOString(), unread_count: 0, sentiment_score: 0.85, status: "active", history: [] }
+    ] as Communication[];
+  }
 }
 
 export async function fetchTransactions(): Promise<Transaction[]> {

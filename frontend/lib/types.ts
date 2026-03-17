@@ -85,7 +85,7 @@ export interface Message {
 
 export interface Communication {
   id: string;
-  platform: 'email' | 'whatsapp' | 'slack' | 'twitter';
+  platform: 'email' | 'whatsapp' | 'slack' | 'twitter' | 'linkedin' | 'facebook' | 'instagram';
   contact_name: string;
   contact_identifier: string;
   last_message: string;

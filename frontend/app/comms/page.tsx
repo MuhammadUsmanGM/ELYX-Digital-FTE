@@ -53,6 +53,9 @@ export default function CommunicationsPage() {
       case 'email': return <Mail size={18} className="text-primary" />;
       case 'whatsapp': return <MessageCircle size={18} className="text-emerald-500" />;
       case 'twitter': return <Twitter size={18} className="text-sky-500" />;
+      case 'linkedin': return <Hash size={18} className="text-blue-500" />;
+      case 'facebook': return <MessageSquare size={18} className="text-blue-400" />;
+      case 'instagram': return <AtSign size={18} className="text-pink-500" />;
       default: return <AtSign size={18} className="text-slate-400" />;
     }
   };
