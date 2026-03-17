@@ -3,13 +3,13 @@
 ELYX Windows Task Scheduler Setup Script
 
 Usage:
-    python setup_windows_scheduler.py register    - Register all ELYX tasks
-    python setup_windows_scheduler.py unregister  - Unregister all ELYX tasks
-    python setup_windows_scheduler.py status      - Show status of all tasks
-    python setup_windows_scheduler.py list        - List all ELYX tasks
-    python setup_windows_scheduler.py run --task <name>  - Run a specific task
-    python setup_windows_scheduler.py enable --task <name>  - Enable a task
-    python setup_windows_scheduler.py disable --task <name> - Disable a task
+    python config/setup_windows_scheduler.py register    - Register all ELYX tasks
+    python config/setup_windows_scheduler.py unregister  - Unregister all ELYX tasks
+    python config/setup_windows_scheduler.py status      - Show status of all tasks
+    python config/setup_windows_scheduler.py list        - List all ELYX tasks
+    python config/setup_windows_scheduler.py run --task <name>  - Run a specific task
+    python config/setup_windows_scheduler.py enable --task <name>  - Enable a task
+    python config/setup_windows_scheduler.py disable --task <name> - Disable a task
 
 Requirements:
     - Windows OS
@@ -21,8 +21,8 @@ import sys
 import os
 from pathlib import Path
 
-# Add project root to path
-project_root = Path(__file__).parent.parent
+# Add project root to path (parent of config/)
+project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 # ANSI Color codes
@@ -237,7 +237,7 @@ def list_tasks():
             print(f"\n  {Colors.BOLD}Total: {len(tasks)} tasks{Colors.ENDC}")
         else:
             print(f"\n  {Colors.WARNING}No ELYX tasks found.{Colors.ENDC}")
-            print(f"  Run 'python setup_windows_scheduler.py register' to register tasks.")
+            print(f"  Run 'python config/setup_windows_scheduler.py register' to register tasks.")
         
     except Exception as e:
         print(f"\n  {Colors.FAIL}✗ Error: {e}{Colors.ENDC}")
@@ -296,7 +296,7 @@ def show_help():
 {Colors.BOLD}ELYX Windows Task Scheduler Setup{Colors.ENDC}
 
 {Colors.OKCYAN}Usage:{Colors.ENDC}
-    python setup_windows_scheduler.py <action> [options]
+    python config/setup_windows_scheduler.py <action> [options]
 
 {Colors.OKCYAN}Actions:{Colors.ENDC}
     register      Register all ELYX tasks with Windows Task Scheduler
@@ -313,12 +313,12 @@ def show_help():
     --verbose      Show verbose output
 
 {Colors.OKCYAN}Examples:{Colors.ENDC}
-    python setup_windows_scheduler.py register
-    python setup_windows_scheduler.py unregister
-    python setup_windows_scheduler.py status
-    python setup_windows_scheduler.py run --task ELYX_CEO_Briefing
-    python setup_windows_scheduler.py enable --task ELYX_Gmail_Watcher
-    python setup_windows_scheduler.py disable --task ELYX_Facebook_Watcher
+    python config/setup_windows_scheduler.py register
+    python config/setup_windows_scheduler.py unregister
+    python config/setup_windows_scheduler.py status
+    python config/setup_windows_scheduler.py run --task ELYX_CEO_Briefing
+    python config/setup_windows_scheduler.py enable --task ELYX_Gmail_Watcher
+    python config/setup_windows_scheduler.py disable --task ELYX_Facebook_Watcher
 
 {Colors.OKCYAN}Registered Tasks:{Colors.ENDC}
     ELYX_Orchestrator        - Main orchestrator (runs at startup)

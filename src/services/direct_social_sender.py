@@ -156,7 +156,7 @@ def _safe_close(p, browser, page=None):
 def _not_logged_in(platform: str):
     return {
         "success": False,
-        "error": f"Not logged in to {platform}. Run: python setup_sessions.py {platform.lower()}",
+        "error": f"Not logged in to {platform}. Run: python config/setup_sessions.py {platform.lower()}",
     }
 
 

@@ -80,7 +80,7 @@ async def test_linkedin_handler():
     print_result("Recipient Validation", valid, "Valid recipient accepted")
     
     # Note: Actual posting tests require login session
-    print_result("Post to Feed", None, "⚠️  Requires LinkedIn session (run setup_sessions.py linkedin)")
+    print_result("Post to Feed", None, "⚠️  Requires LinkedIn session (run config/setup_sessions.py linkedin)")
     
     return True
 
@@ -108,7 +108,7 @@ async def test_facebook_handler():
     print_result("Recipient Validation", valid, "Valid recipient accepted")
     
     # Note: Actual posting tests require login session
-    print_result("Post to Feed", None, "⚠️  Requires Facebook session (run setup_sessions.py facebook)")
+    print_result("Post to Feed", None, "⚠️  Requires Facebook session (run config/setup_sessions.py facebook)")
     print_result("Post to Group", None, "⚠️  Requires Facebook session and group ID")
     
     return True
@@ -137,7 +137,7 @@ async def test_twitter_handler():
     print_result("Recipient Validation", valid, "Valid recipient accepted")
     
     # Note: Actual posting tests require login session
-    print_result("Post Tweet", None, "⚠️  Requires Twitter session (run setup_sessions.py twitter)")
+    print_result("Post Tweet", None, "⚠️  Requires Twitter session (run config/setup_sessions.py twitter)")
     print_result("Post Thread", None, "⚠️  Requires Twitter session")
     print_result("Like Tweet", None, "⚠️  Requires Twitter session and tweet URL")
     print_result("Retweet", None, "⚠️  Requires Twitter session and tweet URL")
@@ -313,7 +313,7 @@ async def run_all_tests():
     
     if passed == total:
         print(f"\n  {Colors.OKGREEN}🎉 All tests passed! Social media posting is ready.{Colors.ENDC}")
-        print(f"\n  {Colors.WARNING}⚠️  Note: Actual posting requires running setup_sessions.py for each platform{Colors.ENDC}")
+        print(f"\n  {Colors.WARNING}⚠️  Note: Actual posting requires running config/setup_sessions.py for each platform{Colors.ENDC}")
     else:
         print(f"\n  {Colors.FAIL}❌ Some tests failed. Review the errors above.{Colors.ENDC}")
     

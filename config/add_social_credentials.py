@@ -3,11 +3,16 @@
 Add social media credentials to .env file
 """
 
+import os
+from pathlib import Path
+
+# Resolve project root (parent of config/) and work from there
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+os.chdir(PROJECT_ROOT)
+
 # Read current .env
 with open('.env', 'r', encoding='utf-8') as f:
     content = f.read()
-
-import os
 
 # Add credentials if not present
 credentials_to_add = []

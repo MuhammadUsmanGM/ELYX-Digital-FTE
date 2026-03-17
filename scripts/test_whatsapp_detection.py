@@ -167,7 +167,7 @@ Send WhatsApp to +1234567890 {pattern_text}
     print("WhatsApp detection is working!")
     print()
     print(f"{Colors.BOLD}Next Steps:{Colors.ENDC}")
-    print("  1. Setup WhatsApp session: python setup_sessions.py whatsapp")
+    print("  1. Setup WhatsApp session: python config/setup_sessions.py whatsapp")
     print("  2. Send test email with WhatsApp request")
     print("  3. Check if message was sent")
     print()

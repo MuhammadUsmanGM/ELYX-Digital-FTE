@@ -23,7 +23,7 @@ Complete code examples for all ELYX integrations. Use these as reference when im
 
 ```bash
 # Run interactive setup
-python setup_gmail_auth.py
+python config/setup_gmail_auth.py
 
 # Or manually:
 # 1. Create project in Google Cloud Console
@@ -123,7 +123,7 @@ read_email("18a3f2b9c4d5e6f7")
 
 ```bash
 # Login to WhatsApp Web (saves session)
-python setup_sessions.py whatsapp
+python config/setup_sessions.py whatsapp
 ```
 
 ### Send WhatsApp Message (via MCP)
@@ -187,7 +187,7 @@ def start_whatsapp_watcher():
 
 ```bash
 # Login and configure Odoo
-python setup_sessions.py odoo
+python config/setup_sessions.py odoo
 
 # Or use dedicated setup
 python setup_odoo_integration.py
@@ -319,13 +319,13 @@ get_revenue_summary()
 
 ```bash
 # Setup all platforms
-python setup_sessions.py
+python config/setup_sessions.py
 
 # Or individual platforms
-python setup_sessions.py linkedin
-python setup_sessions.py twitter
-python setup_sessions.py facebook
-python setup_sessions.py instagram
+python config/setup_sessions.py linkedin
+python config/setup_sessions.py twitter
+python config/setup_sessions.py facebook
+python config/setup_sessions.py instagram
 ```
 
 ### Post to LinkedIn
@@ -801,7 +801,7 @@ from pathlib import Path
 print(Path("gmail_credentials.json").exists())
 
 # Solution 2: Re-run auth setup
-# python setup_gmail_auth.py
+# python config/setup_gmail_auth.py
 
 # Solution 3: Check environment variable
 import os
@@ -828,7 +828,7 @@ odoo = OdooService()
 print(f"Authenticated: {odoo.authenticated}")
 
 # Solution 3: Re-setup Odoo
-# python setup_sessions.py odoo
+# python config/setup_sessions.py odoo
 ```
 
 ### MCP Server Not Found

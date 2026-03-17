@@ -310,8 +310,8 @@ cat obsidian_vault/Dashboard.md
 |---------|----------|
 | Task not processing | Check Needs_Action/ folder, verify watcher running |
 | Approval not executing | Check Approved/ folder, verify orchestrator running |
-| Email not sending | Check gmail_credentials.json, run setup_gmail_auth.py |
-| Odoo not connecting | Run setup_sessions.py odoo, verify credentials in .env |
+| Email not sending | Check gmail_credentials.json, run config/setup_gmail_auth.py |
+| Odoo not connecting | Run config/setup_sessions.py odoo, verify credentials in .env |
 | Dashboard not updating | Check orchestrator logs, verify TaskProcessor running |
 
 ---

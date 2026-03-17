@@ -1,8 +1,14 @@
+import os
 import os.path
 import json
+from pathlib import Path
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
+
+# Resolve project root (parent of config/)
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+os.chdir(PROJECT_ROOT)
 
 # Scopes for reading, sending, and modifying emails
 SCOPES = [

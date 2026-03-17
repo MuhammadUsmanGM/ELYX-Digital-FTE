@@ -14,8 +14,8 @@ from pathlib import Path
 from datetime import datetime
 from unittest.mock import MagicMock, AsyncMock
 
-# Add project root to path
-project_root = Path(__file__).resolve().parent
+# Add project root to path (parent of scripts/)
+project_root = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(project_root))
 
 
@@ -29,7 +29,7 @@ def project_root_path():
     Returns:
         Path: Project root directory
     """
-    return Path(__file__).resolve().parent
+    return Path(__file__).resolve().parent.parent
 
 
 @pytest.fixture(scope="session")

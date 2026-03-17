@@ -247,25 +247,25 @@ read these and make them available via `config_manager.get_secret()`.
 2. **Register ELYX Tasks**:
 
    ```bash
-   python setup_windows_scheduler.py register
+   python config/setup_windows_scheduler.py register
    ```
 
 3. **Verify Registration**:
    ```bash
-   python setup_windows_scheduler.py status
+   python config/setup_windows_scheduler.py status
    ```
 
 ### Available Commands
 
 | Command                                                   | Description               |
 | --------------------------------------------------------- | ------------------------- |
-| `python setup_windows_scheduler.py register`              | Register all ELYX tasks   |
-| `python setup_windows_scheduler.py unregister`            | Unregister all ELYX tasks |
-| `python setup_windows_scheduler.py status`                | Show status of all tasks  |
-| `python setup_windows_scheduler.py list`                  | List all registered tasks |
-| `python setup_windows_scheduler.py run --task <name>`     | Run a task immediately    |
-| `python setup_windows_scheduler.py enable --task <name>`  | Enable a task             |
-| `python setup_windows_scheduler.py disable --task <name>` | Disable a task            |
+| `python config/setup_windows_scheduler.py register`              | Register all ELYX tasks   |
+| `python config/setup_windows_scheduler.py unregister`            | Unregister all ELYX tasks |
+| `python config/setup_windows_scheduler.py status`                | Show status of all tasks  |
+| `python config/setup_windows_scheduler.py list`                  | List all registered tasks |
+| `python config/setup_windows_scheduler.py run --task <name>`     | Run a task immediately    |
+| `python config/setup_windows_scheduler.py enable --task <name>`  | Enable a task             |
+| `python config/setup_windows_scheduler.py disable --task <name>` | Disable a task            |
 
 ### Registered Tasks
 

@@ -11,7 +11,7 @@ class LinkedInWatcher(BaseWatcher):
     """
     Monitors LinkedIn for urgent messages.
     Keeps a single Playwright browser open across all check cycles.
-    Run setup_sessions.py once to log in before starting ELYX.
+    Run config/setup_sessions.py once to log in before starting ELYX.
     """
 
     def __init__(self, vault_path: str, session_path: str = None):
@@ -63,10 +63,10 @@ class LinkedInWatcher(BaseWatcher):
             self.logger.info("LinkedIn: already logged in (verified via URL)")
             return
         self.logger.error(
-            "LinkedIn: not logged in. Run: python setup_sessions.py linkedin"
+            "LinkedIn: not logged in. Run: python config/setup_sessions.py linkedin"
         )
         self._close_browser()
-        raise RuntimeError("LinkedIn session missing — run setup_sessions.py linkedin")
+        raise RuntimeError("LinkedIn session missing — run config/setup_sessions.py linkedin")
 
     def _is_browser_alive(self) -> bool:
         try:

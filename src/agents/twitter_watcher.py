@@ -10,7 +10,7 @@ class TwitterWatcher(BaseWatcher):
     """
     Monitors Twitter/X for mentions and DMs.
     Keeps a single Playwright browser open across all check cycles.
-    Run setup_sessions.py once to log in before starting ELYX.
+    Run config/setup_sessions.py once to log in before starting ELYX.
     """
 
     def __init__(self, vault_path: str, session_path: str = None):
@@ -61,10 +61,10 @@ class TwitterWatcher(BaseWatcher):
             self.logger.info("Twitter: already logged in (verified via URL)")
             return
         self.logger.error(
-            "Twitter: not logged in. Run: python setup_sessions.py twitter"
+            "Twitter: not logged in. Run: python config/setup_sessions.py twitter"
         )
         self._close_browser()
-        raise RuntimeError("Twitter session missing — run setup_sessions.py twitter")
+        raise RuntimeError("Twitter session missing — run config/setup_sessions.py twitter")
 
     def _is_browser_alive(self) -> bool:
         try:

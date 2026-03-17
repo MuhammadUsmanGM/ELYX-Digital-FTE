@@ -10,7 +10,7 @@ class FacebookWatcher(BaseWatcher):
     """
     Monitors Facebook Messenger for new messages.
     Keeps a single Playwright browser open across all check cycles.
-    Run setup_sessions.py once to log in before starting ELYX.
+    Run config/setup_sessions.py once to log in before starting ELYX.
     """
 
     def __init__(self, vault_path: str, session_path: str = None):
@@ -59,10 +59,10 @@ class FacebookWatcher(BaseWatcher):
             self.logger.info("Facebook: already logged in (verified via URL)")
             return
         self.logger.error(
-            "Facebook: not logged in. Run: python setup_sessions.py facebook"
+            "Facebook: not logged in. Run: python config/setup_sessions.py facebook"
         )
         self._close_browser()
-        raise RuntimeError("Facebook session missing — run setup_sessions.py facebook")
+        raise RuntimeError("Facebook session missing — run config/setup_sessions.py facebook")
 
     def _is_browser_alive(self) -> bool:
         try:

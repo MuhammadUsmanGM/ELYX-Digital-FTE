@@ -58,7 +58,7 @@ const FAQS: FAQ[] = [
   {
     id: 4,
     question: "How do I set up Gmail integration?",
-    answer: "1. Create OAuth credentials in Google Cloud Console. 2. Save as gmail_credentials.json in the project root. 3. Run: python setup_gmail_auth.py. 4. Follow the browser authentication flow.",
+    answer: "1. Create OAuth credentials in Google Cloud Console. 2. Save as gmail_credentials.json in the project root. 3. Run: python config/setup_gmail_auth.py. 4. Follow the browser authentication flow.",
     category: 'technical'
   },
   {

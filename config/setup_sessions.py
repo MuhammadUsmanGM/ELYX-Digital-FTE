@@ -8,10 +8,10 @@ the sessions/ directory and reused automatically afterward.
 For Odoo, it will guide you through API credential setup.
 
 Usage:
-    python setup_sessions.py                    # All platforms
-    python setup_sessions.py whatsapp           # Single platform
-    python setup_sessions.py linkedin twitter   # Multiple platforms
-    python setup_sessions.py odoo               # Odoo setup only
+    python config/setup_sessions.py                    # All platforms
+    python config/setup_sessions.py whatsapp           # Single platform
+    python config/setup_sessions.py linkedin twitter   # Multiple platforms
+    python config/setup_sessions.py odoo               # Odoo setup only
 """
 
 import sys
@@ -19,6 +19,10 @@ import time
 import os
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+
+# Resolve project root (parent of config/) and work from there
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+os.chdir(PROJECT_ROOT)
 
 SESSIONS_DIR = Path("./sessions")
 
