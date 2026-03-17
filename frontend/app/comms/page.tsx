@@ -18,7 +18,7 @@ import {
   Paperclip,
   Activity
 } from "lucide-react";
-import { fetchCommunications } from "@/lib/api";
+import { fetchCommunications, sendMessage } from "@/lib/api";
 import { Communication, Message } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import LoadingDots from "@/components/LoadingDots";
@@ -28,6 +28,43 @@ export default function CommunicationsPage() {
   const [selectedComm, setSelectedComm] = useState<Communication | null>(null);
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const handleSendMessage = async () => {
+    if (!replyText.trim() || !selectedComm || sending) return;
+
+    setSending(true);
+    const result = await sendMessage(
+      selectedComm.id,
+      selectedComm.platform,
+      selectedComm.contact_identifier,
+      replyText.trim(),
+    );
+
+    if (result.success) {
+      const newMsg: Message = {
+        id: `msg_${Date.now()}`,
+        sender: "ELYX",
+        content: replyText.trim(),
+        timestamp: new Date().toISOString(),
+        is_ai: true,
+      };
+
+      const updatedComm = {
+        ...selectedComm,
+        history: [...selectedComm.history, newMsg],
+        last_message: replyText.trim(),
+        last_timestamp: new Date().toISOString(),
+      };
+
+      setComms((prev) => prev.map((c) => (c.id === updatedComm.id ? updatedComm : c)));
+      setSelectedComm(updatedComm);
+      setReplyText("");
+    } else {
+      console.error("Send failed:", result.error);
+    }
+    setSending(false);
+  };
 
   const loadData = async () => {
     try {
@@ -187,14 +224,25 @@ export default function CommunicationsPage() {
                     <button className="p-2 text-slate-500 hover:text-primary transition-colors">
                       <Paperclip size={20} />
                     </button>
-                    <textarea 
+                    <textarea
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
                       placeholder={`Reply to ${selectedComm.contact_name} as ELYX...`}
                       className="flex-1 bg-transparent border-none outline-none text-sm text-slate-300 py-2 resize-none h-10 max-h-32"
+                      disabled={sending}
                     />
-                    <button className="p-3 bg-primary text-slate-950 rounded-xl font-bold hover:bg-white transition-all shadow-lg shadow-primary/10 active:scale-95">
-                      <Send size={18} />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={sending || !replyText.trim()}
+                      className="p-3 bg-primary text-slate-950 rounded-xl font-bold hover:bg-white transition-all shadow-lg shadow-primary/10 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                     </button>
                   </div>
                   <div className="mt-3 flex items-center justify-between px-2">

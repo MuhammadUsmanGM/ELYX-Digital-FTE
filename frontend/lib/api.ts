@@ -243,6 +243,54 @@ export async function fetchCommunications(): Promise<Communication[]> {
   }
 }
 
+export async function sendMessage(
+  conversationId: string,
+  platform: string,
+  recipient: string,
+  content: string,
+  subject?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const channelMap: Record<string, string> = {
+    email: "EMAIL",
+    whatsapp: "WHATSAPP",
+    twitter: "TWITTER",
+    slack: "EMAIL",
+    linkedin: "LINKEDIN",
+    facebook: "FACEBOOK",
+    instagram: "INSTAGRAM",
+  };
+
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_ELYX_API_KEY || "";
+    const response = await fetch(`${API_BASE_URL}/communication/send-response`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-API-Key": apiKey,
+      },
+      body: JSON.stringify({
+        original_message_id: conversationId,
+        channel: channelMap[platform] || "EMAIL",
+        recipient_identifier: recipient,
+        content,
+        response_type: "INFORMATIONAL",
+        priority: "MEDIUM",
+        requires_approval: false,
+        ...(subject ? { subject } : {}),
+      }),
+    });
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      return { success: false, error: err.detail || `Send failed (${response.status})` };
+    }
+
+    return { success: true };
+  } catch (error) {
+    return { success: false, error: String(error) };
+  }
+}
+
 export async function fetchTransactions(): Promise<Transaction[]> {
   return [
     { id: "T1", type: "income", amount: 4500.00, category: "Services", merchant: "Client A", date: new Date().toISOString(), status: "completed" }
