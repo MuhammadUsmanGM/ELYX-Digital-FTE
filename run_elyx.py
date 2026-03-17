@@ -6,8 +6,9 @@ Main Startup Script - ALL-IN-ONE
 Starts:
 1. Vault API (Port 8080)
 2. Settings API (Port 8081)
-3. Next.js Frontend (Port 3000)
-4. ELYX Orchestrator & Watchers
+3. Main FastAPI Server (Port 8000)
+4. Next.js Frontend (Port 3000)
+5. ELYX Orchestrator & Watchers
 
 Local-First | Multi-Platform | Human-in-the-Loop
 """
@@ -122,6 +123,23 @@ def start_settings_api():
         return True
     except Exception as e:
         print(f"  {Colors.FAIL}✗ Failed to start Settings API: {e}{Colors.ENDC}")
+        return False
+
+def start_main_api():
+    """Start Main FastAPI server (dashboard, communications, analytics, approvals, etc.)"""
+    port = os.getenv("PORT", "8000")
+    print(f"\n{Colors.BOLD}Starting Main API (Port {port})...{Colors.ENDC}")
+    try:
+        proc = subprocess.Popen(
+            [sys.executable, "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", port],
+            cwd=str(project_root)
+        )
+        processes.append(proc)
+        time.sleep(3)
+        print(f"  {Colors.OKGREEN}✓ Main API running at http://localhost:{port}{Colors.ENDC}")
+        return True
+    except Exception as e:
+        print(f"  {Colors.FAIL}✗ Failed to start Main API: {e}{Colors.ENDC}")
         return False
 
 def start_frontend():
@@ -308,6 +326,7 @@ def main():
     
     start_vault_api()
     start_settings_api()
+    start_main_api()
     start_frontend()
 
     # Start Orchestrator
@@ -344,6 +363,7 @@ def main():
     print(f"  Settings:      http://localhost:3000/settings")
     print(f"  Feature Flags: http://localhost:3000/settings → Feature Flags tab")
     print()
+    print(f"  Main API:      http://localhost:8000")
     print(f"  Vault API:     http://localhost:8080")
     print(f"  Settings API:  http://localhost:8081")
     print()
