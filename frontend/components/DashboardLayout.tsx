@@ -202,10 +202,14 @@ export default function SidebarLayout({
             </div>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
-                <div className={`w-1.5 h-1.5 rounded-full ${data?.health.status === 'healthy' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.8)] animate-pulse'}`} />
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Core Stability</span>
+                <div className={`w-1.5 h-1.5 rounded-full ${data?.dataSource === 'live' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.8)] animate-pulse'}`} />
+                <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">
+                  {data?.dataSource === 'live' ? 'Core Stability' : 'Offline — Mock Data'}
+                </span>
               </div>
-              <span className="text-[10px] font-black text-accent">{data?.system.stability_score.toFixed(1) || "98.4"}%</span>
+              <span className={`text-[10px] font-black ${data?.dataSource === 'live' ? 'text-accent' : 'text-amber-500'}`}>
+                {data?.dataSource === 'live' ? `${data?.system.stability_score.toFixed(1) || "98.4"}%` : 'N/A'}
+              </span>
             </div>
             <div className="h-1 w-full bg-slate-900 rounded-full overflow-hidden border border-white/5">
               <motion.div 
@@ -306,8 +310,10 @@ export default function SidebarLayout({
         <footer className="h-10 px-10 border-t border-white/5 bg-black/40 flex items-center justify-between backdrop-blur-md">
            <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
-                 <div className="w-1 h-1 rounded-full bg-primary animate-ping" />
-                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">System Link: Active</span>
+                 <div className={`w-1 h-1 rounded-full ${data?.dataSource === 'live' ? 'bg-primary animate-ping' : 'bg-amber-500 animate-pulse'}`} />
+                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">
+                   {data?.dataSource === 'live' ? 'System Link: Active' : 'System Link: Offline (Mock Data)'}
+                 </span>
               </div>
               <div className="h-3 w-px bg-white/10" />
               <div className="flex items-center gap-2">

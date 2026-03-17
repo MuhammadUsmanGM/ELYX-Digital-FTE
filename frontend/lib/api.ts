@@ -107,28 +107,36 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     const [vaultSummary, statusRes, system, scenarios] = await Promise.all([
       fetchVaultSummary(),
-      fetch(`${API_BASE_URL}/dashboard/status`).then(r => r.json()).catch(() => ({})),
+      fetch(`${API_BASE_URL}/dashboard/status`).then(r => {
+        if (!r.ok) throw new Error("Backend offline");
+        return r.json();
+      }).catch(() => null),
       fetchSystemState(),
       fetchScenarioStatus()
     ]);
-    
-    const pendingApprovals = vaultSummary?.pending_approvals ?? statusRes.pending_approvals ?? 0;
-    const pendingTasks = vaultSummary?.pending_tasks ?? statusRes.pending_tasks ?? 0;
-    
+
+    // If the main API didn't respond, this is mock data
+    const isLive = statusRes !== null;
+    const status = statusRes ?? {};
+
+    const pendingApprovals = vaultSummary?.pending_approvals ?? status.pending_approvals ?? 0;
+    const pendingTasks = vaultSummary?.pending_tasks ?? status.pending_tasks ?? 0;
+
     return {
       system,
       scenarios,
       tasks: {
         pending_count: pendingApprovals + pendingTasks,
         pending_approvals: pendingApprovals,
-        completed_today: vaultSummary?.completed_tasks ?? statusRes.tasks_processed_today ?? 0,
-        active_chains: statusRes.active_agents ?? 0
+        completed_today: vaultSummary?.completed_tasks ?? status.tasks_processed_today ?? 0,
+        active_chains: status.active_agents ?? 0
       },
       health: {
-        status: statusRes.status === "active" ? "healthy" : "warning",
-        uptime: statusRes.system_uptime || "0m",
+        status: isLive && status.status === "active" ? "healthy" : "warning",
+        uptime: status.system_uptime || "0m",
         version: "System v2.0"
-      }
+      },
+      dataSource: isLive ? "live" : "mock"
     };
   } catch (error) {
     const vaultSummary = await fetchVaultSummary();
@@ -139,9 +147,10 @@ export async function fetchDashboardData(): Promise<DashboardData> {
         pending_count: (vaultSummary?.pending_approvals ?? 0) + (vaultSummary?.pending_tasks ?? 0),
         pending_approvals: vaultSummary?.pending_approvals ?? 0,
         completed_today: vaultSummary?.completed_tasks ?? 0,
-        active_chains: 5
+        active_chains: 0
       },
-      health: { status: "healthy", uptime: "0m", version: "System v2.0" }
+      health: { status: "warning", uptime: "0m", version: "System v2.0" },
+      dataSource: "mock"
     };
   }
 }

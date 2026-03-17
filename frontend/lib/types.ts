@@ -48,6 +48,8 @@ export interface DashboardData {
     uptime: string;
     version: string;
   };
+  /** Indicates whether data came from a live API or from fallback mocks */
+  dataSource: "live" | "mock";
 }
 
 export interface Task {

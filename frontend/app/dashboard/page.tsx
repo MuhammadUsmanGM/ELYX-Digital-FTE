@@ -20,7 +20,8 @@ import {
   Bell,
   Sparkles,
   Command,
-  Fingerprint
+  Fingerprint,
+  AlertTriangle
 } from "lucide-react";
 import { fetchDashboardData, fetchTasks, fetchApprovals } from "@/lib/api";
 import { DashboardData, Task, ApprovalRequest } from "@/lib/types";
@@ -97,9 +98,17 @@ export default function DashboardPage() {
           <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-primary/20 transition-all duration-1000" />
           <div className="space-y-3 relative z-10">
             <div className="flex items-center gap-3 mb-2">
-              <span className="px-3 py-1 bg-primary/10 border border-primary/20 rounded-full text-[10px] font-black text-primary uppercase tracking-[0.2em] flex items-center gap-2">
-                <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(6,182,212,1)]" />
-                Live Network Active
+              <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-2 border ${
+                data?.dataSource === 'mock'
+                  ? 'bg-amber-500/10 border-amber-500/20 text-amber-500'
+                  : 'bg-primary/10 border-primary/20 text-primary'
+              }`}>
+                <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${
+                  data?.dataSource === 'mock'
+                    ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,1)]'
+                    : 'bg-primary shadow-[0_0_8px_rgba(6,182,212,1)]'
+                }`} />
+                {data?.dataSource === 'mock' ? 'Offline — Mock Data' : 'Live Network Active'}
               </span>
               <span className="px-3 py-1 bg-accent/10 border border-accent/20 rounded-full text-[10px] font-black text-accent uppercase tracking-[0.2em] flex items-center gap-2">
                 <BrainCircuit size={10} />
@@ -146,6 +155,30 @@ export default function DashboardPage() {
              </motion.button>
           </div>
         </motion.div>
+
+        {/* Mock Data Warning Banner */}
+        {data?.dataSource === "mock" && (
+          <motion.div
+            variants={itemVariants}
+            className="mx-1 flex items-center gap-4 px-6 py-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm"
+          >
+            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-black text-amber-400 uppercase tracking-widest">
+                Offline Mode — Displaying Fallback Data
+              </p>
+              <p className="text-[11px] text-amber-500/70 mt-0.5">
+                Main API (port 8000) is unreachable. Values shown are placeholders, not live data.
+              </p>
+            </div>
+            <button
+              onClick={() => loadDashboard(true)}
+              className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:bg-amber-500/20 transition-all"
+            >
+              Retry
+            </button>
+          </motion.div>
+        )}
 
         {/* Top-Level Grid Overview */}
         <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 px-1">
