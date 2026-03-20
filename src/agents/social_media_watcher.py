@@ -35,14 +35,13 @@ class SocialMediaWatcher(BaseWatcher):
         """
         super().__init__(vault_path, check_interval=60, use_chrome_profile=True)
         self.platform = platform
-        self.processed_items = self._load_all_platform_ids()
 
         # Persistent browser context (reused across check cycles)
         self._playwright = None
         self._browser = None
         self._page = None
-        
-        # Platform-specific configurations
+
+        # Platform-specific configurations (must be set before _load_all_platform_ids)
         self.platform_configs = {
             'twitter': {
                 'url': 'https://x.com/notifications',
@@ -71,7 +70,10 @@ class SocialMediaWatcher(BaseWatcher):
                 'keywords': os.getenv('WHATSAPP_KEYWORDS', 'urgent,asap,invoice,payment,help').split(',')
             }
         }
-    
+
+        # Now safe to call — platform_configs is set
+        self.processed_items = self._load_all_platform_ids()
+
     def _load_all_platform_ids(self) -> dict:
         """Load processed IDs for all platforms from disk"""
         result = {}
