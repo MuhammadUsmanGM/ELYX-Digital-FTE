@@ -573,12 +573,10 @@ class MemorySystem:
             memory_id, embeddings_blob = row
 
             if embeddings_blob:
-                try:
-                    embeddings = pickle.loads(embeddings_blob)
+                embeddings = self._deserialize_embeddings(embeddings_blob)
+                if embeddings is not None:
                     embeddings_list.append(embeddings)
                     ids_list.append(memory_id)
-                except Exception:
-                    continue
 
         if embeddings_list:
             embeddings_array = np.array(embeddings_list).astype('float32')
