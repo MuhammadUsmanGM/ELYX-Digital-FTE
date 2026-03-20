@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import LoadingDots from "@/components/LoadingDots";
-import { fetchActivityLog } from "@/lib/api";
+import { fetchActivityLog, fetchSystemMetrics } from "@/lib/api";
 
 interface SystemMetrics {
   cpu_usage: number;
@@ -39,20 +39,11 @@ export default function SystemMonitorPage() {
   const loadMetrics = async () => {
     try {
       setLoading(true);
-      // Simulated metrics - replace with actual API call
-      const simulatedMetrics: SystemMetrics = {
-        cpu_usage: 23.5,
-        memory_usage: 42.8,
-        disk_usage: 15.2,
-        active_watchers: 5,
-        tasks_processed: 1247,
-        uptime_hours: 72.3,
-        last_sync: new Date().toISOString(),
-        health_status: 'healthy'
-      };
-      setMetrics(simulatedMetrics);
-
-      const recent = await fetchActivityLog(10);
+      const [realMetrics, recent] = await Promise.all([
+        fetchSystemMetrics(),
+        fetchActivityLog(10)
+      ]);
+      setMetrics(realMetrics);
       setActivity(recent);
     } catch (error) {
       console.error("System metrics fetch error:", error);
@@ -63,14 +54,13 @@ export default function SystemMonitorPage() {
 
   useEffect(() => {
     loadMetrics();
-    const interval = setInterval(() => {
-      // Simulate minor fluctuations
-      setMetrics(prev => prev ? {
-        ...prev,
-        cpu_usage: Math.min(100, Math.max(0, prev.cpu_usage + (Math.random() - 0.5) * 5)),
-        memory_usage: Math.min(100, Math.max(0, prev.memory_usage + (Math.random() - 0.5) * 3))
-      } : null);
-    }, 5000);
+    // Poll real metrics every 10 seconds
+    const interval = setInterval(async () => {
+      try {
+        const realMetrics = await fetchSystemMetrics();
+        setMetrics(realMetrics);
+      } catch { /* silently retry next cycle */ }
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 

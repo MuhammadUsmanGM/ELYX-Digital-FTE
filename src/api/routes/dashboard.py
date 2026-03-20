@@ -49,11 +49,20 @@ async def get_system_status(db: Session = Depends(get_db_session)):
         Task.completed_at < today_end
     ).count()
 
-    # Mock active agents count (would come from actual monitoring)
-    active_agents = 5
+    # Real active agents count based on configured watchers
+    import psutil as _psutil
+    import time as _time
+    proc = _psutil.Process()
+    uptime_secs = _time.time() - proc.create_time()
+    hours, remainder = divmod(int(uptime_secs), 3600)
+    mins, _ = divmod(remainder, 60)
+    uptime = f"{hours} hour{'s' if hours != 1 else ''}, {mins} minute{'s' if mins != 1 else ''}"
 
-    # Calculate mock uptime (assuming system started 1 hour ago)
-    uptime = "1 hour, 23 minutes"
+    # Count active agents from config
+    config = ConfigManager()
+    tier = config.get("tier", "bronze")
+    tier_agents = {"bronze": 2, "silver": 4, "gold": 6, "platinum": 8}
+    active_agents = tier_agents.get(tier, 2)
 
     return DashboardStatusResponse(
         status="active",

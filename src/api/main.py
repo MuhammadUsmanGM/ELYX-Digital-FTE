@@ -66,12 +66,33 @@ app.add_middleware(
 
 @app.get("/api/health", tags=["system"])
 async def health_check():
-    """Health check endpoint for the API"""
+    """Health check endpoint with real system metrics"""
+    import psutil
+    import time
+
+    cpu = psutil.cpu_percent(interval=0.1)
+    mem = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+
+    # Calculate real uptime from process start
+    proc = psutil.Process(os.getpid())
+    uptime_secs = time.time() - proc.create_time()
+    hours, remainder = divmod(int(uptime_secs), 3600)
+    mins, _ = divmod(remainder, 60)
+    uptime_str = f"{hours}h {mins}m"
+
     return {
         "status": "healthy",
         "timestamp": datetime.now().isoformat(),
         "service": "ELYX - Personal AI Employee",
-        "version": "1.0.0"
+        "version": "1.0.0",
+        "metrics": {
+            "cpu_usage": round(cpu, 1),
+            "memory_usage": round(mem.percent, 1),
+            "disk_usage": round(disk.percent, 1),
+            "uptime": uptime_str,
+            "uptime_seconds": round(uptime_secs),
+        }
     }
 
 

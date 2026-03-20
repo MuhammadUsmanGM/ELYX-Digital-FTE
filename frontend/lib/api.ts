@@ -129,6 +129,48 @@ export async function fetchScenarioStatus(domain: string = "primary"): Promise<S
   }
 }
 
+/**
+ * Fetch real system metrics from /health endpoint (FI3 fix).
+ * Returns CPU, memory, disk, uptime, and health status from the backend.
+ */
+export async function fetchSystemMetrics(): Promise<{
+  cpu_usage: number;
+  memory_usage: number;
+  disk_usage: number;
+  active_watchers: number;
+  tasks_processed: number;
+  uptime_hours: number;
+  last_sync: string;
+  health_status: 'healthy' | 'degraded' | 'critical';
+}> {
+  try {
+    const [healthRes, statusRes] = await Promise.all([
+      authFetch(`${API_BASE_URL}/health`),
+      authFetch(`${API_BASE_URL}/dashboard/status`)
+    ]);
+
+    const health = healthRes.ok ? await healthRes.json() : null;
+    const dashStatus = statusRes.ok ? await statusRes.json() : null;
+
+    return {
+      cpu_usage: health?.metrics?.cpu_usage ?? 0,
+      memory_usage: health?.metrics?.memory_usage ?? 0,
+      disk_usage: health?.metrics?.disk_usage ?? 0,
+      active_watchers: dashStatus?.active_agents ?? 0,
+      tasks_processed: dashStatus?.tasks_processed_today ?? 0,
+      uptime_hours: (health?.metrics?.uptime_seconds ?? 0) / 3600,
+      last_sync: health?.timestamp ?? new Date().toISOString(),
+      health_status: health?.status === "healthy" ? "healthy" : "degraded"
+    };
+  } catch {
+    return {
+      cpu_usage: 0, memory_usage: 0, disk_usage: 0,
+      active_watchers: 0, tasks_processed: 0, uptime_hours: 0,
+      last_sync: new Date().toISOString(), health_status: "critical"
+    };
+  }
+}
+
 export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     const [vaultSummary, statusRes, system, scenarios] = await Promise.all([

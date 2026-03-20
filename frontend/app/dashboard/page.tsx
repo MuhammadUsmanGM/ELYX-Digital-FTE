@@ -307,20 +307,32 @@ export default function DashboardPage() {
                ) : (
                  <div className="relative h-40 flex items-end gap-2 px-2 mb-10 overflow-hidden rounded-3xl">
                     <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px] pointer-events-none" />
-                    {Array.from({ length: 48 }).map((_, i) => (
-                      <motion.div 
-                        initial={{ height: 0 }}
-                        animate={{ height: `${20 + Math.random() * 80}%` }}
-                        transition={{ duration: 1.5, delay: i * 0.02, ease: "circOut" }}
-                        key={i} 
-                        className="flex-1 bg-gradient-to-t from-primary/10 via-primary/40 to-primary rounded-t-full hover:to-accent transition-all duration-500 group/bar relative"
-                      >
-                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 p-2 rounded-xl bg-slate-950 border border-white/10 opacity-0 group-hover/bar:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50 shadow-2xl">
-                           <p className="text-[9px] font-black text-primary uppercase tracking-widest">Node ID: {i}</p>
-                           <p className="text-[11px] font-black text-white mt-1">VOL: {(Math.random() * 100).toFixed(2)}</p>
-                        </div>
-                      </motion.div>
-                    ))}
+                    {(() => {
+                      // Build 24-hour histogram from real activity data
+                      const hourCounts = new Array(24).fill(0);
+                      activity.forEach((a: any) => {
+                        const ts = new Date(a.timestamp || "");
+                        if (!Number.isNaN(ts.getTime())) hourCounts[ts.getHours()]++;
+                      });
+                      const maxCount = Math.max(1, ...hourCounts);
+                      return hourCounts.map((count, i) => {
+                        const pct = Math.max(5, (count / maxCount) * 100);
+                        return (
+                          <motion.div
+                            initial={{ height: 0 }}
+                            animate={{ height: `${pct}%` }}
+                            transition={{ duration: 1.5, delay: i * 0.03, ease: "circOut" }}
+                            key={i}
+                            className="flex-1 bg-gradient-to-t from-primary/10 via-primary/40 to-primary rounded-t-full hover:to-accent transition-all duration-500 group/bar relative"
+                          >
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 p-2 rounded-xl bg-slate-950 border border-white/10 opacity-0 group-hover/bar:opacity-100 transition-all pointer-events-none whitespace-nowrap z-50 shadow-2xl">
+                               <p className="text-[9px] font-black text-primary uppercase tracking-widest">{String(i).padStart(2, "0")}:00</p>
+                               <p className="text-[11px] font-black text-white mt-1">{count} event{count !== 1 ? "s" : ""}</p>
+                            </div>
+                          </motion.div>
+                        );
+                      });
+                    })()}
                  </div>
                )}
 
