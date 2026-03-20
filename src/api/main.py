@@ -119,20 +119,26 @@ except ImportError as e:
 @app.exception_handler(404)
 async def custom_http_exception_handler(request, exc):
     """Custom 404 handler"""
-    return {
-        "detail": "Endpoint not found",
-        "status_code": 404,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Endpoint not found",
+            "status_code": 404,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
 
 @app.exception_handler(500)
 async def custom_server_error_exception_handler(request, exc):
     """Custom 500 handler"""
-    return {
-        "detail": "Internal server error",
-        "status_code": 500,
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
+            "status_code": 500,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    )
 
 # Utility functions
 def get_db():
