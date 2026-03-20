@@ -149,13 +149,13 @@ class WindowsTaskScheduler:
             **kwargs: Trigger-specific parameters
         """
         trigger_types = {
-            'startup': 2,      # TASK_TRIGGER_AT_SYSTEMSTART
-            'logon': 9,        # TASK_TRIGGER_LOGON
+            'once': 1,         # TASK_TRIGGER_TIME
             'daily': 2,        # TASK_TRIGGER_DAILY
             'weekly': 3,       # TASK_TRIGGER_WEEKLY
             'monthly': 4,      # TASK_TRIGGER_MONTHLY
-            'once': 1,         # TASK_TRIGGER_ONE_TIME
             'idle': 6,         # TASK_TRIGGER_IDLE
+            'startup': 8,      # TASK_TRIGGER_BOOT
+            'logon': 9,        # TASK_TRIGGER_LOGON
             'event': 0         # TASK_TRIGGER_EVENT
         }
 
@@ -225,10 +225,11 @@ class WindowsTaskScheduler:
     def register_task(self, task_name: str, exe_path: str = None, args: str = '',
                       trigger_type: str = 'once', working_dir: str = None,
                       description: str = '', enabled: bool = True,
-                      user: str = None, password: str = None) -> bool:
+                      user: str = None, password: str = None,
+                      **trigger_kwargs) -> bool:
         """
         Register a task with Windows Task Scheduler
-        
+
         Args:
             task_name: Name of the task
             exe_path: Path to executable (default: Python)
@@ -239,14 +240,16 @@ class WindowsTaskScheduler:
             enabled: Whether task is enabled
             user: User account to run as
             password: User password (if required)
-            
+            **trigger_kwargs: Extra keyword args forwarded to _add_trigger
+                              (e.g. day, time for weekly/daily triggers)
+
         Returns:
             True if successful
         """
         try:
             exe_path = exe_path or self.python_exe
             working_dir = working_dir or str(self.project_root)
-            
+
             # Create task definition
             task_def = self._create_task_definition(
                 name=task_name,
@@ -255,13 +258,14 @@ class WindowsTaskScheduler:
                 args=args,
                 working_dir=working_dir
             )
-            
-            # Add trigger
+
+            # Add trigger — forward all kwargs so day/time reach _add_trigger
             self._add_trigger(
-                task_def, 
+                task_def,
                 trigger_type,
                 enabled=enabled,
-                user=user
+                user=user,
+                **trigger_kwargs
             )
             
             # Register task
@@ -516,7 +520,8 @@ class WindowsTaskScheduler:
                 args=config['args'],
                 trigger_type=trigger,
                 description=config['description'],
-                enabled=True
+                enabled=True,
+                **trigger_kwargs
             )
             
             results[task_key] = 'registered' if success else 'failed'
