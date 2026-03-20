@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, List
 from datetime import datetime, timedelta
 
-from ...services.database import get_db_session
+from ...services.database import get_db_session, Task, InteractionLog
 from ...services.task_service import TaskService
 from ...services.preference_service import UserPreferenceService
 from ...services.interaction_service import InteractionService
@@ -43,10 +43,10 @@ async def get_system_status(db: Session = Depends(get_db_session)):
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = today_start + timedelta(days=1)
 
-    completed_today = db.query(TaskService.entity_class).filter(
-        TaskService.entity_class.status == "completed",
-        TaskService.entity_class.completed_at >= today_start,
-        TaskService.entity_class.completed_at < today_end
+    completed_today = db.query(Task).filter(
+        Task.status == "completed",
+        Task.completed_at >= today_start,
+        Task.completed_at < today_end
     ).count()
 
     # Mock active agents count (would come from actual monitoring)
@@ -122,10 +122,10 @@ async def get_system_analytics(
     success_rate = (completed_count / total_processed * 100) if total_processed > 0 else 100.0
 
     # Calculate user satisfaction (mock based on positive interactions)
-    positive_interactions = interaction_service.db.query(InteractionService.entity_class).filter(
-        InteractionService.entity_class.outcome == "positive"
+    positive_interactions = interaction_service.db.query(InteractionLog).filter(
+        InteractionLog.outcome == "positive"
     ).count()
-    total_interactions = interaction_service.db.query(InteractionService.entity_class).count()
+    total_interactions = interaction_service.db.query(InteractionLog).count()
     user_satisfaction = (positive_interactions / total_interactions * 100) if total_interactions > 0 else 85.0
 
     # Calculate trends
@@ -171,7 +171,7 @@ async def get_system_analytics(
 
 @dashboard_router.get("/tasks", response_model=TaskOverviewResponse)
 async def get_task_overview(
-    status: Optional[str] = Query(None, description="Filter tasks by status"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Filter tasks by status"),
     category: Optional[str] = Query(None, description="Filter tasks by category"),
     limit: int = Query(20, ge=1, le=100, description="Limit number of results returned"),
     db: Session = Depends(get_db_session)
@@ -184,13 +184,13 @@ async def get_task_overview(
 
     # Build filters
     filters = {}
-    if status:
-        if status not in ["pending", "processing", "completed", "failed", "awaiting_approval"]:
+    if status_filter:
+        if status_filter not in ["pending", "processing", "completed", "failed", "awaiting_approval"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid status: {status}"
+                detail=f"Invalid status: {status_filter}"
             )
-        filters["status"] = status
+        filters["status"] = status_filter
 
     if category:
         if category not in ["email", "file", "calendar", "crm", "custom"]:

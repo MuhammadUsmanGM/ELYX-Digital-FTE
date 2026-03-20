@@ -6,9 +6,8 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime
 
-from ...services.database import get_db_session
+from ...services.database import get_db_session, Task, ApprovalRequest
 from ...services.task_service import TaskService
-from ...services.database import ApprovalRequest
 from ..api_models import TaskResponse
 
 # Create router for approval endpoints
@@ -59,8 +58,8 @@ async def approve_request(
     approval_request.approved_at = datetime.utcnow()
 
     # Update the associated task status to processing
-    task = db.query(TaskService.entity_class).filter(
-        TaskService.entity_class.id == approval_request.task_id
+    task = db.query(Task).filter(
+        Task.id == approval_request.task_id
     ).first()
 
     if task:
@@ -115,8 +114,8 @@ async def reject_request(
     approval_request.rejected_at = datetime.utcnow()
 
     # Update the associated task status to failed
-    task = db.query(TaskService.entity_class).filter(
-        TaskService.entity_class.id == approval_request.task_id
+    task = db.query(Task).filter(
+        Task.id == approval_request.task_id
     ).first()
 
     if task:
