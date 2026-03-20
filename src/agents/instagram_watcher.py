@@ -169,7 +169,7 @@ class InstagramWatcher(BaseWatcher):
         sender = item.get('sender', 'Instagram')
         content = f'''---
 type: {item['type']}
-from: {sender}
+from: "{sender}"
 priority: medium
 status: pending
 received: {item["timestamp"]}

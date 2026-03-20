@@ -374,34 +374,36 @@ class TaskService(BaseService[Task]):
             'errors': []
         }
 
+        updated_tasks = []
         for task_id in task_ids:
-            try:
-                task = self.get_by_id(task_id)
-                if task:
-                    # Update only allowlisted fields
-                    for key, value in updates.items():
-                        if key in self.BULK_UPDATABLE_FIELDS and hasattr(task, key):
-                            setattr(task, key, value)
-
-                    task.updated_at = datetime.utcnow()
-                    self.db.commit()
-                    self.db.refresh(task)
-                    results['updated_count'] += 1
-
-                    log_activity("TASK_BULK_UPDATE",
-                               f"Task '{task.title}' updated in bulk operation",
-                               "obsidian_vault")
-                else:
-                    results['failed_count'] += 1
-                    results['errors'].append({
-                        'task_id': task_id,
-                        'error': f'Task not found'
-                    })
-            except Exception as e:
+            task = self.get_by_id(task_id)
+            if task:
+                for key, value in updates.items():
+                    if key in self.BULK_UPDATABLE_FIELDS and hasattr(task, key):
+                        setattr(task, key, value)
+                task.updated_at = datetime.utcnow()
+                updated_tasks.append(task)
+                results['updated_count'] += 1
+            else:
                 results['failed_count'] += 1
                 results['errors'].append({
                     'task_id': task_id,
-                    'error': str(e)
+                    'error': 'Task not found'
                 })
+
+        # Commit all updates atomically — all succeed or all roll back
+        if updated_tasks:
+            try:
+                self.db.commit()
+                for task in updated_tasks:
+                    self.db.refresh(task)
+                    log_activity("TASK_BULK_UPDATE",
+                               f"Task '{task.title}' updated in bulk operation",
+                               "obsidian_vault")
+            except Exception as e:
+                self.db.rollback()
+                results['updated_count'] = 0
+                results['failed_count'] = len(task_ids)
+                results['errors'] = [{'task_id': tid, 'error': str(e)} for tid in task_ids]
 
         return results

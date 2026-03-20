@@ -189,12 +189,12 @@ class WhatsAppWatcher(BaseWatcher):
     def create_action_file(self, item) -> Path:
         content = f'''---
 type: {item['type']}
-from: {item['sender']}
+from: "{item['sender']}"
 platform: WhatsApp
 priority: high
 status: pending
 received: {item["timestamp"]}
-keywords: {", ".join(item["keywords_found"])}
+keywords: "{', '.join(item['keywords_found'])}"
 ---
 
 # URGENT WhatsApp Message

@@ -347,6 +347,7 @@ def main():
         import traceback
         traceback.print_exc()
         cleanup()
+        sys.exit(1)
 
     # Print comprehensive status
     print_system_status()

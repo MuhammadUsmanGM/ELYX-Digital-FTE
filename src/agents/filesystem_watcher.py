@@ -7,17 +7,42 @@ import json
 
 class FileSystemWatcher(FileSystemEventHandler):
     """
-    Watches a specified directory for file changes and creates action files in Needs_Action
+    Watches a specified directory for file changes and creates action files in Needs_Action.
+    Uses watchdog's event-driven model (not polling), but persists processed file IDs
+    to disk so restarts don't cause duplicate processing.
     """
     def __init__(self, watch_path: str, vault_path: str):
         self.watch_path = Path(watch_path)
         self.vault_path = Path(vault_path)
         self.needs_action = self.vault_path / 'Needs_Action'
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.processed_files = set()
 
         # Create the needs_action directory if it doesn't exist
         self.needs_action.mkdir(parents=True, exist_ok=True)
+
+        # Persist processed files across restarts
+        self._ids_file = self.vault_path / 'Logs' / 'filesystem_processed_ids.json'
+        self.processed_files = self._load_processed_files()
+
+    def _load_processed_files(self) -> set:
+        """Load processed file paths from disk"""
+        if self._ids_file.exists():
+            try:
+                with open(self._ids_file, 'r') as f:
+                    return set(json.load(f))
+            except Exception:
+                return set()
+        return set()
+
+    def _save_processed_files(self):
+        """Save processed file paths to disk"""
+        self._ids_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            ids_list = list(self.processed_files)[-10000:]
+            with open(self._ids_file, 'w') as f:
+                json.dump(ids_list, f)
+        except Exception as e:
+            self.logger.error(f"Failed to save processed files: {e}")
 
     def on_created(self, event):
         if event.is_directory:
@@ -29,6 +54,7 @@ class FileSystemWatcher(FileSystemEventHandler):
 
         source = Path(event.src_path)
         self.processed_files.add(normalized)
+        self._save_processed_files()
 
         # Create action file for the new file
         self.create_action_file(source)
@@ -44,6 +70,7 @@ class FileSystemWatcher(FileSystemEventHandler):
 
         source = Path(event.src_path)
         self.processed_files.add(normalized)
+        self._save_processed_files()
 
         # Create action file for the modified file
         self.create_action_file(source)

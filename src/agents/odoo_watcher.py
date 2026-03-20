@@ -27,12 +27,34 @@ class OdooWatcher(BaseWatcher):
         super().__init__(vault_path, check_interval=interval, use_chrome_profile=False)
         self.odoo = get_odoo_service()
         self.processed_invoices = self._load_processed_ids("odoo")
-        self.last_revenue_check = None
+        self.last_revenue_check = self._load_last_revenue_check()
     
+    def _load_last_revenue_check(self) -> str:
+        """Load last revenue check week key from disk"""
+        state_file = self.vault_path / "Logs" / "odoo_revenue_state.json"
+        if state_file.exists():
+            try:
+                with open(state_file, 'r') as f:
+                    data = json.load(f)
+                    return data.get('last_revenue_check')
+            except Exception:
+                pass
+        return None
+
+    def _save_last_revenue_check(self):
+        """Persist last revenue check week key to disk"""
+        state_file = self.vault_path / "Logs" / "odoo_revenue_state.json"
+        state_file.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            with open(state_file, 'w') as f:
+                json.dump({'last_revenue_check': self.last_revenue_check}, f)
+        except Exception as e:
+            self.logger.error(f"Failed to save revenue check state: {e}")
+
     def check_for_updates(self) -> list:
         """
         Check Odoo for accounting events that need attention
-        
+
         Returns:
             List of items to process
         """
@@ -204,7 +226,8 @@ class OdooWatcher(BaseWatcher):
             return None
         
         self.last_revenue_check = week_key
-        
+        self._save_last_revenue_check()
+
         try:
             revenue = self.odoo.get_revenue_this_week()
             
@@ -265,7 +288,7 @@ status: pending
 received: {item["timestamp"]}
 invoice_id: {item['invoice_id']}
 invoice_name: {item['invoice_name']}
-customer: {item['partner']}
+customer: "{item['partner']}"
 amount: {item['amount']:.2f}
 due_date: {item['due_date']}
 days_overdue: {item['days_overdue']}
@@ -308,7 +331,7 @@ status: pending
 received: {item["timestamp"]}
 invoice_id: {item['invoice_id']}
 invoice_name: {item['invoice_name']}
-vendor: {item['vendor']}
+vendor: "{item['vendor']}"
 amount: {item['amount']:.2f}
 due_date: {item['due_date']}
 ---
@@ -367,20 +390,24 @@ amount: {item['amount']:.2f}
 
     def _create_revenue_action(self, item: dict) -> str:
         """Create action file for weekly revenue update"""
+        try:
+            revenue = float(item.get('revenue') or 0)
+        except (TypeError, ValueError):
+            revenue = 0.0
         return f'''---
 type: weekly_revenue
 priority: {item['priority']}
 status: pending
 received: {item["timestamp"]}
 week: {item['week']}
-revenue: {item['revenue']:.2f}
+revenue: {revenue:.2f}
 ---
 
-# 📊 WEEKLY REVENUE UPDATE
+# WEEKLY REVENUE UPDATE
 
 ## Week {item['week']}
 
-**Total Revenue**: ${item['revenue']:.2f}
+**Total Revenue**: ${revenue:.2f}
 
 ## Suggested Actions
 - [ ] Review revenue trends
@@ -391,7 +418,7 @@ revenue: {item['revenue']:.2f}
 ## For CEO Briefing
 Add this data to the Monday Morning CEO Briefing:
 - Week: {item['week']}
-- Revenue: ${item['revenue']:.2f}
+- Revenue: ${revenue:.2f}
 - Compare to previous week and monthly target
 
 ---
