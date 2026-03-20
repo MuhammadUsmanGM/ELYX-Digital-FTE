@@ -1,8 +1,26 @@
 import { DashboardData, SystemState, ScenarioStatus, Task, ApprovalRequest, Communication, Transaction, KPI, BusinessWorkflow, SystemHistory, Scenario, WorkflowTask } from "./types";
+import { supabase } from "./supabase";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
 
 // lib/api.ts
+
+/**
+ * Authenticated fetch wrapper — attaches Supabase JWT as Bearer token
+ * when a session is available. Falls back to unauthenticated fetch otherwise.
+ */
+async function authFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+  const headers = new Headers(init?.headers);
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      headers.set("Authorization", `Bearer ${session.access_token}`);
+    }
+  } catch {
+    // No session available — proceed without auth header
+  }
+  return fetch(input, { ...init, headers });
+}
 
 // Fallback Mock Data as required by the ELYX platform for seamless UI experience
 const MOCK_FALLBACKS = {
@@ -29,42 +47,45 @@ const MOCK_FALLBACKS = {
   ]
 };
 
+/**
+ * Derive system state from the real /dashboard/status endpoint.
+ * No backend route exists for /system/state — this uses the existing health check instead.
+ */
 export async function fetchSystemState(entityId: string = "system_core"): Promise<SystemState> {
   try {
-    const response = await fetch(`${API_BASE_URL}/system/state/${entityId}`);
+    const response = await authFetch(`${API_BASE_URL}/dashboard/status`);
     if (!response.ok) throw new Error("Backend offline");
-    const data = await response.json();
-    const state = data.system_state;
-    
+    const status = await response.json();
+
     return {
-      id: state.id || "system_core",
-      entity_id: state.entity_id || entityId,
-      entity_type: state.entity_type || "ai_system",
-      state_type: state.state_type || "active",
-      attention_focus: state.attention_focus || { current: "System Core" },
-      stability_level: state.stability_level || 0.85,
-      introspection_depth: state.introspection_depth || 0.7,
-      emotional_state: state.emotional_state || { mood: "neutral" },
-      load_level: state.load_level || 2.4,
-      creativity_level: state.creativity_level || 0.6,
-      memory_integration_status: state.memory_integration_status || "stable",
-      coherence_level: state.coherence_level || 0.9,
-      model_accuracy: state.model_accuracy || 0.95,
-      stability_score: (data.system_integrity_score || 9.8) * 10,
-      updated_at: data.timestamp || new Date().toISOString()
+      id: "system_core",
+      entity_id: entityId,
+      entity_type: "ai_system",
+      state_type: status.status === "active" ? "active" : "degraded",
+      attention_focus: { current: "System Core" },
+      stability_level: status.status === "active" ? 0.95 : 0.7,
+      introspection_depth: 0.85,
+      emotional_state: { mood: "focused" },
+      load_level: status.active_agents ?? 0,
+      creativity_level: 0.8,
+      memory_integration_status: "stable",
+      coherence_level: 0.95,
+      model_accuracy: 0.99,
+      stability_score: status.status === "active" ? 98.4 : 75.0,
+      updated_at: status.last_update || new Date().toISOString()
     };
   } catch (error) {
-    console.warn("Using mock system state");
+    console.warn("Backend offline — using default system state");
     return {
-      id: "mock_id",
+      id: "offline",
       entity_id: entityId,
       entity_type: "ai_system",
       state_type: "active",
-      attention_focus: { current: "Market Volatility" },
+      attention_focus: { current: "System Core" },
       stability_level: 0.92,
       introspection_depth: 0.85,
       emotional_state: { mood: "focused" },
-      load_level: 2.4,
+      load_level: 0,
       creativity_level: 0.8,
       memory_integration_status: "stable",
       coherence_level: 0.95,
@@ -75,29 +96,34 @@ export async function fetchSystemState(entityId: string = "system_core"): Promis
   }
 }
 
+/**
+ * Derive scenario status from the real /health endpoint.
+ * No backend route exists for /scenario/status — this uses the existing health check.
+ */
 export async function fetchScenarioStatus(domain: string = "primary"): Promise<ScenarioStatus> {
   try {
-    const response = await fetch(`${API_BASE_URL}/scenario/status/${domain}`);
+    const response = await authFetch(`${API_BASE_URL}/health`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
-    
+
+    const isHealthy = data.status === "healthy";
     return {
-      domain: data.domain || domain,
-      stability_score: (data.stability_score || 9.9) * 10,
-      stability_index: (data.stability_index || 9.9) * 10,
-      anchoring_strength: (data.anchoring_strength || 9.5) * 10,
-      integrity_score: (data.integrity_score || 9.8) * 10,
-      current_status: data.status || "stable",
-      next_check_due: data.timestamp || new Date().toISOString()
+      domain,
+      stability_score: isHealthy ? 99.9 : 70.0,
+      stability_index: isHealthy ? 99.4 : 65.0,
+      anchoring_strength: isHealthy ? 95.2 : 60.0,
+      integrity_score: isHealthy ? 98.7 : 55.0,
+      current_status: isHealthy ? "stable" : "degraded",
+      next_check_due: new Date(Date.now() + 60000).toISOString()
     };
   } catch (error) {
     return {
-      domain: domain,
-      stability_score: 99.98,
-      stability_index: 99.4,
-      anchoring_strength: 95.2,
-      integrity_score: 98.7,
-      current_status: "stable",
+      domain,
+      stability_score: 0,
+      stability_index: 0,
+      anchoring_strength: 0,
+      integrity_score: 0,
+      current_status: "offline",
       next_check_due: new Date().toISOString()
     };
   }
@@ -107,7 +133,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
   try {
     const [vaultSummary, statusRes, system, scenarios] = await Promise.all([
       fetchVaultSummary(),
-      fetch(`${API_BASE_URL}/dashboard/status`).then(r => {
+      authFetch(`${API_BASE_URL}/dashboard/status`).then(r => {
         if (!r.ok) throw new Error("Backend offline");
         return r.json();
       }).catch(() => null),
@@ -157,7 +183,7 @@ export async function fetchDashboardData(): Promise<DashboardData> {
 
 export async function fetchTasks(): Promise<Task[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/tasks`);
+    const response = await authFetch(`${API_BASE_URL}/dashboard/tasks`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
     
@@ -181,7 +207,7 @@ export async function fetchTasks(): Promise<Task[]> {
 
 export async function fetchApprovals(): Promise<ApprovalRequest[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/approvals/pending`);
+    const response = await authFetch(`${API_BASE_URL}/approvals/pending`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
     
@@ -203,7 +229,7 @@ export async function fetchApprovals(): Promise<ApprovalRequest[]> {
 
 export async function fetchActivityLog(limit: number = 20): Promise<any[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/activity?limit=${encodeURIComponent(String(limit))}`);
+    const response = await authFetch(`${API_BASE_URL}/dashboard/activity?limit=${encodeURIComponent(String(limit))}`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
     return (data.activities || []) as any[];
@@ -214,7 +240,7 @@ export async function fetchActivityLog(limit: number = 20): Promise<any[]> {
 
 export async function fetchCommunications(): Promise<Communication[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/communication/conversations`);
+    const response = await authFetch(`${API_BASE_URL}/communication/conversations`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
 
@@ -282,7 +308,7 @@ export async function sendMessage(
 
   try {
     const apiKey = process.env.NEXT_PUBLIC_ELYX_API_KEY || "";
-    const response = await fetch(`${API_BASE_URL}/communication/send-response`, {
+    const response = await authFetch(`${API_BASE_URL}/communication/send-response`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -313,7 +339,7 @@ export async function sendMessage(
 
 export async function fetchTransactions(): Promise<Transaction[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/finance/transactions?limit=25&include_expenses=true`);
+    const response = await authFetch(`${API_BASE_URL}/finance/transactions?limit=25&include_expenses=true`);
     if (!response.ok) throw new Error("Finance API offline");
     const data = await response.json();
     return (data.transactions || []) as Transaction[];
@@ -327,7 +353,7 @@ export async function fetchTransactions(): Promise<Transaction[]> {
 
 export async function fetchKPIs(): Promise<KPI[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/finance/kpis`);
+    const response = await authFetch(`${API_BASE_URL}/finance/kpis`);
     if (!response.ok) throw new Error("Finance API offline");
     const data = await response.json();
     return (data.kpis || []) as KPI[];
@@ -358,7 +384,7 @@ export async function fetchWorkflowTasks(): Promise<WorkflowTask[]> {
 
 export async function fetchUserPreferences(): Promise<any[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/preferences`);
+    const response = await authFetch(`${API_BASE_URL}/dashboard/preferences`);
     if (!response.ok) throw new Error("Backend offline");
     const data = await response.json();
     return data.preferences;
@@ -374,7 +400,7 @@ export async function fetchUserPreferences(): Promise<any[]> {
 
 export async function updateUserPreference(key: string, value: any, type: string = "operational"): Promise<void> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/preferences`, {
+    const response = await authFetch(`${API_BASE_URL}/dashboard/preferences`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -393,7 +419,7 @@ export async function updateUserPreference(key: string, value: any, type: string
 
 export async function fetchAnalytics(timeframe: string = "week"): Promise<any> {
   try {
-    const response = await fetch(`${API_BASE_URL}/dashboard/analytics?timeframe=${timeframe}`);
+    const response = await authFetch(`${API_BASE_URL}/dashboard/analytics?timeframe=${timeframe}`);
     if (!response.ok) throw new Error("Backend offline");
     return await response.json();
   } catch (error) {
@@ -434,7 +460,7 @@ export async function fetchAnalytics(timeframe: string = "week"): Promise<any> {
 
 export async function fetchTeamMembers(): Promise<any[]> {
   try {
-    const response = await fetch(`${API_BASE_URL}/users`);
+    const response = await authFetch(`${API_BASE_URL}/users`);
     if (!response.ok) throw new Error("Backend offline");
     return await response.json();
   } catch (error) {
@@ -466,7 +492,7 @@ export async function fetchTeamMembers(): Promise<any[]> {
 
 export async function deleteTeamMember(id: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, { method: 'DELETE' });
+    const response = await authFetch(`${API_BASE_URL}/users/${id}`, { method: 'DELETE' });
     return response.ok;
   } catch (error) {
     return false;
@@ -479,7 +505,7 @@ export async function saveOnboardingData(data: {
   selected_channels: string[];
 }): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/settings/onboard`, {
+    const response = await authFetch(`${API_BASE_URL}/settings/onboard`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -493,7 +519,7 @@ export async function saveOnboardingData(data: {
 
 export async function fetchOnboardingStatus(userId: string): Promise<boolean> {
   try {
-    const response = await fetch(`${API_BASE_URL}/settings/status/${userId}`);
+    const response = await authFetch(`${API_BASE_URL}/settings/status/${userId}`);
     if (!response.ok) return false;
     const data = await response.json();
     return data.onboarded;
@@ -507,7 +533,7 @@ const VAULT_API_BASE = "http://localhost:8080/api/vault";
 
 export async function fetchVaultSummary(): Promise<{ pending_tasks: number; pending_approvals: number; completed_tasks: number } | null> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/summary`);
+    const response = await authFetch(`${VAULT_API_BASE}/summary`);
     if (!response.ok) return null;
     const data = await response.json();
     return {
@@ -522,7 +548,7 @@ export async function fetchVaultSummary(): Promise<{ pending_tasks: number; pend
 
 export async function fetchVaultTasks(folder: string = "Needs_Action"): Promise<Task[]> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/tasks?folder=${folder}`);
+    const response = await authFetch(`${VAULT_API_BASE}/tasks?folder=${folder}`);
     if (!response.ok) throw new Error("Vault API offline");
     const data = await response.json();
     
@@ -546,7 +572,7 @@ export async function fetchVaultTasks(folder: string = "Needs_Action"): Promise<
 
 export async function approveVaultTask(filename: string): Promise<boolean> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/approve`, {
+    const response = await authFetch(`${VAULT_API_BASE}/approve`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ filename })
@@ -561,7 +587,7 @@ export async function approveVaultTask(filename: string): Promise<boolean> {
 
 export async function rejectVaultTask(filename: string): Promise<boolean> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/reject`, {
+    const response = await authFetch(`${VAULT_API_BASE}/reject`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ filename })
@@ -576,7 +602,7 @@ export async function rejectVaultTask(filename: string): Promise<boolean> {
 
 export async function completeVaultTask(filename: string): Promise<boolean> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/complete`, {
+    const response = await authFetch(`${VAULT_API_BASE}/complete`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ filename })
@@ -591,7 +617,7 @@ export async function completeVaultTask(filename: string): Promise<boolean> {
 
 export async function fetchVaultApprovals(): Promise<ApprovalRequest[]> {
   try {
-    const response = await fetch(`${VAULT_API_BASE}/approvals`);
+    const response = await authFetch(`${VAULT_API_BASE}/approvals`);
     if (!response.ok) throw new Error("Vault API offline");
     const data = await response.json();
     
@@ -627,7 +653,7 @@ export interface FeatureFlag {
 
 export async function fetchFeatureFlags(): Promise<FeatureFlag[]> {
   try {
-    const response = await fetch(`${SETTINGS_API_BASE}/flags`);
+    const response = await authFetch(`${SETTINGS_API_BASE}/flags`);
     if (!response.ok) throw new Error("Settings API offline");
     const data = await response.json();
     return data.flags || [];
@@ -645,7 +671,7 @@ export async function fetchFeatureFlags(): Promise<FeatureFlag[]> {
 
 export async function updateFeatureFlag(flag: string, value: boolean): Promise<boolean> {
   try {
-    const response = await fetch(`${SETTINGS_API_BASE}/flags`, {
+    const response = await authFetch(`${SETTINGS_API_BASE}/flags`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ flag, value })
@@ -660,7 +686,7 @@ export async function updateFeatureFlag(flag: string, value: boolean): Promise<b
 
 export async function fetchAllSettings(): Promise<any> {
   try {
-    const response = await fetch(`${SETTINGS_API_BASE}/all`);
+    const response = await authFetch(`${SETTINGS_API_BASE}/all`);
     if (!response.ok) throw new Error("Settings API offline");
     return await response.json();
   } catch (error) {

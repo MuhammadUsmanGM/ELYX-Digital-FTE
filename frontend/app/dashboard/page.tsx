@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
   Activity, 
   BrainCircuit, 
@@ -38,6 +39,7 @@ type ActivityItem = {
 };
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
@@ -433,9 +435,10 @@ export default function DashboardPage() {
                   )}
                </div>
                
-               <motion.button 
+               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => router.push("/approvals")}
                 className="w-full py-5 bg-gradient-to-r from-red-600 to-red-500 border border-red-400/20 rounded-3xl text-[11px] font-black text-white uppercase tracking-[0.2em] shadow-xl shadow-red-600/20 flex items-center justify-center gap-3 group/btn"
                >
                   Authorize Sequence <Command size={16} className="group-hover/btn:rotate-12 transition-transform" />
