@@ -114,18 +114,28 @@ class CEOBriefingService:
             # Get invoice counts
             unpaid = self.odoo.get_unpaid_invoices()
             overdue = self.odoo.get_overdue_invoices()
-            
-            revenue_data['invoices_sent'] = len(unpaid)
-            revenue_data['invoices_paid'] = len([i for i in unpaid if i.get('payment_state') == 'paid'])
+            # Query paid invoices separately — unpaid list will never contain paid ones
+            paid = self.odoo.get_invoices(domain=[
+                ['move_type', '=', 'out_invoice'],
+                ['state', '=', 'posted'],
+                ['payment_state', '=', 'paid'],
+            ])
+
+            revenue_data['invoices_sent'] = len(unpaid) + len(paid)
+            revenue_data['invoices_paid'] = len(paid)
             revenue_data['invoices_overdue'] = len(overdue)
-            
-            # Determine trend
-            if revenue_data['this_week'] > 0:
+
+            # Determine trend by comparing weekly to monthly average
+            this_week = revenue_data['this_week']
+            mtm = revenue_data['mtm']
+            # Approximate weekly average from month-to-date
+            weekly_avg = mtm / 4.0 if mtm > 0 else 0.0
+            if weekly_avg > 0 and this_week > weekly_avg * 1.1:
                 revenue_data['trend'] = 'growing'
-            elif revenue_data['this_week'] == 0:
-                revenue_data['trend'] = 'stable'
-            else:
+            elif weekly_avg > 0 and this_week < weekly_avg * 0.9:
                 revenue_data['trend'] = 'declining'
+            else:
+                revenue_data['trend'] = 'stable'
                 
         except Exception as e:
             print(f"Error getting revenue data: {e}")
@@ -143,15 +153,21 @@ class CEOBriefingService:
             # Get all .md files in Done folder
             done_files = list(self.done_folder.glob('*.md'))
             
+            period_start_ts = period_start.timestamp()
+            period_end_ts = period_end.timestamp()
+
             for file in done_files:
                 try:
                     content = file.read_text(encoding='utf-8')
-                    
+
                     # Parse frontmatter and content
                     task_data = self._parse_task_file(content, file)
-                    
+
                     if task_data:
-                        completed_tasks.append(task_data)
+                        # Filter by date range using file modification time
+                        completed_at = task_data.get('completed_at', 0)
+                        if period_start_ts <= completed_at <= period_end_ts:
+                            completed_tasks.append(task_data)
                         
                 except Exception as e:
                     print(f"Error reading task file {file}: {e}")

@@ -798,8 +798,8 @@ class Orchestrator:
         now = datetime.now()
         current_date = now.strftime('%Y-%m-%d')
 
-        # Weekly Briefing - Every Friday at 5 PM
-        if now.weekday() == 4 and now.hour >= 17:
+        # Weekly Briefing - Every Monday at 8 AM
+        if now.weekday() == 0 and now.hour >= 8:
             if not hasattr(self, 'last_briefing_date'):
                 self.last_briefing_date = None
             if self.last_briefing_date != current_date:

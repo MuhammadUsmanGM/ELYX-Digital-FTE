@@ -145,20 +145,17 @@ class MemorySystem:
             memory_id, content, embeddings_blob = row
 
             # Load embeddings from blob if available
+            # Only add to ids_list when we actually add to the FAISS index,
+            # so that FAISS result indices map to the correct memory IDs.
             if embeddings_blob:
                 try:
                     embeddings = self._deserialize_embeddings(embeddings_blob)
                     if embeddings is not None:
                         embeddings_list.append(embeddings)
                         ids_list.append(memory_id)
-                    else:
-                        ids_list.append(memory_id)
                 except Exception:
                     # If embeddings are corrupted, skip this memory
                     continue
-            else:
-                # If no embeddings, we'll generate them when needed
-                ids_list.append(memory_id)
 
         if embeddings_list:
             # Add to FAISS index
