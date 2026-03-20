@@ -76,7 +76,6 @@ class UserPreferenceService(BaseService[UserPreference]):
 
         # Create preference object
         preference = UserPreference(
-            id=None,  # Will be auto-generated
             user_id=user_id,
             preference_key=preference_key,
             preference_value=serialized_value,

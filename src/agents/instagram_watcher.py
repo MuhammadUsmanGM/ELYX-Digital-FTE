@@ -105,40 +105,59 @@ class InstagramWatcher(BaseWatcher):
             unread = page.query_selector_all('[aria-label="Unread"]')
             self.logger.info(f"Instagram: found {len(unread)} unread DMs")
 
+            # First pass: snapshot IDs from the DOM before any navigation
+            # so we don't encounter stale elements after clicking into threads.
+            unread_snapshots = []
             for u in unread[:5]:
                 u_id = hashlib.sha256(u.inner_html().encode()).hexdigest()[:16]
                 if u_id not in self.processed_ids:
-                    sender = "Instagram User"
-                    text = "Unread message in thread"
-                    try:
-                        # Click into the thread to extract actual content
-                        u.click()
-                        page.wait_for_timeout(2000)
+                    unread_snapshots.append(u_id)
 
-                        # Extract sender name from thread header
-                        sender_elem = page.query_selector('header a[role="link"], [role="heading"] span')
-                        if sender_elem:
-                            sender = sender_elem.inner_text().strip() or sender
+            # Second pass: click into each thread one-by-one, re-querying the
+            # DOM after every navigation back to the inbox.
+            for u_id in unread_snapshots:
+                sender = "Instagram User"
+                text = "Unread message in thread"
+                try:
+                    # Re-query unread elements (DOM was refreshed after last navigation)
+                    current_unread = page.query_selector_all('[aria-label="Unread"]')
+                    target = None
+                    for elem in current_unread:
+                        elem_id = hashlib.sha256(elem.inner_html().encode()).hexdigest()[:16]
+                        if elem_id == u_id:
+                            target = elem
+                            break
 
-                        # Extract last message text from conversation
-                        msg_elems = page.query_selector_all('div[role="row"] div[dir="auto"], div[class*="message"] span')
-                        if msg_elems:
-                            text = msg_elems[-1].inner_text().strip()[:500] or text
+                    if not target:
+                        continue
 
-                        # Navigate back to inbox
-                        page.goto('https://www.instagram.com/direct/inbox/', wait_until='domcontentloaded', timeout=30000)
-                        page.wait_for_timeout(2000)
-                    except Exception as thread_err:
-                        self.logger.warning(f"Instagram: could not extract thread content: {thread_err}")
+                    target.click()
+                    page.wait_for_timeout(2000)
 
-                    updates.append({
-                        'type': 'instagram_dm',
-                        'sender': sender,
-                        'text': text,
-                        'timestamp': str(page.evaluate("new Date().toISOString()")),
-                    })
-                    self.processed_ids.add(u_id)
-                    self._save_processed_ids("instagram", self.processed_ids)
+                    # Extract sender name from thread header
+                    sender_elem = page.query_selector('header a[role="link"], [role="heading"] span')
+                    if sender_elem:
+                        sender = sender_elem.inner_text().strip() or sender
+
+                    # Extract last message text from conversation
+                    msg_elems = page.query_selector_all('div[role="row"] div[dir="auto"], div[class*="message"] span')
+                    if msg_elems:
+                        text = msg_elems[-1].inner_text().strip()[:500] or text
+
+                    # Navigate back to inbox for next iteration
+                    page.goto('https://www.instagram.com/direct/inbox/', wait_until='domcontentloaded', timeout=30000)
+                    page.wait_for_timeout(2000)
+                except Exception as thread_err:
+                    self.logger.warning(f"Instagram: could not extract thread content: {thread_err}")
+
+                updates.append({
+                    'type': 'instagram_dm',
+                    'sender': sender,
+                    'text': text,
+                    'timestamp': str(page.evaluate("new Date().toISOString()")),
+                })
+                self.processed_ids.add(u_id)
+                self._save_processed_ids("instagram", self.processed_ids)
 
         except Exception as e:
             self.logger.error(f"Instagram watcher error: {e}")

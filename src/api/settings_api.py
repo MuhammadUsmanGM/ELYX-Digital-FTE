@@ -264,9 +264,9 @@ class SettingsAPIHandler(BaseHTTPRequestHandler):
                 flags = self.settings_api.get_all_flags()
                 self._send_json({"flags": flags, "count": len(flags)})
             
-            elif path == '/api/settings/flags/' + parsed.path.split('/')[-1]:
+            elif path.startswith('/api/settings/flags/') and len(path) > len('/api/settings/flags/'):
                 # Get specific flag
-                flag_name = parsed.path.split('/')[-1]
+                flag_name = path[len('/api/settings/flags/'):]
                 value = self.settings_api.get_feature_flag(flag_name)
                 self._send_json({"flag": flag_name, "value": value})
             

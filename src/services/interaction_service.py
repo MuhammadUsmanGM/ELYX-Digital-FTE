@@ -76,7 +76,6 @@ class InteractionService(BaseService[InteractionLog]):
 
         # Create interaction log object
         interaction = InteractionLog(
-            id=None,  # Will be auto-generated
             user_id=user_id,
             interaction_type=interaction_type,
             task_id=task_id,
@@ -220,7 +219,6 @@ class InteractionService(BaseService[InteractionLog]):
             raise NotFoundError("InteractionLog", interaction_id)
 
         interaction.learning_applied = True
-        interaction.updated_at = datetime.utcnow()
 
         try:
             self.db.commit()
