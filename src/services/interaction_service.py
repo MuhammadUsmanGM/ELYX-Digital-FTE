@@ -4,7 +4,7 @@ Handles tracking of all interactions for learning and adaptation
 """
 from typing import List, Optional, Dict, Any
 from sqlalchemy.orm import Session
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from enum import Enum
 
@@ -64,11 +64,13 @@ class InteractionService(BaseService[InteractionLog]):
         if outcome not in ["positive", "negative", "neutral"]:
             raise ValidationError(f"Invalid outcome: {outcome}")
 
-        # Serialize context snapshot if provided
+        # Validate context snapshot is JSON-compatible (column is JSON type,
+        # so SQLAlchemy handles serialization — don't double-encode with json.dumps)
         serialized_context = None
         if context_snapshot:
             try:
-                serialized_context = json.dumps(context_snapshot)
+                json.dumps(context_snapshot)  # validate only
+                serialized_context = context_snapshot
             except TypeError as e:
                 raise ValidationError(f"Context snapshot is not JSON serializable: {str(e)}")
 
