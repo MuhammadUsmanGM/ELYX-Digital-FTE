@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { 
-  Activity, 
-  TrendingUp, 
-  Clock, 
-  BarChart3, 
-  PieChart, 
-  ArrowUpRight, 
+import {
+  Activity,
+  TrendingUp,
+  Clock,
+  BarChart3,
+  PieChart,
+  ArrowUpRight,
   ArrowDownRight,
   MessageSquare,
   Users,
@@ -24,7 +24,8 @@ import {
   Sparkles,
   Brain,
   TrendingDown,
-  Gauge
+  Gauge,
+  AlertTriangle
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { fetchAnalytics } from "@/lib/api";
@@ -109,9 +110,17 @@ export default function AnalyticsPage() {
             >
               <RefreshCw size={20} className={refreshing ? 'animate-spin' : ''} />
             </motion.button>
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                if (!data) return;
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url; a.download = `elyx-analytics-${timeframe}-${new Date().toISOString().slice(0, 10)}.json`;
+                a.click(); URL.revokeObjectURL(url);
+              }}
               className="btn-premium-primary !px-8 !py-5 shadow-2xl shadow-primary/20 border border-white/10 group"
             >
               <Download size={18} className="group-hover:translate-y-0.5 transition-transform" />
@@ -132,6 +141,17 @@ export default function AnalyticsPage() {
             </div>
           </div>
         ) : (
+          <div className="space-y-10">
+          {data?._dataSource === "mock" && (
+            <div className="flex items-center gap-4 px-6 py-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm">
+              <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+              <div className="flex-1">
+                <p className="text-xs font-black text-amber-400 uppercase tracking-widest">Offline Mode — Displaying Fallback Data</p>
+                <p className="text-[11px] text-amber-500/70 mt-0.5">Analytics API is unreachable. Values shown are placeholders, not live data.</p>
+              </div>
+              <button onClick={loadAnalytics} className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:bg-amber-500/20 transition-all">Retry</button>
+            </div>
+          )}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
             
             {/* Top Row: Hero Metrics */}
@@ -352,9 +372,33 @@ export default function AnalyticsPage() {
                   <ReportItem title="Comm Engagement Report" date="Feb 05, 2026" score="96.2" />
                   <ReportItem title="Workflow Logic Review" date="Feb 03, 2026" score="94.8" />
                 </div>
-                <motion.button 
+                <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    if (!data) return;
+                    const lines = [
+                      `ELYX Performance Report — ${timeframe.toUpperCase()}`,
+                      `Generated: ${new Date().toLocaleString()}`,
+                      ``,
+                      `Tasks Processed: ${data.metrics.tasks_processed}`,
+                      `Success Rate: ${data.metrics.success_rate}%`,
+                      `Average Response Time: ${data.metrics.average_response_time}s`,
+                      `User Satisfaction: ${data.metrics.user_satisfaction}%`,
+                      ``,
+                      `Communication Stats:`,
+                      `  Email: ${data.metrics.communication_stats.email}`,
+                      `  WhatsApp: ${data.metrics.communication_stats.whatsapp}`,
+                      `  LinkedIn: ${data.metrics.communication_stats.linkedin}`,
+                      ``,
+                      `Trend: ${data.trends.improving ? "Improving" : "Declining"} (${data.trends.percentage_change}%)`,
+                    ];
+                    const blob = new Blob([lines.join("\n")], { type: "text/plain" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url; a.download = `elyx-report-${timeframe}-${new Date().toISOString().slice(0, 10)}.txt`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }}
                   className="w-full mt-8 py-5 bg-white/[0.03] border border-white/10 rounded-3xl text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-white hover:border-primary/30 transition-all flex items-center justify-center gap-3 group shadow-xl"
                 >
                   Generate Complete Report
@@ -379,6 +423,7 @@ export default function AnalyticsPage() {
                 </p>
               </div>
             </div>
+          </div>
           </div>
         )}
       </div>

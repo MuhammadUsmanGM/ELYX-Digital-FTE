@@ -29,7 +29,7 @@ import {
   Eye
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
-import { fetchTeamMembers, deleteTeamMember } from "@/lib/api";
+import { fetchTeamMembers, deleteTeamMember, createTeamMember } from "@/lib/api";
 import LoadingDots from "@/components/LoadingDots";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -51,6 +51,10 @@ export default function UsersPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showRecruitModal, setShowRecruitModal] = useState(false);
+  const [recruitName, setRecruitName] = useState("");
+  const [recruitEmail, setRecruitEmail] = useState("");
+  const [recruitRole, setRecruitRole] = useState("System Operator");
+  const [recruiting, setRecruiting] = useState(false);
 
   const loadMembers = async () => {
     try {
@@ -497,6 +501,8 @@ export default function UsersPage() {
                       <input
                         type="text"
                         placeholder="Enter full name..."
+                        value={recruitName}
+                        onChange={(e) => setRecruitName(e.target.value)}
                         className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all"
                       />
                     </div>
@@ -505,12 +511,18 @@ export default function UsersPage() {
                       <input
                         type="email"
                         placeholder="member@elyx.ai..."
+                        value={recruitEmail}
+                        onChange={(e) => setRecruitEmail(e.target.value)}
                         className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all"
                       />
                     </div>
                     <div>
                       <label className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-3 block">Authority Role</label>
-                      <select className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all">
+                      <select
+                        value={recruitRole}
+                        onChange={(e) => setRecruitRole(e.target.value)}
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl py-4 px-6 text-sm font-bold text-slate-300 outline-none focus:border-primary/50 transition-all"
+                      >
                         <option>System Operator</option>
                         <option>Strategic Analyst</option>
                         <option>Master Admin</option>
@@ -538,9 +550,23 @@ export default function UsersPage() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      className="flex-1 btn-premium-primary !py-5 shadow-2xl shadow-primary/20"
+                      disabled={recruiting || !recruitName.trim() || !recruitEmail.trim()}
+                      onClick={async () => {
+                        try {
+                          setRecruiting(true);
+                          await createTeamMember({ name: recruitName.trim(), email: recruitEmail.trim(), role: recruitRole });
+                          setShowRecruitModal(false);
+                          setRecruitName(""); setRecruitEmail(""); setRecruitRole("System Operator");
+                          await loadMembers();
+                        } catch (err) {
+                          console.error("Failed to recruit member:", err);
+                        } finally {
+                          setRecruiting(false);
+                        }
+                      }}
+                      className="flex-1 btn-premium-primary !py-5 shadow-2xl shadow-primary/20 disabled:opacity-50"
                     >
-                      <span className="font-outfit text-sm font-black uppercase tracking-[0.2em]">Send Invitation</span>
+                      <span className="font-outfit text-sm font-black uppercase tracking-[0.2em]">{recruiting ? "Sending..." : "Send Invitation"}</span>
                     </motion.button>
                   </div>
                 </div>

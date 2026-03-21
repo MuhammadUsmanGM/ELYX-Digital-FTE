@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { 
-  Mail, 
-  MessageCircle, 
+import {
+  Mail,
+  MessageCircle,
   MessageSquare,
-  Send, 
+  Send,
   Search,
   MoreVertical,
   Loader2,
@@ -16,7 +16,8 @@ import {
   AtSign,
   Smile,
   Paperclip,
-  Activity
+  Activity,
+  AlertTriangle
 } from "lucide-react";
 import { fetchCommunications, sendMessage } from "@/lib/api";
 import { Communication, Message } from "@/lib/types";
@@ -29,6 +30,7 @@ export default function CommunicationsPage() {
   const [loading, setLoading] = useState(true);
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   const handleSendMessage = async () => {
     if (!replyText.trim() || !selectedComm || sending) return;
@@ -71,11 +73,14 @@ export default function CommunicationsPage() {
       setLoading(true);
       const fetchedComms = await fetchCommunications();
       setComms(fetchedComms);
+      // Detect mock fallback: single item with id "COM_1" is the hardcoded mock
+      setIsOffline(fetchedComms.length === 1 && fetchedComms[0]?.id === "COM_1");
       if (fetchedComms.length > 0) {
         setSelectedComm(fetchedComms[0]);
       }
     } catch (error) {
       console.error("Communications load error:", error);
+      setIsOffline(true);
     } finally {
       setLoading(false);
     }
@@ -100,6 +105,16 @@ export default function CommunicationsPage() {
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-140px)] flex flex-col animate-in fade-in duration-500">
+        {isOffline && (
+          <div className="flex items-center gap-4 px-6 py-4 mb-4 rounded-2xl border border-amber-500/30 bg-amber-500/5 backdrop-blur-sm">
+            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+            <div className="flex-1">
+              <p className="text-xs font-black text-amber-400 uppercase tracking-widest">Offline Mode — Displaying Fallback Data</p>
+              <p className="text-[11px] text-amber-500/70 mt-0.5">Communication API is unreachable. Messages shown are placeholders.</p>
+            </div>
+            <button onClick={loadData} className="shrink-0 px-4 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[10px] font-black text-amber-400 uppercase tracking-widest hover:bg-amber-500/20 transition-all">Retry</button>
+          </div>
+        )}
         <div className="flex items-end justify-between mb-6">
           <div>
             <h1 className="text-4xl font-black tracking-tight mb-2">Communication Hub</h1>

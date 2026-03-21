@@ -358,3 +358,49 @@ async def get_recent_activity(
         return {"source": "error", "activities": []}
 
     return {"source": "audit_trail", "activities": activities}
+
+
+# ── Agent Management Endpoints (FI9) ──────────────────────────────────
+
+AGENT_DEFINITIONS = [
+    {"id": "gmail_watcher", "name": "Gmail Watcher", "config_key": "integrations.gmail_enabled", "interval": "120s"},
+    {"id": "whatsapp_watcher", "name": "WhatsApp Watcher", "config_key": "integrations.whatsapp_enabled", "interval": "60s"},
+    {"id": "linkedin_watcher", "name": "LinkedIn Watcher", "config_key": "integrations.linkedin_enabled", "interval": "300s"},
+    {"id": "filesystem_watcher", "name": "Filesystem Watcher", "config_key": "integrations.filesystem_enabled", "interval": "10s"},
+    {"id": "odoo_watcher", "name": "Odoo Integration", "config_key": "integrations.crm_enabled", "interval": "3600s"},
+]
+
+
+@dashboard_router.get("/agents")
+async def list_agents():
+    """List all agents and their enabled/disabled status from config."""
+    config = ConfigManager()
+    agents = []
+    for defn in AGENT_DEFINITIONS:
+        enabled = config.get(defn["config_key"], True)
+        agents.append({
+            "id": defn["id"],
+            "name": defn["name"],
+            "enabled": bool(enabled),
+            "interval": defn["interval"],
+            "status": "running" if enabled else "stopped",
+        })
+    return {"agents": agents}
+
+
+@dashboard_router.post("/agents/{agent_id}/toggle")
+async def toggle_agent(agent_id: str):
+    """Enable or disable an agent by toggling its config flag."""
+    config = ConfigManager()
+    for defn in AGENT_DEFINITIONS:
+        if defn["id"] == agent_id:
+            current = config.get(defn["config_key"], True)
+            new_value = not current
+            config.set(defn["config_key"], new_value)
+            return {
+                "id": agent_id,
+                "enabled": new_value,
+                "status": "running" if new_value else "stopped",
+                "message": f"{defn['name']} {'enabled' if new_value else 'disabled'}",
+            }
+    raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found")

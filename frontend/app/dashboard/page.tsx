@@ -24,7 +24,7 @@ import {
   Fingerprint,
   AlertTriangle
 } from "lucide-react";
-import { fetchActivityLog, fetchApprovals, fetchDashboardData, fetchTasks } from "@/lib/api";
+import { fetchActivityLog, fetchVaultApprovals, fetchDashboardData, fetchTasks } from "@/lib/api";
 import { DashboardData, Task, ApprovalRequest } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "react-hot-toast";
@@ -59,7 +59,7 @@ export default function DashboardPage() {
       const [dashData, taskList, approvalList, activityLog] = await Promise.all([
         fetchDashboardData(),
         fetchTasks(),
-        fetchApprovals(),
+        fetchVaultApprovals(),
         fetchActivityLog(12),
       ]);
       setData(dashData);
