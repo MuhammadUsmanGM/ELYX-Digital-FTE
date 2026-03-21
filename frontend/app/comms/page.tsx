@@ -23,6 +23,7 @@ import { fetchCommunications, sendMessage } from "@/lib/api";
 import { Communication, Message } from "@/lib/types";
 import DashboardLayout from "@/components/DashboardLayout";
 import LoadingDots from "@/components/LoadingDots";
+import { toast } from "react-hot-toast";
 
 export default function CommunicationsPage() {
   const [comms, setComms] = useState<Communication[]>([]);
@@ -31,6 +32,7 @@ export default function CommunicationsPage() {
   const [replyText, setReplyText] = useState("");
   const [sending, setSending] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSendMessage = async () => {
     if (!replyText.trim() || !selectedComm || sending) return;
@@ -63,7 +65,7 @@ export default function CommunicationsPage() {
       setSelectedComm(updatedComm);
       setReplyText("");
     } else {
-      console.error("Send failed:", result.error);
+      toast.error(result.error || "Failed to send message");
     }
     setSending(false);
   };
@@ -122,9 +124,11 @@ export default function CommunicationsPage() {
           </div>
           <div className="flex items-center gap-4 bg-slate-900/50 border border-card-border rounded-xl px-4 py-2 w-64">
             <Search size={16} className="text-slate-500" />
-            <input 
-              type="text" 
-              placeholder="Search messages..." 
+            <input
+              type="text"
+              placeholder="Search messages..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent border-none outline-none text-sm text-slate-300 w-full"
             />
           </div>
@@ -137,7 +141,11 @@ export default function CommunicationsPage() {
               <div className="flex flex-col items-center justify-center p-20 gap-4 glass-panel rounded-2xl">
                 <Loader2 size={32} className="text-primary animate-spin" />
               </div>
-            ) : comms.map((comm) => (
+            ) : comms.filter((c) => {
+              if (!searchQuery.trim()) return true;
+              const q = searchQuery.toLowerCase();
+              return c.contact_name.toLowerCase().includes(q) || c.last_message.toLowerCase().includes(q) || c.platform.toLowerCase().includes(q);
+            }).map((comm) => (
               <div 
                 key={comm.id}
                 onClick={() => setSelectedComm(comm)}

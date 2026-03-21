@@ -17,7 +17,8 @@ import {
   Instagram,
   AlertCircle,
   CheckCircle2,
-  X
+  X,
+  ChevronRight
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { toast } from "react-hot-toast";
@@ -272,7 +273,7 @@ export default function TasksPage() {
                   <>
                     <button
                       onClick={async () => {
-                        toast.info("Use Approvals page to reject items that require approval.");
+                        toast("Use Approvals page to reject items that require approval.", { icon: "ℹ️" });
                       }}
                       className="px-4 py-2 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-lg transition-all flex items-center gap-2"
                     >

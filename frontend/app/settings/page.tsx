@@ -361,20 +361,45 @@ export default function SettingsPage() {
 
             {/* Placeholder for other tabs to keep UI consistent */}
             {activeTab === "security" && (
-              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                 <div className="p-8 rounded-full bg-slate-900/50 border border-card-border animate-pulse">
-                   <RefreshCw size={48} className="text-slate-600" />
-                 </div>
-                 <h3 className="text-xl font-bold text-slate-400 uppercase tracking-widest">Sector Initializing</h3>
-                 <p className="text-slate-600 max-w-xs mx-auto">This system configuration module is currently being optimized for your tier.</p>
+              <div className="space-y-6">
+                <section>
+                  <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                    <Shield size={18} className="text-primary" /> Access Controls
+                  </h3>
+                  <div className="space-y-4">
+                    <SettingToggle
+                      title="Human-in-the-Loop Approvals"
+                      desc="Require manual approval for sensitive actions (emails, payments, external API calls)"
+                      active={settings.security_hitl ?? true}
+                      onToggle={() => handleToggle("security_hitl")}
+                    />
+                    <SettingToggle
+                      title="Audit Logging"
+                      desc="Log all agent actions and decisions to the vault audit trail"
+                      active={settings.security_audit_log ?? true}
+                      onToggle={() => handleToggle("security_audit_log")}
+                    />
+                    <SettingToggle
+                      title="Action Signing"
+                      desc="Cryptographically sign outgoing actions for tamper detection"
+                      active={settings.security_action_signing ?? false}
+                      onToggle={() => handleToggle("security_action_signing")}
+                    />
+                    <SettingToggle
+                      title="Rate Limit Enforcement"
+                      desc="Enforce per-service rate limits on all watcher and sender agents"
+                      active={settings.security_rate_limits ?? true}
+                      onToggle={() => handleToggle("security_rate_limits")}
+                    />
+                  </div>
+                </section>
               </div>
             )}
+            {/* Feature Flags Tab */}
+            {activeTab === "feature_flags" && (
+              <FeatureFlagsTab />
+            )}
           </div>
-
-          {/* Feature Flags Tab */}
-          {activeTab === "feature_flags" && (
-            <FeatureFlagsTab />
-          )}
         </div>
       </div>
     </DashboardLayout>

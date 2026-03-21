@@ -177,7 +177,7 @@ export default function DashboardPage() {
           <div className="flex items-center gap-6 relative z-10">
              <div className="hidden lg:flex flex-col items-end px-8 border-r border-white/5">
                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-[0.3em] mb-1">Compute Prowess</span>
-                <span className="text-emerald-500 font-black text-lg tracking-tight shadow-emerald-500/20 drop-shadow-lg">99.998% Optimal</span>
+                <span className="text-emerald-500 font-black text-lg tracking-tight shadow-emerald-500/20 drop-shadow-lg">{data?.system?.stability_score ? `${data.system.stability_score.toFixed(1)}% Optimal` : "..."}</span>
              </div>
              <motion.button 
                whileHover={{ scale: 1.02, translateY: -2 }}
@@ -344,7 +344,7 @@ export default function DashboardPage() {
                      </div>
                      <div className="flex items-center gap-3 px-6 py-3 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-primary/30 transition-all cursor-wait group/item">
                         <Cpu size={16} className="text-primary group-hover/item:animate-spin transition-all" />
-                        <span className="text-[10px] font-black text-slate-400 group-hover/item:text-slate-100 uppercase tracking-widest transition-colors">Core Latency: 42ms</span>
+                        <span className="text-[10px] font-black text-slate-400 group-hover/item:text-slate-100 uppercase tracking-widest transition-colors">Core Latency: {data?.system?.model_accuracy ? `${((1 - data.system.model_accuracy) * 1000).toFixed(0)}ms` : "..."}</span>
                      </div>
                   </div>
                   <motion.button 
@@ -479,14 +479,14 @@ export default function DashboardPage() {
                <div className="flex items-center justify-between mb-10 relative z-10">
                   <h3 className="text-xl font-black text-white tracking-tight">System Load</h3>
                   <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20">
-                     <span className="text-xs font-black text-primary uppercase">{(Math.random() * 5 + 85).toFixed(1)}%</span>
+                     <span className="text-xs font-black text-primary uppercase">{data?.system?.stability_score ? `${data.system.stability_score.toFixed(1)}%` : "..."}</span>
                   </div>
                </div>
-               
+
                <div className="space-y-8 relative z-10">
-                  <ResourceItem label="Compute Overload" value={92} color="bg-primary" />
-                  <ResourceItem label="Memory Density" value={76} color="bg-accent" />
-                  <ResourceItem label="Process Buffer" value={98} color="bg-emerald-500" />
+                  <ResourceItem label="Compute Load" value={Math.round(data?.system?.stability_score ?? 0)} color="bg-primary" />
+                  <ResourceItem label="Memory Density" value={Math.round((data?.system?.coherence_level ?? 0) * 100)} color="bg-accent" />
+                  <ResourceItem label="Process Buffer" value={Math.round((data?.system?.model_accuracy ?? 0) * 100)} color="bg-emerald-500" />
                </div>
             </motion.div>
 
