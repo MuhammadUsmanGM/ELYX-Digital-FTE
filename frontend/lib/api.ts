@@ -812,3 +812,40 @@ export async function fetchAllSettings(): Promise<any> {
     return {};
   }
 }
+
+// ── Agent Management (FI9) ───────────────────────────────────────────
+
+export interface AgentInfo {
+  id: string;
+  name: string;
+  enabled: boolean;
+  interval: string;
+  status: "running" | "stopped";
+}
+
+export async function fetchAgents(): Promise<AgentInfo[]> {
+  try {
+    const response = await authFetch(`${API_BASE_URL}/dashboard/agents`);
+    if (!response.ok) throw new Error("Backend offline");
+    const data = await response.json();
+    return data.agents || [];
+  } catch {
+    return [
+      { id: "gmail_watcher", name: "Gmail Watcher", enabled: true, interval: "120s", status: "running" },
+      { id: "whatsapp_watcher", name: "WhatsApp Watcher", enabled: true, interval: "60s", status: "running" },
+      { id: "linkedin_watcher", name: "LinkedIn Watcher", enabled: true, interval: "300s", status: "running" },
+      { id: "filesystem_watcher", name: "Filesystem Watcher", enabled: true, interval: "10s", status: "running" },
+      { id: "odoo_watcher", name: "Odoo Integration", enabled: false, interval: "3600s", status: "stopped" },
+    ];
+  }
+}
+
+export async function toggleAgent(agentId: string): Promise<AgentInfo | null> {
+  try {
+    const response = await authFetch(`${API_BASE_URL}/dashboard/agents/${agentId}/toggle`, { method: "POST" });
+    if (!response.ok) throw new Error("Toggle failed");
+    return await response.json();
+  } catch {
+    return null;
+  }
+}

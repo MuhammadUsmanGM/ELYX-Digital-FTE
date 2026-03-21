@@ -13,11 +13,12 @@ import {
   Network,
   CheckCircle2,
   TrendingUp,
-  Clock
+  Clock,
+  Power
 } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import LoadingDots from "@/components/LoadingDots";
-import { fetchActivityLog, fetchSystemMetrics } from "@/lib/api";
+import { fetchActivityLog, fetchSystemMetrics, fetchAgents, toggleAgent, AgentInfo } from "@/lib/api";
 
 interface SystemMetrics {
   cpu_usage: number;
@@ -33,18 +34,22 @@ interface SystemMetrics {
 export default function SystemMonitorPage() {
   const [metrics, setMetrics] = useState<SystemMetrics | null>(null);
   const [activity, setActivity] = useState<any[]>([]);
+  const [agents, setAgents] = useState<AgentInfo[]>([]);
+  const [togglingAgent, setTogglingAgent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const loadMetrics = async () => {
     try {
       setLoading(true);
-      const [realMetrics, recent] = await Promise.all([
+      const [realMetrics, recent, agentList] = await Promise.all([
         fetchSystemMetrics(),
-        fetchActivityLog(10)
+        fetchActivityLog(10),
+        fetchAgents()
       ]);
       setMetrics(realMetrics);
       setActivity(recent);
+      setAgents(agentList);
     } catch (error) {
       console.error("System metrics fetch error:", error);
     } finally {
@@ -170,29 +175,58 @@ export default function SystemMonitorPage() {
                   </div>
 
                   <div className="space-y-4">
-                    {[
-                      { name: 'Gmail Watcher', status: 'active', interval: '120s' },
-                      { name: 'WhatsApp Watcher', status: 'active', interval: '60s' },
-                      { name: 'Filesystem Watcher', status: 'active', interval: '10s' },
-                      { name: 'Odoo Integration', status: 'active', interval: '3600s' },
-                      { name: 'API Server', status: 'active', port: '8000' },
-                      { name: 'Database', status: 'active', type: 'SQLite' },
-                    ].map((service, i) => (
-                      <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-card-border hover:border-primary/30 transition-all">
+                    {agents.map((agent) => (
+                      <div key={agent.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-card-border hover:border-primary/30 transition-all">
                         <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span className="text-sm font-bold text-slate-200">{service.name}</span>
+                          <div className={`w-2 h-2 rounded-full ${agent.enabled ? 'bg-emerald-500 animate-pulse' : 'bg-slate-600'}`} />
+                          <span className="text-sm font-bold text-slate-200">{agent.name}</span>
                         </div>
                         <div className="flex items-center gap-4">
                           <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-                            {service.interval || service.port || service.type}
+                            {agent.interval}
                           </span>
-                          <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
-                            Running
+                          <span className={`text-[10px] font-black uppercase px-2 py-1 rounded-lg border ${agent.enabled ? 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' : 'text-slate-500 bg-slate-500/10 border-slate-500/20'}`}>
+                            {agent.enabled ? "Running" : "Stopped"}
                           </span>
+                          <button
+                            disabled={togglingAgent === agent.id}
+                            onClick={async () => {
+                              setTogglingAgent(agent.id);
+                              const result = await toggleAgent(agent.id);
+                              if (result) {
+                                setAgents(prev => prev.map(a => a.id === agent.id ? { ...a, enabled: result.enabled, status: result.status } : a));
+                              }
+                              setTogglingAgent(null);
+                            }}
+                            className={`p-2 rounded-xl border transition-all ${agent.enabled ? 'text-red-400 border-red-500/20 hover:bg-red-500/10' : 'text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/10'} disabled:opacity-50`}
+                            title={agent.enabled ? "Stop agent" : "Start agent"}
+                          >
+                            <Power size={14} />
+                          </button>
                         </div>
                       </div>
                     ))}
+                    {/* Static infrastructure entries */}
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-card-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-sm font-bold text-slate-200">API Server</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">8000</span>
+                        <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">Running</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-900/50 border border-card-border">
+                      <div className="flex items-center gap-3">
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="text-sm font-bold text-slate-200">Database</span>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">SQLite</span>
+                        <span className="text-[10px] font-black text-emerald-500 uppercase px-2 py-1 rounded-lg bg-emerald-500/10 border border-emerald-500/20">Running</span>
+                      </div>
+                    </div>
                   </div>
                </div>
 
