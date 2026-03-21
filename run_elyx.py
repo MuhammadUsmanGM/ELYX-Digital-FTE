@@ -3,14 +3,7 @@
 ELYX - Autonomous AI Employee
 Main Startup Script - ALL-IN-ONE
 
-Starts:
-1. Vault API (Port 8080)
-2. Settings API (Port 8081)
-3. Main FastAPI Server (Port 8000)
-4. Next.js Frontend (Port 3000)
-5. ELYX Orchestrator & Watchers
-
-Local-First | Multi-Platform | Human-in-the-Loop
+Starts all services, shows a clean status table, then streams logs.
 """
 
 import os
@@ -20,386 +13,358 @@ import threading
 import subprocess
 import signal
 import atexit
+import logging
 from pathlib import Path
 from datetime import datetime
 
-# Add project root to path
+# ── Project Setup ─────────────────────────────────────────────────────
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# ANSI Color codes
-class Colors:
-    HEADER = '\033[95m'
-    OKBLUE = '\033[94m'
-    OKCYAN = '\033[96m'
-    OKGREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
-    
-    # RGB Colors for gradient
-    ELYX_GRADIENT = '\033[38;2;0;201;167m'  # Cyan/teal color
+logs_dir = project_root / "obsidian_vault" / "Logs"
+logs_dir.mkdir(parents=True, exist_ok=True)
 
-# Global process tracking
+# ── ANSI Helpers ──────────────────────────────────────────────────────
+G = "\033[92m"   # green
+R = "\033[91m"   # red
+Y = "\033[93m"   # yellow
+C = "\033[96m"   # cyan
+B = "\033[1m"    # bold
+D = "\033[2m"    # dim
+X = "\033[0m"    # reset
+T = "\033[38;2;0;201;167m"  # teal/ELYX brand
+
+# ── Globals ───────────────────────────────────────────────────────────
 processes = []
+log_handles = []
+_cleanup_done = False
 vault_git_enabled = False
 
-def is_vault_git_repo():
-    """Check if vault is a git repository"""
-    global vault_git_enabled
-    vault_path = Path("obsidian_vault")
-    git_dir = vault_path / ".git"
-    vault_git_enabled = git_dir.exists()
-    return vault_git_enabled
+# Suppress noisy libraries during import
+logging.getLogger("uvicorn").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+logging.getLogger("uvicorn.error").setLevel(logging.WARNING)
+logging.getLogger("watchdog").setLevel(logging.WARNING)
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
-def commit_vault_changes(message: str = "Auto-commit: Vault changes"):
-    """Commit vault changes to git"""
-    if not vault_git_enabled:
-        return False
-    
-    try:
-        vault_path = Path("obsidian_vault")
-        
-        # Check if there are changes
-        success, stdout, stderr = run_command(["git", "status", "--porcelain"], cwd=vault_path)
-        if not stdout.strip():
-            return False  # No changes
+# ── Utility ───────────────────────────────────────────────────────────
 
-        # Add, commit, push
-        run_command(["git", "add", "."], cwd=vault_path)
-        run_command(["git", "commit", "-m", message], cwd=vault_path)
-        
-        # Don't push automatically (let GitHub Actions handle it)
-        # run_command("git push origin main", cwd=vault_path)
-        
-        return True
-    except Exception as e:
-        print(f"Warning: Could not commit vault changes: {e}")
-        return False
+def _log_file(name: str):
+    """Open a log file handle for a child service (appended)."""
+    fh = open(logs_dir / f"{name}.log", "a", encoding="utf-8")
+    log_handles.append(fh)
+    return fh
+
 
 def run_command(cmd, cwd=None):
-    """Run shell command safely using list form only (#53)"""
+    """Run a shell command safely (list form)."""
     try:
         if isinstance(cmd, str):
-            # Use shlex.split for correct handling of quoted paths/spaces
             import shlex
-            cmd_list = shlex.split(cmd)
-        else:
-            cmd_list = cmd
-        result = subprocess.run(cmd_list, shell=False, cwd=cwd, capture_output=True, text=True, timeout=10)
-        return result.returncode == 0, result.stdout, result.stderr
+            cmd = shlex.split(cmd)
+        r = subprocess.run(cmd, shell=False, cwd=cwd, capture_output=True, text=True, timeout=10)
+        return r.returncode == 0, r.stdout, r.stderr
     except Exception as e:
         return False, "", str(e)
 
-def start_vault_api():
-    """Start Vault API server"""
-    print(f"\n{Colors.BOLD}Starting Vault API (Port 8080)...{Colors.ENDC}")
-    try:
-        proc = subprocess.Popen(
-            [sys.executable, str(project_root / "src" / "api" / "vault_api.py"), "--port", "8080"],
-            cwd=str(project_root)
-        )
-        processes.append(proc)
-        time.sleep(2)
-        print(f"  {Colors.OKGREEN}✓ Vault API running at http://localhost:8080{Colors.ENDC}")
-        return True
-    except Exception as e:
-        print(f"  {Colors.FAIL}✗ Failed to start Vault API: {e}{Colors.ENDC}")
+
+def is_vault_git_repo():
+    global vault_git_enabled
+    vault_git_enabled = (Path("obsidian_vault") / ".git").exists()
+    return vault_git_enabled
+
+
+def commit_vault_changes(message="Auto-commit: Vault changes"):
+    if not vault_git_enabled:
         return False
+    try:
+        vp = Path("obsidian_vault")
+        ok, out, _ = run_command(["git", "status", "--porcelain"], cwd=vp)
+        if not out.strip():
+            return False
+        run_command(["git", "add", "."], cwd=vp)
+        run_command(["git", "commit", "-m", message], cwd=vp)
+        return True
+    except Exception:
+        return False
+
+
+# ── Service Launchers (all output → log files) ───────────────────────
+
+def _start_service(name, cmd, cwd=None, wait=2):
+    """Start a subprocess, pipe output to log file. Returns (success, proc)."""
+    log = _log_file(name)
+    log.write(f"\n{'='*60}\n[{datetime.now().isoformat()}] Starting {name}\n{'='*60}\n")
+    log.flush()
+    try:
+        proc = subprocess.Popen(cmd, cwd=cwd or str(project_root), stdout=log, stderr=log)
+        processes.append(proc)
+        time.sleep(wait)
+        alive = proc.poll() is None
+        return alive, proc
+    except Exception:
+        return False, None
+
+
+def start_vault_api():
+    ok, _ = _start_service(
+        "vault_api",
+        [sys.executable, str(project_root / "src" / "api" / "vault_api.py"), "--port", "8080"],
+        wait=2,
+    )
+    return ok
+
 
 def start_settings_api():
-    """Start Settings API server"""
-    print(f"\n{Colors.BOLD}Starting Settings API (Port 8081)...{Colors.ENDC}")
-    try:
-        proc = subprocess.Popen(
-            [sys.executable, str(project_root / "src" / "api" / "settings_api.py"), "--port", "8081"],
-            cwd=str(project_root)
-        )
-        processes.append(proc)
-        time.sleep(2)
-        print(f"  {Colors.OKGREEN}✓ Settings API running at http://localhost:8081{Colors.ENDC}")
-        return True
-    except Exception as e:
-        print(f"  {Colors.FAIL}✗ Failed to start Settings API: {e}{Colors.ENDC}")
-        return False
+    ok, _ = _start_service(
+        "settings_api",
+        [sys.executable, str(project_root / "src" / "api" / "settings_api.py"), "--port", "8081"],
+        wait=2,
+    )
+    return ok
+
 
 def start_main_api():
-    """Start Main FastAPI server (dashboard, communications, analytics, approvals, etc.)"""
     port = os.getenv("PORT", "8000")
-    print(f"\n{Colors.BOLD}Starting Main API (Port {port})...{Colors.ENDC}")
-    try:
-        proc = subprocess.Popen(
-            [sys.executable, "-m", "uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", port],
-            cwd=str(project_root)
-        )
-        processes.append(proc)
-        time.sleep(3)
-        print(f"  {Colors.OKGREEN}✓ Main API running at http://localhost:{port}{Colors.ENDC}")
-        return True
-    except Exception as e:
-        print(f"  {Colors.FAIL}✗ Failed to start Main API: {e}{Colors.ENDC}")
-        return False
+    ok, _ = _start_service(
+        "main_api",
+        [sys.executable, "-m", "uvicorn", "src.api.main:app",
+         "--host", "0.0.0.0", "--port", port, "--log-level", "warning"],
+        wait=3,
+    )
+    return ok
+
 
 def start_frontend():
-    """Start Next.js frontend"""
-    print(f"\n{Colors.BOLD}Starting Frontend (Port 3000)...{Colors.ENDC}")
     frontend_dir = project_root / "frontend"
-    
     if not (frontend_dir / "node_modules").exists():
-        print(f"  {Colors.WARNING}⚠ Frontend not installed. Run: cd frontend && npm install{Colors.ENDC}")
         return False
-    
-    try:
-        # Check if npm is available
-        npm_cmd = "npm"
-        if sys.platform == "win32":
-            npm_cmd = "npm.cmd"
-        
-        proc = subprocess.Popen(
-            [npm_cmd, "run", "dev"],
-            cwd=str(frontend_dir)
-        )
-        processes.append(proc)
-        time.sleep(5)
-        print(f"  {Colors.OKGREEN}✓ Frontend running at http://localhost:3000{Colors.ENDC}")
-        return True
-    except Exception as e:
-        print(f"  {Colors.FAIL}✗ Failed to start frontend: {e}{Colors.ENDC}")
-        return False
+    npm = "npm.cmd" if sys.platform == "win32" else "npm"
+    ok, _ = _start_service("frontend", [npm, "run", "dev"], cwd=str(frontend_dir), wait=5)
+    return ok
 
-_cleanup_done = False
+
+def start_orchestrator(vault_path):
+    """Start orchestrator in-process (background thread). Returns (success, orch_instance)."""
+    try:
+        # Quiet orchestrator / watcher loggers
+        for name in ["orchestrator", "orchestrator.main", "orchestrator.filesystem",
+                      "gmail_watcher", "whatsapp_watcher",
+                      "linkedin_watcher", "facebook_watcher", "twitter_watcher",
+                      "instagram_watcher", "odoo_watcher", "filesystem_watcher",
+                      "social_media_watcher", "briefing_service"]:
+            logging.getLogger(name).setLevel(logging.WARNING)
+
+        from src.agents.orchestrator import Orchestrator
+        orch = Orchestrator(vault_path=str(vault_path))
+        t = threading.Thread(target=orch.run, daemon=False, name="orchestrator")
+        t.start()
+        processes.append(orch)
+        return True, orch
+    except Exception:
+        return False, None
+
+
+# ── Watcher Probing ───────────────────────────────────────────────────
+
+WATCHER_DEFS = [
+    ("Gmail",      "integrations.gmail_enabled",     "src.agents.gmail_watcher",      "GmailWatcher",     "2m"),
+    ("WhatsApp",   "integrations.whatsapp_enabled",  "src.agents.whatsapp_watcher",   "WhatsAppWatcher",  "1m"),
+    ("LinkedIn",   "integrations.linkedin_enabled",  "src.agents.linkedin_watcher",   "LinkedInWatcher",  "1h"),
+    ("Facebook",   "integrations.facebook_enabled",  "src.agents.facebook_watcher",   "FacebookWatcher",  "2h"),
+    ("Twitter/X",  "integrations.twitter_enabled",   "src.agents.twitter_watcher",    "TwitterWatcher",   "2h"),
+    ("Instagram",  "integrations.instagram_enabled", "src.agents.instagram_watcher",  "InstagramWatcher", "2h"),
+    ("Odoo",       "integrations.odoo_enabled",      "src.agents.odoo_watcher",       "OdooWatcher",      "1h"),
+    ("Filesystem", "integrations.filesystem_enabled","src.agents.filesystem_watcher", "FileSystemWatcher","10s"),
+]
+
+
+def probe_watchers(config: dict):
+    """Check which watchers are enabled in config and importable. Returns list of (name, interval, status)."""
+    results = []
+    integrations = config.get("integrations", {})
+    for name, cfg_key, module_path, class_name, interval in WATCHER_DEFS:
+        key = cfg_key.split(".")[-1]  # e.g. "gmail_enabled"
+        enabled = integrations.get(key, True)
+        if not enabled:
+            results.append((name, interval, "disabled"))
+            continue
+        # Try to import the watcher class
+        try:
+            __import__(module_path, fromlist=[class_name])
+            results.append((name, interval, "ok"))
+        except ImportError:
+            results.append((name, interval, "missing"))
+        except Exception:
+            results.append((name, interval, "error"))
+    return results
+
+
+# ── Cleanup ───────────────────────────────────────────────────────────
 
 def cleanup(signum=0, frame=None):
-    """Clean shutdown of all processes"""
     global _cleanup_done
     if _cleanup_done:
         return
     _cleanup_done = True
 
-    print(f"\n\n{Colors.WARNING}{'='*80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}Shutting Down ELYX...{Colors.ENDC}")
-    print(f"{Colors.WARNING}{'='*80}{Colors.ENDC}")
+    print(f"\n\n{Y}{'─'*62}{X}")
+    print(f"{B}  Shutting down ELYX ...{X}")
+    print(f"{Y}{'─'*62}{X}\n")
 
-    print(f"\n  Stopping services...")
-
+    stopped = 0
     for proc in processes:
         try:
-            if hasattr(proc, 'cleanup'):
-                # Orchestrator object — call its cleanup method
+            if hasattr(proc, "cleanup"):
                 proc.cleanup()
-                print(f"    ✓ Orchestrator cleaned up")
-            elif hasattr(proc, 'terminate'):
+            elif hasattr(proc, "terminate"):
                 proc.terminate()
                 proc.wait(timeout=5)
-                print(f"    ✓ Service stopped")
+            stopped += 1
         except Exception:
             try:
-                if hasattr(proc, 'kill'):
+                if hasattr(proc, "kill"):
                     proc.kill()
-                print(f"    ✓ Service killed")
+                stopped += 1
             except Exception:
-                print(f"    ⚠ Service force closed")
+                pass
 
-    print(f"\n  {Colors.OKGREEN}✓ All services stopped{Colors.ENDC}")
-    print(f"  {Colors.BOLD}ELYX shutdown complete. Goodbye!{Colors.ENDC}\n")
+    for fh in log_handles:
+        try:
+            fh.close()
+        except Exception:
+            pass
+
+    print(f"  {G}✓{X} {stopped} service(s) stopped")
+    print(f"  {B}ELYX shutdown complete. Goodbye!{X}\n")
+
+
+# ── Display ───────────────────────────────────────────────────────────
 
 def print_banner():
-    """Print ELYX startup banner with ASCII art"""
-    # ELYX ASCII Art with gradient color
-    print(f"\n{Colors.ELYX_GRADIENT}███████╗██╗     ██╗   ██╗██╗  ██╗{Colors.ENDC}")
-    print(f"{Colors.ELYX_GRADIENT}██╔════╝██║     ╚██╗ ██╔╝╚██╗██╔╝{Colors.ENDC}")
-    print(f"{Colors.ELYX_GRADIENT}█████╗  ██║      ╚████╔╝  ╚███╔╝ {Colors.ENDC}")
-    print(f"{Colors.ELYX_GRADIENT}██╔══╝  ██║       ╚██╔╝   ██╔██╗ {Colors.ENDC}")
-    print(f"{Colors.ELYX_GRADIENT}███████╗███████╗   ██║   ██╔╝ ██╗{Colors.ENDC}")
-    print(f"{Colors.ELYX_GRADIENT}╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝{Colors.ENDC}")
-    print(f"\n{Colors.BOLD}{Colors.OKCYAN}  Autonomous AI Employee - Local-First | Multi-Platform | Human-in-the-Loop{Colors.ENDC}")
-    print(f"{Colors.OKCYAN}{'=' * 80}{Colors.ENDC}\n")
+    print(f"""
+{T}███████╗██╗     ██╗   ██╗██╗  ██╗{X}
+{T}██╔════╝██║     ╚██╗ ██╔╝╚██╗██╔╝{X}
+{T}█████╗  ██║      ╚████╔╝  ╚███╔╝ {X}
+{T}██╔══╝  ██║       ╚██╔╝   ██╔██╗ {X}
+{T}███████╗███████╗   ██║   ██╔╝ ██╗{X}
+{T}╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝{X}
+{B}{C}  Autonomous AI Employee{X}
+""")
 
-def print_section(title: str):
-    """Print section header"""
-    print(f"\n{Colors.BOLD}{Colors.OKBLUE}{'─' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKBLUE}  {title}{Colors.ENDC}")
-    print(f"{Colors.OKBLUE}{'─' * 80}{Colors.ENDC}")
 
-def get_brain_info():
-    """Get active AI brain from .env"""
-    brain = os.getenv('ELYX_ACTIVE_BRAIN', 'claude').upper()
-    brain_icons = {
-        'CLAUDE': '🤖 Claude Code',
-        'QWEN': '💻 Qwen Coder',
-        'GEMINI': '🌟 Google Gemini',
-        'CODEX': '📝 OpenAI Codex'
-    }
-    return brain_icons.get(brain, f'🤖 {brain}')
+def status_icon(ok):
+    return f"{G}✓{X}" if ok else f"{R}✗{X}"
 
-def print_system_status():
-    """Print comprehensive system status"""
-    print_section("SYSTEM STATUS")
-    
-    # AI Brain
-    brain_info = get_brain_info()
-    print(f"\n  {Colors.BOLD}AI Brain:{Colors.ENDC} {brain_info}")
-    print(f"  {Colors.BOLD}Active Since:{Colors.ENDC} {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    
-    # Watchers Status
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[ACTIVE WATCHERS]:{Colors.ENDC}")
-    print(f"    +------------------------------------------------------------+")
-    print(f"    |  [G] Gmail           -> Every 2 minutes   |  [OK] Active  |")
-    print(f"    |  [W] WhatsApp        -> Every 1 minute    |  [OK] Active  |")
-    print(f"    |  [L] LinkedIn        -> Every hour        |  [OK] Active  |")
-    print(f"    |  [F] Facebook        -> Every 2 hours     |  [OK] Active  |")
-    print(f"    |  [T] Twitter/X       -> Every 2 hours     |  [OK] Active  |")
-    print(f"    |  [I] Instagram       -> Every 2 hours     |  [OK] Active  |")
-    print(f"    |  [O] Odoo Accounting -> Every hour        |  [OK] Active  |")
-    print(f"    |  [S] Filesystem      -> Every 10 seconds  |  [OK] Active  |")
-    print(f"    +------------------------------------------------------------+")
-    
-    # Capabilities
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[CAPABILITIES]:{Colors.ENDC}")
-    print(f"    [+] Multi-platform communication monitoring (7 channels)")
-    print(f"    [+] Automated response to routine inquiries")
-    print(f"    [+] Human-in-the-loop approval for sensitive actions")
-    print(f"    [+] Weekly CEO Briefing generation (Mondays 8 AM)")
-    print(f"    [+] Social media auto-posting")
-    print(f"    [+] Invoice & payment tracking via Odoo")
-    print(f"    [+] Cryptographic audit logging (SHA3-512)")
-    print(f"    [+] Autonomous multi-step task completion (Ralph Wiggum)")
-    print(f"    [+] Chrome profile auto-launch & session preservation")
-    
-    # Access Points
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[ACCESS POINTS]:{Colors.ENDC}")
-    print(f"    +------------------------------------------------------------+")
-    print(f"    |  [Dashboard]    obsidian_vault/Dashboard.md                |")
-    print(f"    |  [Handbook]     obsidian_vault/Company_Handbook.md         |")
-    print(f"    |  [Tasks]        obsidian_vault/Needs_Action/               |")
-    print(f"    |  [Done]         obsidian_vault/Done/                       |")
-    print(f"    |  [Pending]      obsidian_vault/Pending_Approval/           |")
-    print(f"    |  [Briefings]    obsidian_vault/Briefings/                  |")
-    print(f"    |  [Audit Logs]   obsidian_vault/Logs/                       |")
-    print(f"    +------------------------------------------------------------+")
-    
-    # Chrome Profile
-    chrome_profile = os.getenv('CHROME_USER_DATA_DIR', 'Not configured')
-    print(f"\n  {Colors.BOLD}{Colors.OKGREEN}[CHROME PROFILE]:{Colors.ENDC}")
-    print(f"    - Path: {chrome_profile}")
-    print(f"    - Auto-Launch: {'[OK] Enabled' if chrome_profile else '[--] Disabled'}")
-    print(f"    - Health Check: Every 5 minutes")
-    print(f"    - Session Preservation: [OK] Active")
 
-def print_shutdown_message():
-    """Print graceful shutdown message"""
-    print(f"\n\n{Colors.WARNING}{'=' * 80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.WARNING}  SHUTTING DOWN ELYX AI EMPLOYEE{Colors.ENDC}")
-    print(f"{Colors.WARNING}{'=' * 80}{Colors.ENDC}")
-    print(f"\n  [OK] Stopping watchers...")
-    print(f"  [OK] Closing database connections...")
-    print(f"  [OK] Saving audit logs...")
-    print(f"\n  {Colors.OKGREEN}[COMPLETE] ELYX shutdown complete.{Colors.ENDC}")
-    print(f"  {Colors.BOLD}All systems preserved. Goodbye!{Colors.ENDC}\n")
+def print_row(service, port, ok, note=""):
+    icon = status_icon(ok)
+    status = f"{G}running{X}" if ok else f"{R}failed{X}"
+    note_str = f"  {D}{note}{X}" if note else ""
+    print(f"  {icon}  {service:<22} {D}:{X}{port:<6} {status}{note_str}")
+
+
+# ── Main ──────────────────────────────────────────────────────────────
 
 def main():
-    """Main ELYX startup function - ALL-IN-ONE"""
     print_banner()
 
-    print(f"{Colors.BOLD}[START]{Colors.ENDC} ELYX Autonomous AI Employee (All-in-One)")
-    print(f"{Colors.BOLD}[TIME]{Colors.ENDC}  {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print()
-
-    # Register signal handlers for clean shutdown
+    # Signal handlers
     signal.signal(signal.SIGINT, cleanup)
-    # SIGTERM is not reliably delivered on Windows (Task Manager sends SIGKILL),
-    # but register it where available for Unix compatibility
-    if hasattr(signal, 'SIGTERM'):
+    if hasattr(signal, "SIGTERM"):
         signal.signal(signal.SIGTERM, cleanup)
-    # Use atexit as a fallback to ensure cleanup runs on normal exit
     atexit.register(cleanup)
 
-    # Initialize vault
+    # Vault
     vault_path = Path("obsidian_vault")
     vault_path.mkdir(exist_ok=True)
-    print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Vault path: {vault_path}")
 
-    # Start APIs and Frontend
-    print_section("Starting Web Services")
-    
-    start_vault_api()
-    start_settings_api()
-    start_main_api()
-    start_frontend()
+    brain = os.getenv("ELYX_ACTIVE_BRAIN", "claude").capitalize()
+    port = os.getenv("PORT", "8000")
 
-    # Start Orchestrator
-    print(f"\n{Colors.BOLD}[INIT]{Colors.ENDC} Starting Orchestrator...")
-    try:
-        from src.agents.orchestrator import Orchestrator
-        orchestrator = Orchestrator(vault_path=str(vault_path))
-        print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator initialized")
+    # ── Status Table ──────────────────────────────────────────────
+    print(f"  {B}ELYX Startup{X}  {D}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{X}  {D}Brain: {brain}{X}")
+    print(f"  {D}{'─'*58}{X}")
 
-        # Run orchestrator in background thread (non-daemon so cleanup runs)
-        orch_thread = threading.Thread(target=orchestrator.run, daemon=False, name="orchestrator")
-        orch_thread.start()
-        processes.append(orchestrator)  # Track for cleanup
-        print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Orchestrator started (monitoring active)")
+    r1 = start_vault_api()
+    print_row("Vault API", "8080", r1)
 
-    except Exception as e:
-        print(f"{Colors.FAIL}[ERROR]{Colors.ENDC} Failed to start Orchestrator: {e}")
-        import traceback
-        traceback.print_exc()
-        cleanup()
-        sys.exit(1)
+    r2 = start_settings_api()
+    print_row("Settings API", "8081", r2)
 
-    # Print comprehensive status
-    print_system_status()
+    r3 = start_main_api()
+    print_row("Main API (FastAPI)", port, r3)
 
-    # Print access URLs
-    print(f"\n{Colors.OKCYAN}{'='*80}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.OKGREEN}  ✓ SYSTEM READY - AI EMPLOYEE OPERATIONAL{Colors.ENDC}")
-    print(f"{Colors.OKCYAN}{'='*80}{Colors.ENDC}")
-    
-    print(f"\n{Colors.BOLD}[ACCESS POINTS]:{Colors.ENDC}")
-    print(f"  Dashboard:     http://localhost:3000")
-    print(f"  Tasks:         http://localhost:3000/tasks")
-    print(f"  Approvals:     http://localhost:3000/approvals")
-    print(f"  Settings:      http://localhost:3000/settings")
-    print(f"  Feature Flags: http://localhost:3000/settings → Feature Flags tab")
-    print()
-    print(f"  Main API:      http://localhost:8000")
-    print(f"  Vault API:     http://localhost:8080")
-    print(f"  Settings API:  http://localhost:8081")
-    print()
+    r4 = start_frontend()
+    if not r4 and not (project_root / "frontend" / "node_modules").exists():
+        print_row("Frontend (Next.js)", "3000", False, "run: cd frontend && npm install")
+    else:
+        print_row("Frontend (Next.js)", "3000", r4)
 
-    print(f"\n{Colors.WARNING}Press Ctrl+C to shut down all services gracefully.{Colors.ENDC}\n")
+    r5, orch = start_orchestrator(vault_path)
+    print_row("Orchestrator", "—", r5, "watchers + task monitor")
 
-    # Check if vault is git repo
     is_vault_git_repo()
-    if vault_git_enabled:
-        print(f"{Colors.OKGREEN}[OK]{Colors.ENDC} Vault Git repository detected - auto-commit enabled")
-        print(f"   Changes will be committed every hour")
-        print(f"   GitHub Actions will sync to GitHub automatically\n")
+    print_row("Vault Git Sync", "—", vault_git_enabled, "hourly auto-commit" if vault_git_enabled else "no .git found")
 
-    # Keep alive with periodic vault commits
-    last_commit_time = time.time()
-    commit_interval = 3600  # 1 hour
-    
+    total = sum([r1, r2, r3, r4, r5])
+    print(f"  {D}{'─'*58}{X}")
+
+    if total == 5:
+        print(f"\n  {G}{B}ALL SYSTEMS OPERATIONAL{X}  {D}({total}/5 services){X}\n")
+    elif total >= 3:
+        print(f"\n  {Y}{B}PARTIALLY OPERATIONAL{X}  {D}({total}/5 services){X}\n")
+    else:
+        print(f"\n  {R}{B}STARTUP FAILED{X}  {D}({total}/5 services){X}\n")
+
+    # ── Watchers Table ────────────────────────────────────────────
+    config = orch.config if orch else {}
+    watchers = probe_watchers(config)
+    w_ok = sum(1 for _, _, s in watchers if s == "ok")
+
+    print(f"  {B}Watchers{X}  {D}({w_ok}/{len(watchers)} enabled){X}")
+    print(f"  {D}{'─'*58}{X}")
+    for wname, interval, wstatus in watchers:
+        if wstatus == "ok":
+            icon = f"{G}✓{X}"
+            label = f"{G}enabled{X}"
+        elif wstatus == "disabled":
+            icon = f"{D}—{X}"
+            label = f"{D}disabled{X}"
+        elif wstatus == "missing":
+            icon = f"{Y}!{X}"
+            label = f"{Y}import err{X}"
+        else:
+            icon = f"{R}✗{X}"
+            label = f"{R}error{X}"
+        print(f"  {icon}  {wname:<18} {D}every{X} {interval:<5}  {label}")
+    print(f"  {D}{'─'*58}{X}")
+
+    # ── Quick Links ───────────────────────────────────────────────
+    print(f"\n  {B}Access Points{X}")
+    print(f"  {D}{'─'*58}{X}")
+    print(f"  Dashboard      {C}http://localhost:3000{X}")
+    print(f"  API Docs       {C}http://localhost:{port}/docs{X}")
+    print(f"  Vault API      {C}http://localhost:8080{X}")
+    print(f"  Settings API   {C}http://localhost:8081{X}")
+    print(f"  {D}{'─'*58}{X}")
+    print(f"\n  {Y}Ctrl+C{X} to shut down  {D}│{X}  Logs → {D}obsidian_vault/Logs/*.log{X}\n")
+
+    # ── Keep-alive loop (auto-commit + stream important events) ──
+    last_commit = time.time()
     try:
         while True:
             time.sleep(10)
-            
-            # Auto-commit vault changes every hour
-            if vault_git_enabled and (time.time() - last_commit_time) > commit_interval:
-                print(f"\n{Colors.BOLD}[AUTO-COMMIT]{Colors.ENDC} Committing vault changes...")
+            if vault_git_enabled and (time.time() - last_commit) > 3600:
                 if commit_vault_changes(f"Auto-commit: {datetime.now().strftime('%Y-%m-%d %H:%M')}"):
-                    print(f"  {Colors.OKGREEN}✓ Vault changes committed{Colors.ENDC}")
-                last_commit_time = time.time()
-                
+                    print(f"  {D}[{datetime.now().strftime('%H:%M')}]{X} {G}✓{X} Vault changes committed")
+                last_commit = time.time()
     except KeyboardInterrupt:
-        # Final commit before shutdown
         if vault_git_enabled:
-            print(f"\n{Colors.BOLD}[AUTO-COMMIT]{Colors.ENDC} Final vault commit before shutdown...")
             commit_vault_changes(f"Final commit: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
         cleanup()
         sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
