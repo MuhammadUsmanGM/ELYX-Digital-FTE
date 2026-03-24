@@ -23,7 +23,6 @@ import {
   ArrowRight,
   HelpCircle,
   Users,
-  LogOut,
   ChevronRight,
   Sparkles,
   Calendar,
@@ -32,10 +31,7 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { DashboardData } from "@/lib/types";
-import { fetchDashboardData, fetchOnboardingStatus } from "@/lib/api";
-import { supabase } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
-import { useRouter } from "next/navigation";
+import { fetchDashboardData } from "@/lib/api";
 import { toast } from "react-hot-toast";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -46,10 +42,8 @@ export default function SidebarLayout({
 }) {
   const pathname = usePathname();
   const [data, setData] = useState<DashboardData | null>(null);
-  const [user, setUser] = useState<User | null>(null);
   const [isSidebarHovered, setIsSidebarHovered] = useState(false);
   const refreshInFlight = useRef(false);
-  const router = useRouter();
 
   const sidebarItems = [
     { icon: <LayoutDashboard size={18} />, label: "Mission Control", href: "/dashboard" },
@@ -66,26 +60,6 @@ export default function SidebarLayout({
   ];
 
   useEffect(() => {
-    const checkUserAndOnboarding = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session && pathname !== "/auth") {
-        router.push("/auth");
-        return;
-      }
-      
-      setUser(session?.user ?? null);
-
-      if (session?.user && pathname !== "/onboard" && pathname !== "/auth") {
-        const onboarded = await fetchOnboardingStatus(session.user.id);
-        if (!onboarded) {
-          router.push("/onboard");
-        }
-      }
-    };
-    
-    checkUserAndOnboarding();
-
     const loadData = async () => {
       try {
         if (refreshInFlight.current) return;
@@ -116,13 +90,8 @@ export default function SidebarLayout({
       clearInterval(interval);
       document.removeEventListener("visibilitychange", onVisibility);
     };
-  }, [pathname, router]);
+  }, [pathname]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast.success("System Session Terminated. Returning to Login.");
-    router.push("/auth");
-  };
 
   return (
     <div className="flex min-h-screen bg-[#020617] text-slate-200 selection:bg-primary/30 relative overflow-hidden">
@@ -280,7 +249,7 @@ export default function SidebarLayout({
             <div className="flex items-center gap-5">
               <div className="text-right hidden xl:block">
                 <p className="text-xs font-black text-slate-200 capitalize tracking-tight leading-none mb-1">
-                  {user?.email?.split('@')[0].replace('.', ' ') || "System Admin"}
+                  System Admin
                 </p>
                 <div className="flex items-center justify-end gap-1.5">
                   <div className="w-1 h-1 rounded-full bg-primary" />
@@ -296,23 +265,17 @@ export default function SidebarLayout({
                   }}
                   className="w-11 h-11 rounded-xl overflow-hidden bg-slate-900 border border-white/5 relative z-10"
                 >
-                  <img src={`https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${user?.email || 'default'}&backgroundColor=020617`} alt="Avatar" className="w-full h-full object-cover" />
+                  <img src="https://api.dicebear.com/7.x/bottts-neutral/svg?seed=admin&backgroundColor=020617" alt="Avatar" className="w-full h-full object-cover" />
                 </button>
                 
                 <div id="user-dropdown" className="hidden absolute top-full right-0 mt-4 w-60 bg-[#020617] border border-white/10 rounded-2xl shadow-2xl p-3 backdrop-blur-2xl z-50">
                   <div className="p-4 border-b border-white/5 mb-2">
-                    <p className="text-xs font-black text-white truncate mb-0.5">{user?.email}</p>
+                    <p className="text-xs font-black text-white truncate mb-0.5">Local Admin</p>
                     <p className="text-[10px] font-bold text-slate-500">System Integrity: Optimal</p>
                   </div>
                   <Link href="/settings" className="flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-slate-400 hover:text-white hover:bg-white/5 rounded-xl transition-all">
                     <Settings size={14} /> Workspace Settings
                   </Link>
-                  <button 
-                    onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-[11px] font-bold text-red-500/80 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all border-t border-white/5 mt-2 pt-4"
-                  >
-                    <LogOut size={14} /> Sign Out Session
-                  </button>
                 </div>
               </div>
             </div>
