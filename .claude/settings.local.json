@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(xargs grep:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(ls:*)",
+      "Bash(npx next:*)",
+      "Bash(curl:*)",
+      "Bash(node:*)"
     ]
   }
 }

@@ -178,7 +178,7 @@ def run_watchdog(vault_path="vault"):
 
 if __name__ == "__main__":
     # Create default vault structure if it doesn't exist
-    vault_path = "vault"
+    vault_path = "obsidian_vault"
     vault_dirs = ["Inbox", "Needs_Action", "Plans", "Pending_Approval",
                   "Approved", "Rejected", "Done", "Logs"]
 
@@ -194,7 +194,7 @@ if __name__ == "__main__":
     # Create Company_Handbook.md if it doesn't exist
     handbook_path = vault_root / "Company_Handbook.md"
     if not handbook_path.exists():
-        from utils.handbook_parser import HandbookParser
+        from src.utils.handbook_parser import HandbookParser
         parser = HandbookParser(str(handbook_path))
 
     # Start the watchdog

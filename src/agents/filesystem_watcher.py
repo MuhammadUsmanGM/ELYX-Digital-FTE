@@ -183,5 +183,5 @@ def run_filesystem_watcher(watch_path: str, vault_path: str):
     """
     Convenience function to run the filesystem watcher
     """
-    watcher = FileSystemWatcher(watch_path, Path(vault_path))
+    watcher = FileSystemWatcher(watch_path, vault_path)
     watcher.start_watching()

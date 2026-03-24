@@ -833,7 +833,7 @@ class Orchestrator:
 
 if __name__ == "__main__":
     # Create default vault structure if it doesn't exist
-    vault_path = "vault"
+    vault_path = "obsidian_vault"
     vault_dirs = ["Inbox", "Needs_Action", "Plans", "Pending_Approval",
                   "Approved", "Rejected", "Done", "Logs"]
 
