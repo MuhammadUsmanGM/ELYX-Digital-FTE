@@ -1,12 +1,11 @@
 <div align="center">
   <img src="frontend/public/animated.gif" alt="ELYX Logo" width="120" />
   <h1>ELYX</h1>
-  <p><strong>A Local-First Autonomous AI Employee Framework</strong></p>
+  <p><strong>A Local-First Autonomous AI Employee</strong></p>
 
-[![Prototype](https://img.shields.io/badge/Status-Prototype-orange?style=for-the-badge)]()
 [![Python](https://img.shields.io/badge/Python-3.10+-blue?style=for-the-badge&logo=python)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2015-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Frontend-Next.js%2016-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
 [![Hackathon](https://img.shields.io/badge/Built%20for-Personal%20AI%20Employee%20Hackathon%200-purple?style=for-the-badge)]()
 
@@ -14,336 +13,243 @@
 
 ---
 
-## 🌐 Overview
+## Overview
 
-**ELYX** is a modular AI employee framework designed to autonomously manage structured business workflows on a local machine while optionally integrating with cloud services.
+**ELYX** is an autonomous AI employee that runs locally on your machine. It monitors your email, social media, and file system — then reasons about incoming tasks, executes actions, and asks for your approval when needed.
 
-The system combines:
+You email it "send a WhatsApp message saying hello to +923001234567" and it does it. You get a LinkedIn DM and it drafts a response. An invoice comes in from Odoo and it flags it for review.
 
-- **Local data control** and long-term memory (Obsidian vault)
-- **A swappable multi-model reasoning core** (Claude, Gemini, Qwen, Codex)
-- **Role-based task execution** with human-in-the-loop approvals
-- **Comprehensive audit logging** for traceability
+Everything stays on your machine. The vault is Markdown. The reasoning engine is swappable. Every action is logged.
 
-ELYX is built to explore how autonomous AI agents can safely operate within real-world business environments without compromising data sovereignty.
-
-Developed as part of the **Personal AI Employee Hackathon 0**.
+Built for the **Personal AI Employee Hackathon 0**.
 
 ---
 
-## 🚀 Core Capabilities
+## How It Works
 
-### 🧠 Modular Reasoning Engine
-
-Supports multiple AI providers (Claude, Gemini, Qwen, Codex) that can be switched via environment configuration. This enables experimentation with different reasoning profiles depending on task complexity.
-
-### 👤 Role-Based Task Assignment
-
-Agents operate under defined roles (e.g., Operations, Finance, Communications), limiting scope and improving predictability of execution.
-
-### 📊 Business Workflow Integration
-
-Integrated with Odoo Cloud for:
-
-- Invoice monitoring
-- Financial summaries
-- Automated reporting
-
-The system can generate structured weekly briefings based on business data.
-
-### 🔐 Local-First Memory & Security
-
-- Long-term memory stored locally (Markdown-based vault)
-- Credentials never leave the host environment
-- All executed actions are cryptographically signed for traceability
-
-### ⏱ Continuous Monitoring Architecture
-
-Lightweight watcher processes monitor connected services (email, ERP, etc.) and trigger reasoning cycles when predefined conditions are met.
-
-### 🛡️ Human-in-the-Loop Safety
-
-Sensitive actions (payments, new contacts, file sharing) require explicit user approval before execution.
+```
+[Gmail / WhatsApp / LinkedIn / Facebook / Twitter / Instagram / Odoo / File Drops]
+                              |
+                         Watchers detect new items
+                              |
+                    Create .md files in Needs_Action/
+                              |
+                     Orchestrator triggers processing
+                              |
+              TaskProcessor reads Company Handbook rules
+                              |
+                 +-------------+-------------+
+                 |                           |
+           Safe to automate          Needs human approval
+                 |                           |
+          Execute + send response    Move to Pending_Approval/
+                 |                           |
+           Move to Done/             Wait for user decision
+```
 
 ---
 
-## 🏗 System Architecture
+## What It Can Do
 
-ELYX follows a modular, event-driven architecture:
+**Communication**
+- Monitor Gmail, WhatsApp, LinkedIn, Facebook, Twitter, Instagram
+- Auto-respond to routine messages based on handbook rules
+- Cross-platform dispatch: email it to send a WhatsApp, or vice versa
+- Social media posting across all platforms
 
-### 1. Perception Layer (Watchers)
+**Business Operations**
+- Odoo accounting integration (invoices, payments, financial summaries)
+- Weekly CEO briefing generation
+- Task scheduling via Windows Task Scheduler
 
-Monitors external services and normalizes incoming data:
+**Safety**
+- Human-in-the-loop approval for sensitive actions (payments, new contacts, file sharing)
+- Append-only activity logs in `/Logs/`
+- All actions traceable via vault files
 
-- Gmail watcher (OAuth2 authenticated)
-- WhatsApp watcher (Playwright-based)
-- Filesystem watcher (watchdog)
-- Odoo ERP watcher (JSON-RPC)
-
-### 2. Reasoning Layer (Brain Core)
-
-Executes structured multi-step decision pipelines using the selected model provider:
-
-- Supports Claude, Gemini, Qwen, Codex via `brain_factory.py`
-- Uses Ralph Wiggum pattern for multi-step task persistence
-- Creates `Plan.md` files for complex multi-step tasks
-
-### 3. Execution Layer (Skills)
-
-Performs deterministic actions such as:
-
-- Sending emails
-- Updating ERP entries
-- Generating reports
-- Moving files between workflow states
-
-### 4. Audit Layer
-
-Logs every strategic action for traceability:
-
-- Append-only audit trail in `audit_trail.json`
-- Daily logs in `/Logs/YYYY-MM-DD.log`
-- Cryptographic hashing for tamper detection
+**Intelligence**
+- Swappable AI brain (Claude, Gemini, Qwen, Codex)
+- Company Handbook-driven decision making
+- Predictive analytics and adaptive learning (Silver tier)
 
 ---
 
-## 🛠 Tech Stack
+## Tech Stack
 
-| Component           | Technology                  | Role                          |
-| :------------------ | :-------------------------- | :---------------------------- |
-| **Backend**         | FastAPI (Python)            | High-performance API server   |
-| **Frontend**        | Next.js 15 (TypeScript)     | Dashboard UI                  |
-| **Database**        | SQLite + Supabase           | Hybrid storage                |
-| **Memory**          | Obsidian (Local Markdown)   | Long-term memory & GUI        |
-| **ERP Integration** | Odoo Cloud                  | Accounting & business logic   |
-| **Security**        | Hash-based signing          | Action logging & audit trails |
-| **Model Support**   | Claude, Gemini, Qwen, Codex | Swappable reasoning engines   |
-
----
-
-## 🧪 Current Status
-
-**✅ GOLD TIER COMPLETE (100%)** – All Gold Tier requirements implemented and tested.
-Actively expanding automation capabilities and safety constraints.
-
-### ✅ Implemented (Production-Ready)
-
-**Bronze Tier**
-
-- [x] Obsidian vault structure
-- [x] File-based task orchestration
-- [x] Basic watcher pattern
-- [x] Dashboard.md updates
-
-**Silver Tier**
-
-- [x] Gmail watcher (OAuth2 authenticated)
-- [x] WhatsApp watcher (Playwright-based)
-- [x] Filesystem watcher (watchdog)
-- [x] Calendar service integration (optional)
-- [x] Predictive analytics service (basic)
-
-**Gold Tier** ✅ **100% COMPLETE**
-
-- [x] Odoo Cloud integration (JSON-RPC)
-- [x] Weekly CEO briefing generation
-- [x] Human-in-the-loop approval workflow
-- [x] Multi-brain support (Claude, Qwen, Gemini, Codex)
-- [x] **Social media auto-posting** (LinkedIn, Facebook, Twitter, Instagram)
-- [x] **Error recovery with exponential backoff**
-- [x] **Windows Task Scheduler integration**
-- [x] Comprehensive audit logging
-- [x] Ralph Wiggum autonomous loop
-
-**Platinum Tier (Conceptual)**
-
-- [ ] Distributed ledger for audit logs (design phase)
-- [ ] Ralph Wiggum autonomous loop (implemented in Gold)
-
-### 🚧 In Development (Prototype)
-
-- [ ] LinkedIn watcher (authentication pending)
-- [ ] Facebook/Twitter/Instagram watchers (API integration needed)
-- [ ] Multi-region sync (requires actual cloud infrastructure)
-- [ ] Federated learning (design phase)
-
-### 📋 Planned (Future Enhancements)
-
-- [ ] Multi-region sync (requires cloud infrastructure)
-- [ ] Global failover (requires multi-region deployment)
-- [ ] AR/VR interfaces (conceptual)
+| Component | Technology | Role |
+|:----------|:-----------|:-----|
+| **Backend** | FastAPI (Python) | API server + task processing |
+| **Frontend** | Next.js 16 (TypeScript) | Dashboard UI |
+| **Database** | SQLite | Local persistent storage |
+| **Memory** | Obsidian (Markdown vault) | Long-term memory + task files |
+| **Browser Automation** | Playwright | Social media watchers + sender |
+| **ERP** | Odoo Cloud (JSON-RPC) | Accounting & invoicing |
+| **AI Engines** | Claude, Gemini, Qwen, Codex | Swappable reasoning cores |
 
 ---
 
-## 🛰 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Python 3.10+
 - Node.js 18+
-- Anthropic API Key (or other supported AI provider)
-- Odoo Cloud Instance (Invoicing App) - optional
+- An AI provider API key (Anthropic recommended)
+- Playwright browsers: `playwright install chromium`
 
-### Installation
+### Quick Start
 
-1. **Clone & Setup Backend**:
+```bash
+# 1. Install backend dependencies
+pip install -r requirements.txt
 
-   ```bash
-   pip install -r requirements.txt
-   python run_elyx.py
-   ```
+# 2. Install Playwright browsers
+playwright install chromium
 
-2. **Setup Frontend**:
+# 3. Configure environment
+cp .env.example .env   # Edit with your API keys
 
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+# 4. Start everything
+python run_elyx.py
+```
 
-3. **Configure Environment**:
-   Initialize your `.env` with your Odoo, API, and Security keys.
+The startup script launches:
+- FastAPI backend (port 8000)
+- Vault API (port 8080)
+- Settings API (port 8081)
+- Orchestrator + all enabled watchers
 
----
+```bash
+# 5. Start the dashboard (separate terminal)
+cd frontend
+npm install
+npm run dev
+```
 
-## 🪟 Windows Task Scheduler Integration (Gold Tier)
+Open `http://localhost:3000` to access the dashboard.
 
-ELYX includes native Windows Task Scheduler integration for autonomous 24/7 operation.
+### Platform Setup
 
-### Quick Setup
+For social media watchers, log in once via browser:
 
-1. **Install pywin32** (required for Windows Task Scheduler):
+```bash
+python config/setup_sessions.py whatsapp    # Scan QR code
+python config/setup_sessions.py linkedin    # Log in manually
+python config/setup_sessions.py twitter     # Log in manually
+python config/setup_sessions.py facebook    # Log in manually
+python config/setup_sessions.py instagram   # Log in manually
+```
 
----
-
-## 🛠 Contributing & CI
-
-To make the framework production‑ready, we maintain automated checks:
-
-- **GitHub Actions** run linting, type‑checking, backend tests, and frontend builds on every push/PR. New workflows live under `.github/workflows/ci.yml`.
-- Use `pre-commit` (configured by `.pre-commit-config.yaml`) to format and lint code before committing.
-- Run `pytest` for backend unit/integration tests; many helper scripts under `scripts/` cover additional scenarios.
-
-Ensure you add new dependencies to `requirements.txt` and update relevant tests before submitting changes.
-
-### Secret management
-
-Sensitive values can be injected via environment variables prefixed with `CONFIG_`
-(e.g. `CONFIG_gmail__credentials_path=/secure/path`) or by placing plain‑text files
-in a `Secrets/` directory inside the vault. The `ConfigManager` will automatically
-read these and make them available via `config_manager.get_secret()`.
+For Gmail, set up OAuth2 credentials and place them at the path specified in your `.env`.
 
 ---
 
-### Quick Setup
+## Project Structure
 
-1. **Install pywin32** (required for Windows Task Scheduler): ```bash
-   pip install pywin32
-
-   ```
-
-   ```
-
-2. **Register ELYX Tasks**:
-
-   ```bash
-   python config/setup_windows_scheduler.py register
-   ```
-
-3. **Verify Registration**:
-   ```bash
-   python config/setup_windows_scheduler.py status
-   ```
-
-### Available Commands
-
-| Command                                                   | Description               |
-| --------------------------------------------------------- | ------------------------- |
-| `python config/setup_windows_scheduler.py register`              | Register all ELYX tasks   |
-| `python config/setup_windows_scheduler.py unregister`            | Unregister all ELYX tasks |
-| `python config/setup_windows_scheduler.py status`                | Show status of all tasks  |
-| `python config/setup_windows_scheduler.py list`                  | List all registered tasks |
-| `python config/setup_windows_scheduler.py run --task <name>`     | Run a task immediately    |
-| `python config/setup_windows_scheduler.py enable --task <name>`  | Enable a task             |
-| `python config/setup_windows_scheduler.py disable --task <name>` | Disable a task            |
-
-### Registered Tasks
-
-| Task                      | Schedule          | Description                                 |
-| ------------------------- | ----------------- | ------------------------------------------- |
-| `ELYX_Orchestrator`       | At Startup        | Main orchestrator coordinating all watchers |
-| `ELYX_Gmail_Watcher`      | At Logon          | Monitors Gmail for important messages       |
-| `ELYX_WhatsApp_Watcher`   | At Logon          | Monitors WhatsApp for urgent messages       |
-| `ELYX_LinkedIn_Watcher`   | At Logon          | Monitors LinkedIn messages                  |
-| `ELYX_Facebook_Watcher`   | At Logon          | Monitors Facebook Messenger                 |
-| `ELYX_Twitter_Watcher`    | At Logon          | Monitors Twitter/X notifications and DMs    |
-| `ELYX_Instagram_Watcher`  | At Logon          | Monitors Instagram DMs                      |
-| `ELYX_Odoo_Watcher`       | Hourly            | Monitors Odoo accounting                    |
-| `ELYX_FileSystem_Watcher` | At Startup        | Monitors file drops                         |
-| `ELYX_CEO_Briefing`       | Weekly (Mon 8 AM) | Generates weekly CEO briefing               |
-| `ELYX_Scheduled_Posts`    | Hourly            | Publishes scheduled social media posts      |
-| `ELYX_Vault_Backup`       | Daily (2 AM)      | Backs up Obsidian vault                     |
-
-### Configure Task Schedules
-
-Edit `config.json` to customize task schedules:
-
-```json
-{
-  "windows_scheduler": {
-    "enabled": true,
-    "tasks": {
-      "ceo_briefing": {
-        "enabled": true,
-        "trigger": "weekly",
-        "day": "Monday",
-        "time": "08:00"
-      },
-      "vault_backup": {
-        "enabled": true,
-        "trigger": "daily",
-        "time": "02:00"
-      }
-    }
-  }
-}
+```
+ELYX/
+├── src/
+│   ├── agents/              # Watchers + orchestrator + watchdog
+│   │   ├── orchestrator.py  # Main coordinator
+│   │   ├── gmail_watcher.py
+│   │   ├── whatsapp_watcher.py
+│   │   ├── linkedin_watcher.py
+│   │   ├── facebook_watcher.py
+│   │   ├── twitter_watcher.py
+│   │   ├── instagram_watcher.py
+│   │   ├── odoo_watcher.py
+│   │   ├── filesystem_watcher.py
+│   │   └── watchdog.py
+│   ├── api/                 # FastAPI routes
+│   │   ├── main.py
+│   │   ├── vault_api.py
+│   │   ├── settings_api.py
+│   │   └── routes/
+│   ├── services/            # Business logic
+│   │   ├── brain_factory.py
+│   │   ├── direct_social_sender.py
+│   │   ├── briefing_service.py
+│   │   ├── odoo_service.py
+│   │   └── ...
+│   ├── claude_skills/       # Task processor
+│   └── config/              # ConfigManager
+├── frontend/                # Next.js dashboard
+├── obsidian_vault/          # Markdown vault (separate repo)
+│   ├── Inbox/
+│   ├── Needs_Action/
+│   ├── Plans/
+│   ├── Pending_Approval/
+│   ├── Approved/
+│   ├── Rejected/
+│   ├── Done/
+│   ├── Responses/
+│   ├── Logs/
+│   ├── Templates/
+│   ├── Briefings/
+│   ├── Conversations/
+│   ├── Social_Posts/
+│   ├── Company_Handbook.md
+│   ├── Business_Goals.md
+│   └── Dashboard.md
+├── config.json              # Runtime configuration
+├── run_elyx.py              # Startup script
+└── requirements.txt
 ```
 
 ---
 
-## 🔀 Brain Selection
+## Brain Selection
 
-ELYX supports multiple AI coding agents as its reasoning core. Switch brains by editing one line in `.env`:
+Switch the reasoning engine by editing `.env`:
 
 ```env
-# Options: claude, qwen, gemini, codex
 ELYX_ACTIVE_BRAIN=claude
 ```
 
-| Brain    | Best For                                      |
-| :------- | :-------------------------------------------- |
+| Brain | Best For |
+|:------|:---------|
 | `claude` | Strategic reasoning, complex multi-step tasks |
-| `qwen`   | Fast local coding, lightweight operations     |
-| `gemini` | High-volume triage, analysis, speed           |
-| `codex`  | Code generation and refactoring               |
+| `qwen` | Fast local coding, lightweight operations |
+| `gemini` | High-volume triage, analysis, speed |
+| `codex` | Code generation and refactoring |
 
 ---
 
-## 🛡 Security & Data Sovereignty
+## Windows Task Scheduler
 
-- **Local Vault**: Credentials and memories never leave your machine
-- **Audit Trail**: Append-only log for compliance and debugging
-- **Human-in-the-Loop**: Sensitive actions require explicit approval
-- **Error Recovery**: Exponential backoff for failed operations
+For 24/7 autonomous operation:
+
+```bash
+pip install pywin32
+python config/setup_windows_scheduler.py register
+python config/setup_windows_scheduler.py status
+```
+
+This registers startup tasks for the orchestrator, all watchers, scheduled briefings, and vault backups.
 
 ---
 
-## 📚 Documentation
+## Configuration
 
-- [Architecture Overview](ARCHITECTURE.md)
-- [Implementation Status](IMPLEMENTATION_STATUS.md)
-- [Company Handbook](obsidian_vault/Company_Handbook.md)
-- [Skill Documentation](SKILL.md)
+All runtime settings are in `config.json` and `.env`. The Settings API (port 8081) allows live toggle of features without restart.
+
+Key toggles:
+- `integrations.gmail_enabled` / `whatsapp_enabled` / `linkedin_enabled` / etc.
+- `silver_tier_features.enable_analytics` / `enable_learning`
+- `gold_tier_features.enable_advanced_ai`
+- `integrations.use_claude_cli` (enables Ralph Loop autonomous mode)
+
+Secrets can be injected via `CONFIG_` prefixed env vars (e.g., `CONFIG_gmail__credentials_path`) or by placing files in a `Secrets/` directory inside the vault.
+
+---
+
+## Security
+
+- **Local-first**: All data stays on your machine
+- **Human-in-the-loop**: Sensitive actions require approval via vault files
+- **Audit logging**: Append-only activity logs with timestamps
+- **Credential isolation**: Secrets in env vars or vault, never in code
+- **Rate limiting**: Built-in rate limiter for social platform interactions
 
 ---
 

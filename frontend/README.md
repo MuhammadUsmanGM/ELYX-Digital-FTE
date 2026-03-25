@@ -1,36 +1,76 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ELYX Frontend
 
-## Getting Started
+Dashboard UI for the ELYX autonomous AI employee system. Built with Next.js 16, React 19, TypeScript, and Tailwind CSS 4.
 
-First, run the development server:
+## Setup
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Opens at `http://localhost:3000`. Requires the backend APIs running:
+- FastAPI on port 8000
+- Vault API on port 8080
+- Settings API on port 8081
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Start all backends with `python run_elyx.py` from the project root.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Pages
 
-## Learn More
+| Route | Page | Description |
+|:------|:-----|:------------|
+| `/dashboard` | Mission Control | Main overview — tasks, approvals, activity chart, system metrics |
+| `/tasks` | Tasks | View and manage pending/completed tasks from the vault |
+| `/approvals` | Approvals | Review and approve/reject sensitive actions |
+| `/analytics` | Decision Matrix | Analytics dashboard with export and report generation |
+| `/users` | Team Directory | Team members and recruitment form |
+| `/business` | Business Operations | Odoo-connected business metrics and operations |
+| `/comms` | Global Comms | Communication hub — send messages across platforms |
+| `/system-monitor` | System Monitor | Live CPU/memory/disk metrics, agent status and toggles |
+| `/scheduling` | Task Scheduler | Scheduled task management |
+| `/security` | Vault Security | Security audit logs and settings |
+| `/settings` | OS Settings | Feature flags, agent config, security toggles |
+| `/api-docs` | System Interface | API documentation browser |
 
-To learn more about Next.js, take a look at the following resources:
+## Architecture
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+frontend/
+├── app/                    # Next.js App Router pages
+│   ├── dashboard/          # Main dashboard
+│   ├── tasks/              # Task management
+│   ├── approvals/          # Approval workflow
+│   ├── analytics/          # Analytics + reports
+│   ├── comms/              # Communication hub
+│   ├── system-monitor/     # Live system metrics
+│   ├── settings/           # Feature flags + config
+│   └── ...                 # Other pages
+├── components/
+│   └── DashboardLayout.tsx # Shared sidebar + header layout
+├── lib/
+│   ├── api.ts              # All API calls (authFetch wrapper)
+│   ├── types.ts            # TypeScript interfaces
+│   └── supabase.ts         # Supabase client (inactive, auth removed)
+└── public/                 # Static assets
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Key Patterns
 
-## Deploy on Vercel
+- **`authFetch()`** — Wrapper around `fetch()` in `lib/api.ts`. All API calls go through this. Gracefully skips auth headers when no session exists (app runs locally without login).
+- **`DashboardLayout`** — Shared layout with sidebar navigation, header, and status bar. Every page wraps its content in this component.
+- **Real metrics** — System monitor and dashboard pull live CPU/memory/disk from the backend via `psutil`. No mock data when backend is running.
+- **Offline detection** — Pages show a warning banner when the backend is unreachable and data falls back to mock values.
+- **`react-hot-toast`** — Used for all notifications. Note: no `.info()` method — use `toast("msg", { icon: "..." })` instead.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Package | Version | Role |
+|:--------|:--------|:-----|
+| Next.js | 16.1.6 | Framework (App Router, Turbopack) |
+| React | 19.2.3 | UI library |
+| TypeScript | 5.x | Type safety |
+| Tailwind CSS | 4.x | Styling |
+| Framer Motion | latest | Animations |
+| Lucide React | latest | Icons |
+| react-hot-toast | latest | Toast notifications |
