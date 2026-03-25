@@ -1,13 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc:*)",
-      "Bash(xargs grep:*)",
-      "Bash(grep:*)",
-      "Bash(ls:*)",
-      "Bash(npx next:*)",
-      "Bash(curl:*)",
-      "Bash(node:*)"
+      "Bash(for d in Blockchain_Integration Active_Project Active_Projects In_Progress Invoices Accounting Attachments .trash)",
+      "Bash(do echo \"=== $d ===\")",
+      "Read(//c/Users/Usman Mustafa/OneDrive/Desktop/ELYX-Personal-AI-Employee/obsidian_vault/**)",
+      "Bash(done)",
+      "Bash(rm:*)"
     ]
   }
 }
