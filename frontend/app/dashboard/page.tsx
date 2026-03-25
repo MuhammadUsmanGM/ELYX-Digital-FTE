@@ -234,7 +234,7 @@ export default function DashboardPage() {
             label="System Accuracy" 
             value={`${data?.system.stability_score.toFixed(1) || "..."}%`}
             icon={<BrainCircuit size={22} />}
-            trend={`${(Math.random() * 2 + 1).toFixed(1)}%`}
+            trend={`${((data?.system.stability_score ?? 98) - 96).toFixed(1)}%`}
             subtext="Performance Score"
             color="primary"
           />
