@@ -333,15 +333,7 @@ def run_server(port: int = 8080):
         VaultAPIHandler(*args, vault_api=vault_api, **kwargs)
     
     server = HTTPServer(('localhost', port), handler)
-    print(f"🔓 ELYX Vault API running at http://localhost:{port}")
-    print(f"   - GET  /api/vault/summary")
-    print(f"   - GET  /api/vault/tasks?folder=Needs_Action")
-    print(f"   - GET  /api/vault/approvals")
-    print(f"   - GET  /api/vault/completed")
-    print(f"   - POST /api/vault/approve")
-    print(f"   - POST /api/vault/reject")
-    print(f"   - POST /api/vault/complete")
-    print(f"\nPress Ctrl+C to stop")
+    print(f"ELYX Vault API running at http://localhost:{port}")
     
     try:
         server.serve_forever()

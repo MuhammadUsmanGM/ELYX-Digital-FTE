@@ -336,12 +336,7 @@ def run_server(port: int = 8081):
         SettingsAPIHandler(*args, settings_api=settings_api, **kwargs)
     
     server = HTTPServer(('localhost', port), handler)
-    print(f"🔧 ELYX Settings API running at http://localhost:{port}")
-    print(f"   - GET  /api/settings/flags - Get all feature flags")
-    print(f"   - GET  /api/settings/flags/FLAG_NAME - Get specific flag")
-    print(f"   - POST /api/settings/flags - Update feature flag")
-    print(f"   - GET  /api/settings/all - Get all settings")
-    print(f"\nPress Ctrl+C to stop")
+    print(f"ELYX Settings API running at http://localhost:{port}")
     
     try:
         server.serve_forever()
