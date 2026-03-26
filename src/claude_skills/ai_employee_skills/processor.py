@@ -574,8 +574,7 @@ subject: Response to your request
 
     def _send_email_response(self, task, response_content: str):
         """
-        Send email: try browser (Gmail) first, then MCP, then direct API.
-        Browser path opens Gmail, composes, and sends — no MCP/Gmail API required.
+        Send email: try Gmail API first (OAuth tokens), then browser fallback.
         """
         import re
 
@@ -592,37 +591,15 @@ subject: Response to your request
 
         subject = f"Re: {original_subject}"
 
-        # 1) Prefer browser: open Gmail, compose, type, send (no MCP)
-        try:
-            from src.services.direct_social_sender import send_gmail_via_browser
-
-            log_activity(
-                "EMAIL_SENDING_BROWSER",
-                f"Sending email to {recipient} via Gmail browser",
-                self.vault_path,
-            )
-            result = send_gmail_via_browser(
-                to=recipient, subject=subject, body=response_content
-            )
-            if result.get("success"):
-                log_activity(
-                    "EMAIL_SENT_BROWSER",
-                    f"Email sent to {recipient} via Gmail (browser)",
-                    self.vault_path,
-                )
-                task.content += f"\n\n## Email Sent (Gmail browser) ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Status**: Sent\n"
-                task.filepath.write_text(task.content, encoding="utf-8")
-                return
-            self.logger.warning(
-                f"Gmail browser send failed: {result.get('error')}. Trying MCP/direct."
-            )
-        except Exception as e:
-            self.logger.warning(f"Gmail browser send error: {e}. Trying MCP/direct.")
-
-        # 2) Fallback: Gmail API (sync, no asyncio.run needed)
+        # 1) Prefer Gmail API (OAuth tokens — fast, no browser needed)
         try:
             from src.services.direct_social_sender import send_gmail_via_api
 
+            log_activity(
+                "EMAIL_SENDING_API",
+                f"Sending email to {recipient} via Gmail API",
+                self.vault_path,
+            )
             result = send_gmail_via_api(
                 to=recipient, subject=subject, body=response_content
             )
@@ -635,15 +612,35 @@ subject: Response to your request
                 task.content += f"\n\n## Email Sent (Gmail API) ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n"
                 task.filepath.write_text(task.content, encoding="utf-8")
                 return
-            self.logger.warning(f"Gmail API send failed: {result.get('error')}")
+            self.logger.warning(f"Gmail API send failed: {result.get('error')}. Trying browser fallback.")
         except Exception as e:
-            self.logger.warning(f"Gmail API fallback error: {e}")
+            self.logger.warning(f"Gmail API error: {e}. Trying browser fallback.")
+
+        # 2) Fallback: browser (opens Gmail, composes, sends)
+        try:
+            from src.services.direct_social_sender import send_gmail_via_browser
+
+            result = send_gmail_via_browser(
+                to=recipient, subject=subject, body=response_content
+            )
+            if result.get("success"):
+                log_activity(
+                    "EMAIL_SENT_BROWSER",
+                    f"Email sent to {recipient} via Gmail (browser)",
+                    self.vault_path,
+                )
+                task.content += f"\n\n## Email Sent (Gmail browser) ✅\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Status**: Sent\n"
+                task.filepath.write_text(task.content, encoding="utf-8")
+                return
+            self.logger.warning(f"Gmail browser send failed: {result.get('error')}")
+        except Exception as e:
+            self.logger.warning(f"Gmail browser fallback error: {e}")
 
         # 3) All methods failed — log error
         log_activity(
             "EMAIL_FAILED", f"All email methods failed for {recipient}", self.vault_path
         )
-        task.content += f"\n\n## Email Send Failed ⚠️\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Note**: Browser and API both failed\n"
+        task.content += f"\n\n## Email Send Failed ⚠️\n- **To**: {recipient}\n- **Subject**: {subject}\n- **Note**: API and browser both failed\n"
         task.filepath.write_text(task.content, encoding="utf-8")
 
     def _detect_whatsapp_action(self, task) -> dict:

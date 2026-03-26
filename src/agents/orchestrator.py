@@ -643,10 +643,10 @@ class Orchestrator:
         channel = channel.upper()
         try:
             if channel == "EMAIL":
-                # Try browser first, then API — same fallback chain as processor
-                result = send_gmail_via_browser(to=recipient, subject=subject, body=body)
+                # Try API first (OAuth tokens), then browser fallback
+                result = send_gmail_via_api(to=recipient, subject=subject, body=body)
                 if not result.get("success"):
-                    result = send_gmail_via_api(to=recipient, subject=subject, body=body)
+                    result = send_gmail_via_browser(to=recipient, subject=subject, body=body)
             elif channel == "WHATSAPP":
                 result = send_message("whatsapp", recipient, body)
             elif channel == "LINKEDIN":

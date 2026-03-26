@@ -293,15 +293,25 @@ def send_gmail_via_browser(to: str, subject: str, body: str, session_path: str =
 
 
 def send_gmail_via_api(to: str, subject: str, body: str):
-    """Fallback: send email via Gmail API (requires OAuth credentials)."""
+    """Send email via Gmail API (requires OAuth credentials)."""
     try:
         import base64
+        import os
         from email.mime.text import MIMEText
 
         from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request as GoogleAuthRequest
         from googleapiclient.discovery import build
 
-        creds_path = "gmail_credentials.json"
+        # Resolve credentials path: env var → config → default
+        creds_path = os.getenv("GMAIL_CREDENTIALS_PATH")
+        if not creds_path:
+            try:
+                from src.config.manager import get_config
+                creds_path = get_config("gmail.credentials_path", "gmail_credentials.json")
+            except Exception:
+                creds_path = "gmail_credentials.json"
+
         if not Path(creds_path).exists():
             return {
                 "success": False,
@@ -311,6 +321,13 @@ def send_gmail_via_api(to: str, subject: str, body: str):
         creds = Credentials.from_authorized_user_file(
             creds_path, scopes=["https://www.googleapis.com/auth/gmail.send"]
         )
+
+        # Refresh token if expired
+        if creds.expired and creds.refresh_token:
+            creds.refresh(GoogleAuthRequest())
+            with open(creds_path, "w") as f:
+                f.write(creds.to_json())
+
         service = build("gmail", "v1", credentials=creds)
 
         msg = MIMEText(body)
