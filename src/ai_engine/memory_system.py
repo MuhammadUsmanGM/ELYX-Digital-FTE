@@ -55,7 +55,7 @@ class MemorySystem:
     Advanced memory system for Gold Tier AI capabilities
     """
 
-    def __init__(self, memory_db_path: str = "memory.db", model_cache_size: int = 1000):
+    def __init__(self, memory_db_path: str = "elyx.db", model_cache_size: int = 1000):
         self.memory_db_path = Path(memory_db_path)
         self.model_cache_size = model_cache_size
 

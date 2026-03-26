@@ -26,7 +26,7 @@ class AIService:
     Comprehensive AI service layer integrating all Gold Tier AI capabilities
     """
 
-    def __init__(self, model_dir: str = "models", memory_db_path: str = "memory.db"):
+    def __init__(self, model_dir: str = "models", memory_db_path: str = "elyx.db"):
         self.model_dir = Path(model_dir)
         self.memory_db_path = memory_db_path
 
