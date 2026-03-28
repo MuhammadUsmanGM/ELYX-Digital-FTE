@@ -17,6 +17,7 @@ from src.utils.vault import (
     get_pending_tasks,
     move_file_to_folder,
 )
+from src.services.approval_workflow import ApprovalWorkflow, ApprovalStatus, MessageType
 
 
 class TaskProcessor:
@@ -35,6 +36,7 @@ class TaskProcessor:
         self.done_path = self.vault_path / "Done"
         self.plans_path = self.vault_path / "Plans"
         self.ai_service = ai_service
+        self.approval_workflow = ApprovalWorkflow(str(self.vault_path))
         self.logger = setup_logger("TaskProcessor")
         self._processing_lock = threading.Lock()
 
@@ -118,47 +120,27 @@ class TaskProcessor:
 
     def create_approval_request(self, task, reason):
         """
-        Create an approval request for sensitive actions
+        Create an approval request for sensitive actions using ApprovalWorkflow.
         """
-        approval_content = f"""---
-type: approval_request
-action: process_task
-related_task: {task.filename}
-reason: {reason}
-created: {datetime.now().isoformat()}
-status: pending
----
+        # Determine message type from task type
+        task_type = (task.type or "").upper()
+        if "EMAIL" in task_type:
+            msg_type = MessageType.EMAIL
+        elif any(k in task_type for k in ("POST", "LINKEDIN", "FACEBOOK", "TWITTER", "INSTAGRAM")):
+            msg_type = MessageType.POST
+        else:
+            msg_type = MessageType.MESSAGE
 
-## Approval Request for Task: {task.filename}
-
-### Original Task Content
-{task.content[:500]}...
-
-### Reason for Approval
-{reason}
-
-## Action Details
-- Task Type: {task.type}
-- Priority: {task.frontmatter.get('priority', 'medium')}
-- Created: {task.frontmatter.get('created', 'unknown')}
-
-## To Approve
-Move this file to /Approved folder.
-
-## To Reject
-Move this file to /Rejected folder.
-"""
-
-        # Create approval request file
-        approval_filename = f"APPROVAL_{task.filename.replace('.md', '.md')}"
-        create_vault_entry(
-            self.vault_path,
-            "Pending_Approval",
-            approval_filename,
-            approval_content,
-            entry_type="approval_request",
-            priority=task.frontmatter.get("priority", "medium"),
+        amount = task.frontmatter.get("amount")
+        approval_id = self.approval_workflow.create_approval_request(
+            message_type=msg_type,
+            action=f"process_task:{task.filename}",
+            recipient=task.frontmatter.get("from", "unknown"),
+            reason=reason,
+            amount=float(amount) if amount else None,
+            expiration_hours=24,
         )
+        self.logger.info(f"Created approval request {approval_id} for {task.filename}")
 
     def execute_automated_task(self, task):
         """
@@ -1068,8 +1050,12 @@ subject: Response to your request
 
     def process_approval_requests(self):
         """
-        Process approval requests that have been moved to Approved/Rejected folders
+        Process approval requests that have been moved to Approved/Rejected folders.
+        Also expires stale pending approvals via ApprovalWorkflow.
         """
+        # Auto-expire stale pending approvals
+        self.approval_workflow.get_pending_approvals()
+
         approved_path = self.vault_path / "Approved"
         rejected_path = self.vault_path / "Rejected"
 

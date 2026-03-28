@@ -340,6 +340,16 @@ def main():
         print(f"  {icon}  {wname:<18} {D}every{X} {interval:<5}  {label}")
     print(f"  {D}{'─'*58}{X}")
 
+    # ── Watchdog (health monitor) ─────────────────────────────────
+    try:
+        from src.agents.watchdog import WatchdogAgent
+        watchdog = WatchdogAgent(str(vault_path))
+        watchdog_thread = threading.Thread(target=watchdog.run, kwargs={"check_interval": 120}, daemon=True)
+        watchdog_thread.start()
+        print_row("Watchdog", "—", True, "health monitor (120s)")
+    except Exception as e:
+        print_row("Watchdog", "—", False, str(e))
+
     # ── Quick Links ───────────────────────────────────────────────
     print(f"\n  {B}Access Points{X}")
     print(f"  {D}{'─'*58}{X}")

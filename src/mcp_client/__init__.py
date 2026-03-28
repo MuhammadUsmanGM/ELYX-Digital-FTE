@@ -52,11 +52,17 @@ class MCPClient:
         # Auto-detect server path if not provided
         if not server_path and transport == "stdio":
             project_root = Path(__file__).parent.parent.parent
-            self.server_path = str(project_root / "src" / "mcp-servers" / f"{server}-mcp" / "index.py")
-            
-            # Fallback to Node.js version if Python not found
-            if not Path(self.server_path).exists():
-                self.server_path = str(project_root / "src" / "mcp-servers" / f"{server}-mcp" / "index.js")
+            # Map server names to Python MCP server files
+            server_file_map = {
+                "email": "email_mcp.py",
+                "odoo": "odoo_mcp.py",
+                "social": "social_mcp.py",
+                "whatsapp": "whatsapp_mcp.py",
+                "fs": "filesystem_mcp.py",
+                "filesystem": "filesystem_mcp.py",
+            }
+            filename = server_file_map.get(server, f"{server}_mcp.py")
+            self.server_path = str(project_root / "src" / "mcp_servers" / filename)
         
         logger.info(f"MCP Client initialized: {server} via {transport}")
     

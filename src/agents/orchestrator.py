@@ -402,6 +402,21 @@ class Orchestrator:
                 except Exception as e:
                     self.logger.error(f"Error starting Odoo watcher: {e}")
 
+            # Start FileSystem watcher if configured
+            if self.config.get("integrations", {}).get("filesystem_enabled", True):
+                try:
+                    from src.agents.filesystem_watcher import FileSystemWatcher
+                    watch_path = self.config.get("integrations", {}).get(
+                        "filesystem_watch_path", str(self.vault_path / "Inbox")
+                    )
+                    fs_watcher = FileSystemWatcher(watch_path, str(self.vault_path))
+                    fs_thread = threading.Thread(target=fs_watcher.start_watching, daemon=True)
+                    fs_thread.start()
+                    self.running_watchers.append(fs_thread)
+                    self.logger.info(f"FileSystem watcher started (watching: {watch_path})")
+                except Exception as e:
+                    self.logger.error(f"Error starting FileSystem watcher: {e}")
+
         except Exception as e:
             self.logger.error(f"Error starting communication watchers: {e}")
 
@@ -634,9 +649,13 @@ class Orchestrator:
     def _deliver_response(self, channel: str, recipient: str, body: str, subject: str = "") -> bool:
         """Attempt to send a response via the unified sender. Returns True on success."""
         from src.services.direct_social_sender import send_message, send_gmail_via_browser, send_gmail_via_api
+        from src.utils.response_formatter import ResponseFormatter
 
         channel = channel.upper()
         try:
+            # Format and sanitize content for the target channel
+            body = ResponseFormatter.sanitize_content(body, channel.lower())
+            body = ResponseFormatter.format_for_channel(body, channel.lower())
             if channel == "EMAIL":
                 # Try API first (OAuth tokens), then browser fallback
                 result = send_gmail_via_api(to=recipient, subject=subject, body=body)
