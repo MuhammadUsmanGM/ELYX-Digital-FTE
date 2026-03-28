@@ -27,11 +27,16 @@ class InstagramWatcher(BaseWatcher):
     def _open_browser(self):
         self._playwright = sync_playwright().start()
         self.session_path.mkdir(parents=True, exist_ok=True)
+        headless = os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true'
+        args = ['--disable-blink-features=AutomationControlled']
+        if headless:
+            args.append('--headless=new')
         self._browser = self._playwright.chromium.launch_persistent_context(
             str(self.session_path),
-            headless=os.getenv('BROWSER_HEADLESS', 'true').lower() == 'true',
+            channel='chromium',
+            headless=False,
             viewport={'width': 1280, 'height': 800},
-            args=['--disable-blink-features=AutomationControlled'],
+            args=args,
         )
         self._page = self._browser.pages[0] if self._browser.pages else self._browser.new_page()
         self._page.goto('https://www.instagram.com/', wait_until='domcontentloaded', timeout=90000)

@@ -35,7 +35,8 @@ class WhatsAppWatcher(BaseWatcher):
         self.session_path.mkdir(parents=True, exist_ok=True)
         self._browser = self._playwright.chromium.launch_persistent_context(
             str(self.session_path),
-            headless=False,          # Must be visible for initial QR scan
+            channel='chromium',
+            headless=False,
             viewport={'width': 1280, 'height': 800},
             args=['--disable-blink-features=AutomationControlled'],
         )
