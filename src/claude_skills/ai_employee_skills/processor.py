@@ -1082,9 +1082,12 @@ subject: Response to your request
         content = approved_file.read_text()
 
         # Find the related task in the original content
+        # Supports both old format (related_task:) and new ApprovalWorkflow format (action: process_task:)
         import re
 
         match = re.search(r"related_task: (.+)", content)
+        if not match:
+            match = re.search(r"action: process_task:(.+)", content)
         if match:
             original_task_name = match.group(1).strip()
             original_task_path = (
