@@ -27,24 +27,128 @@ Built for the **Personal AI Employee Hackathon 0**.
 
 ## How It Works
 
-```
-[Gmail / WhatsApp / LinkedIn / Facebook / Twitter / Instagram / Odoo / File Drops]
-                              |
-                         Watchers detect new items
-                              |
-                    Create .md files in Needs_Action/
-                              |
-                     Orchestrator triggers processing
-                              |
-              TaskProcessor reads Company Handbook rules
-                              |
-                 +-------------+-------------+
-                 |                           |
-           Safe to automate          Needs human approval
-                 |                           |
-          Execute + send response    Move to Pending_Approval/
-                 |                           |
-           Move to Done/             Wait for user decision
+```mermaid
+flowchart TB
+    subgraph Sources["External Sources"]
+        Gmail["Gmail"]
+        WA["WhatsApp"]
+        LI["LinkedIn"]
+        FB["Facebook"]
+        TW["Twitter / X"]
+        IG["Instagram"]
+        Odoo["Odoo ERP"]
+        FS["File Drops"]
+    end
+
+    subgraph Watchers["Perception Layer — Python Watchers"]
+        GW["Gmail Watcher"]
+        WAW["WhatsApp Watcher"]
+        LIW["LinkedIn Watcher"]
+        FBW["Facebook Watcher"]
+        TWW["Twitter Watcher"]
+        IGW["Instagram Watcher"]
+        OW["Odoo Watcher"]
+        FSW["FileSystem Watcher"]
+    end
+
+    subgraph Vault["Obsidian Vault — Local Markdown"]
+        NA["Needs_Action/"]
+        HB["Company_Handbook.md"]
+        Plans["Plans/"]
+        PA["Pending_Approval/"]
+        Approved["Approved/"]
+        Done["Done/"]
+        Logs["Logs/"]
+        Dash["Dashboard.md"]
+    end
+
+    subgraph Brain["Reasoning Layer"]
+        Orch["Orchestrator"]
+        TP["TaskProcessor"]
+        RL["Ralph Wiggum Loop"]
+        BF["BrainFactory\n(Claude / Gemini / Qwen / Codex)"]
+    end
+
+    subgraph MCP["Action Layer — MCP Servers"]
+        EM["email-mcp\nsend · draft · search"]
+        WM["whatsapp-mcp\nsend · read"]
+        SM["social-mcp\npost · DM"]
+        OM["odoo-mcp\ninvoice · payment"]
+        FM["filesystem-mcp\nread · write"]
+    end
+
+    subgraph HITL["Human-in-the-Loop"]
+        Review["Review in Obsidian"]
+        Approve["Move to Approved/"]
+        Reject["Move to Rejected/"]
+    end
+
+    subgraph Actions["External Actions"]
+        Send["Send Email"]
+        WAMsg["Send WhatsApp"]
+        Post["Social Media Post"]
+        Pay["Register Payment"]
+    end
+
+    %% Source → Watcher
+    Gmail --> GW
+    WA --> WAW
+    LI --> LIW
+    FB --> FBW
+    TW --> TWW
+    IG --> IGW
+    Odoo --> OW
+    FS --> FSW
+
+    %% Watcher → Vault
+    GW --> NA
+    WAW --> NA
+    LIW --> NA
+    FBW --> NA
+    TWW --> NA
+    IGW --> NA
+    OW --> NA
+    FSW --> NA
+
+    %% Orchestrator reads vault
+    NA --> Orch
+    HB --> TP
+    Orch --> TP
+    Orch --> RL
+    RL --> BF
+    BF --> MCP
+
+    %% TaskProcessor decisions
+    TP -->|"Safe to automate"| Plans
+    TP -->|"Needs approval"| PA
+    Plans --> MCP
+    Plans --> Done
+
+    %% HITL flow
+    PA --> Review
+    Review --> Approve
+    Review --> Reject
+    Approve --> NA
+    Reject --> Done
+
+    %% MCP → Actions
+    EM --> Send
+    WM --> WAMsg
+    SM --> Post
+    OM --> Pay
+
+    %% Logging
+    TP --> Logs
+    TP --> Dash
+
+    %% Styling
+    style Sources fill:#e3f2fd,stroke:#1565c0
+    style Watchers fill:#fff3e0,stroke:#e65100
+    style Vault fill:#e8f5e9,stroke:#2e7d32
+    style Brain fill:#f3e5f5,stroke:#6a1b9a
+    style MCP fill:#fce4ec,stroke:#c62828
+    style HITL fill:#fff8e1,stroke:#f57f17
+    style Actions fill:#e0f7fa,stroke:#00695c
 ```
 
 ---
