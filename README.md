@@ -28,7 +28,7 @@ Built for the **Personal AI Employee Hackathon 0**.
 ## How It Works
 
 ```mermaid
-flowchart TB
+graph TB
     subgraph Sources["External Sources"]
         Gmail["Gmail"]
         WA["WhatsApp"]
@@ -52,35 +52,35 @@ flowchart TB
     end
 
     subgraph Vault["Obsidian Vault — Local Markdown"]
-        NA["Needs_Action/"]
-        HB["Company_Handbook.md"]
-        Plans["Plans/"]
-        PA["Pending_Approval/"]
-        Approved["Approved/"]
-        Done["Done/"]
-        Logs["Logs/"]
-        Dash["Dashboard.md"]
+        NA["Needs Action"]
+        HB["Company Handbook"]
+        Plans["Plans"]
+        PA["Pending Approval"]
+        Approved["Approved"]
+        Done["Done"]
+        Logs["Logs"]
+        Dash["Dashboard"]
     end
 
     subgraph Brain["Reasoning Layer"]
         Orch["Orchestrator"]
-        TP["TaskProcessor"]
+        TP["Task Processor"]
         RL["Ralph Wiggum Loop"]
-        BF["BrainFactory\n(Claude / Gemini / Qwen / Codex)"]
+        BF["BrainFactory — Claude / Gemini / Qwen / Codex"]
     end
 
     subgraph MCP["Action Layer — MCP Servers"]
-        EM["email-mcp\nsend · draft · search"]
-        WM["whatsapp-mcp\nsend · read"]
-        SM["social-mcp\npost · DM"]
-        OM["odoo-mcp\ninvoice · payment"]
-        FM["filesystem-mcp\nread · write"]
+        EM["email-mcp — send · draft · search"]
+        WM["whatsapp-mcp — send · read"]
+        SM["social-mcp — post · DM"]
+        OM["odoo-mcp — invoice · payment"]
+        FM["filesystem-mcp — read · write"]
     end
 
     subgraph HITL["Human-in-the-Loop"]
         Review["Review in Obsidian"]
-        Approve["Move to Approved/"]
-        Reject["Move to Rejected/"]
+        Approve["Move to Approved"]
+        Reject["Move to Rejected"]
     end
 
     subgraph Actions["External Actions"]
@@ -142,13 +142,21 @@ flowchart TB
     TP --> Dash
 
     %% Styling
-    style Sources fill:#e3f2fd,stroke:#1565c0
-    style Watchers fill:#fff3e0,stroke:#e65100
-    style Vault fill:#e8f5e9,stroke:#2e7d32
-    style Brain fill:#f3e5f5,stroke:#6a1b9a
-    style MCP fill:#fce4ec,stroke:#c62828
-    style HITL fill:#fff8e1,stroke:#f57f17
-    style Actions fill:#e0f7fa,stroke:#00695c
+    classDef sources      fill:#0d1f3c,stroke:#1f6feb,color:#79c0ff,stroke-width:1.5px
+    classDef watchers     fill:#1c1206,stroke:#d97706,color:#fbbf24,stroke-width:1.5px
+    classDef vault        fill:#0d2d1a,stroke:#238636,color:#56d364,stroke-width:1.5px
+    classDef brain        fill:#1a0f3a,stroke:#6e40c9,color:#bc8cff,stroke-width:1.5px
+    classDef mcp          fill:#2d1a1a,stroke:#b91c1c,color:#fca5a5,stroke-width:1.5px
+    classDef hitl         fill:#1c1a12,stroke:#9e6a03,color:#e3b341,stroke-width:1.5px
+    classDef actions      fill:#0a2a2a,stroke:#0e7490,color:#22d3ee,stroke-width:1.5px
+
+    class Gmail,WA,LI,FB,TW,IG,Odoo,FS sources
+    class GW,WAW,LIW,FBW,TWW,IGW,OW,FSW watchers
+    class NA,HB,Plans,PA,Approved,Done,Logs,Dash vault
+    class Orch,TP,RL,BF brain
+    class EM,WM,SM,OM,FM mcp
+    class Review,Approve,Reject hitl
+    class Send,WAMsg,Post,Pay actions
 ```
 
 ---
