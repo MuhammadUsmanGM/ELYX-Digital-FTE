@@ -22,34 +22,12 @@ class MinimalAIService:
         self.dependencies_loaded = False
         self._full_service = None  # Cached full AIService instance
 
-        # Try to load advanced AI components if dependencies are available
-        try:
-            from ..ml_models.nlp_models.advanced_nlp import AdvancedNLPProcessor
-            from ..ml_models.prediction_models.task_prediction import TaskPredictionEngine
-            from ..ml_models.recommendation_models.task_recommendation import TaskRecommendationEngine
-            from ..ai_engine.reasoning_engine import LogicalReasoningEngine
-            from ..ai_engine.memory_system import MemorySystem
-            from ..ai_engine.collaboration_engine import CollaborationEngine
-
-            self.nlp_processor = AdvancedNLPProcessor()
-            self.prediction_engine = TaskPredictionEngine()
-            self.recommendation_engine = TaskRecommendationEngine()
-            self.reasoning_engine = LogicalReasoningEngine()
-            self.memory_system = MemorySystem()
-            self.collaboration_engine = CollaborationEngine()
-
-            self.dependencies_loaded = True
-            self.logger.info("All AI dependencies loaded successfully")
-        except ImportError as e:
-            self.logger.warning(f"AI dependencies not available: {e}")
-            self.dependencies_loaded = False
+        # Advanced AI components removed (ml_models, ai_engine deleted as dead code)
+        self.dependencies_loaded = False
 
     def _get_full_service(self):
-        """Get or create a cached full AIService instance (avoids re-loading models every call)."""
-        if self._full_service is None:
-            from .ai_service import AIService
-            self._full_service = AIService()
-        return self._full_service
+        """Full AIService was removed (dead code cleanup). Returns self as fallback."""
+        return self
 
     def process_task_request(self, task_data: Dict[str, Any], user_id: str = "default_user") -> Dict[str, Any]:
         """

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(do echo:*)",
+      "Bash(while read mod)",
+      "Bash(done)",
+      "Bash(rm:*)"
+    ]
+  }
+}

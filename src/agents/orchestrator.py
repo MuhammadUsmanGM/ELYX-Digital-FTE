@@ -240,12 +240,7 @@ class Orchestrator:
     def _initialize_gold_services(self):
         """Initialize Gold Tier services"""
         try:
-            from src.services.ai_service import AIService
-            
-            # AIService manages its own internal components (NLP, Prediction, etc.)
-            self.ai_service = AIService()
-            self.processor.ai_service = self.ai_service
-            
+            # Full AIService removed (dead code cleanup). Gold features use minimal service.
             self.gold_services_initialized = True
             log_activity("GOLD_SERVICES_INITIALIZED",
                         "Gold Tier AI services initialized successfully",
