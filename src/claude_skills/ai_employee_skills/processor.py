@@ -417,7 +417,7 @@ class TaskProcessor:
                         "sender": task.frontmatter.get("from", ""),
                         "subject": task.frontmatter.get("subject", ""),
                         "snippet": task.content[:200]
-                        .replace("`", "\`")
+                        .replace("`", "\\`")
                         .replace("{", "{{")
                         .replace("}", "}}"),
                         "full_content": task.content,

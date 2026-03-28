@@ -58,18 +58,46 @@ class WhatsAppWatcher(BaseWatcher):
             '[aria-label="Chat list"]',
             '[aria-label="Chats"]',
             'div[data-tab="3"]',
+            '[data-testid="chatlist-header"]',
+            'header span[data-testid="cta-btn"]',
+            'div[role="navigation"]',
+            '[data-testid="default-user"]',
+            'div._aigt',
         ]
+        # Try selectors individually with short timeouts first (faster detection)
+        per_selector_timeout = min(5000, timeout // 2)
+        for sel in selectors:
+            try:
+                self._page.wait_for_selector(sel, timeout=per_selector_timeout)
+                self.logger.debug(f"WhatsApp login detected via: {sel}")
+                return True
+            except Exception:
+                continue
+
+        # Final attempt: wait for any absence of the QR canvas as a login signal
         try:
-            self._page.wait_for_selector(
-                ', '.join(selectors), timeout=timeout
-            )
-            return True
+            # If there's no QR code canvas, we're probably logged in and just
+            # waiting for chats to render
+            qr_visible = self._page.query_selector('canvas[aria-label="Scan this QR code to link a device!"], canvas[aria-label="Scan me!"], [data-testid="qrcode"]')
+            if qr_visible is None:
+                # No QR shown — assume logged in, wait for DOM to settle
+                self.logger.info("WhatsApp: no QR code found, waiting for chat list to render...")
+                self._page.wait_for_timeout(10000)
+                # One more try with all selectors
+                for sel in selectors:
+                    try:
+                        self._page.wait_for_selector(sel, timeout=3000)
+                        return True
+                    except Exception:
+                        continue
         except Exception:
-            return False
+            pass
+
+        return False
 
     def _ensure_logged_in(self):
         """Block until the chat list is visible (handles first-run QR scan)."""
-        if self._is_whatsapp_logged_in(timeout=30000):
+        if self._is_whatsapp_logged_in(timeout=60000):
             self.logger.info("WhatsApp: already logged in")
             return
         self.logger.info("=" * 60)
