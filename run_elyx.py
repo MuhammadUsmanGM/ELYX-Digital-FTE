@@ -8,6 +8,7 @@ Starts all services, shows a clean status table, then streams logs.
 
 import os
 import sys
+import io
 import time
 import threading
 import subprocess
@@ -16,6 +17,12 @@ import atexit
 import logging
 from pathlib import Path
 from datetime import datetime
+
+# Force UTF-8 output on Windows (box-drawing chars need it)
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+    os.system("")  # enable ANSI escape codes on Windows terminal
 
 # ── Project Setup ─────────────────────────────────────────────────────
 project_root = Path(__file__).parent
@@ -257,11 +264,60 @@ def status_icon(ok):
     return f"{G}✓{X}" if ok else f"{R}✗{X}"
 
 
+def ok_text(ok, label_ok="running", label_fail="failed"):
+    return f"{G}{label_ok}{X}" if ok else f"{R}{label_fail}{X}"
+
+
 def print_row(service, port, ok, note=""):
     icon = status_icon(ok)
-    status = f"{G}running{X}" if ok else f"{R}failed{X}"
+    status = ok_text(ok)
     note_str = f"  {D}{note}{X}" if note else ""
     print(f"  {icon}  {service:<22} {D}:{X}{port:<6} {status}{note_str}")
+
+
+# ── Table Drawing Helpers ────────────────────────────────────────────
+
+def _visible_len(s):
+    """Length of string without ANSI escape codes."""
+    import re
+    return len(re.sub(r'\033\[[0-9;]*m', '', s))
+
+
+def _pad(s, width):
+    """Pad string to width accounting for ANSI codes."""
+    return s + ' ' * (width - _visible_len(s))
+
+
+def print_table(headers, rows, col_widths=None):
+    """Print a bordered table with ANSI support."""
+    cols = len(headers)
+    if not col_widths:
+        col_widths = [max(
+            _visible_len(headers[c]),
+            *((_visible_len(str(row[c])) for row in rows) if rows else [0])
+        ) + 2 for c in range(cols)]
+
+    def h_line(left, mid, right):
+        return left + mid.join('─' * w for w in col_widths) + right
+
+    top    = f"  {D}{h_line('┌', '┬', '┐')}{X}"
+    mid    = f"  {D}{h_line('├', '┼', '┤')}{X}"
+    bottom = f"  {D}{h_line('└', '┴', '┘')}{X}"
+
+    def fmt_row(cells):
+        parts = []
+        for i, cell in enumerate(cells):
+            parts.append(_pad(str(cell), col_widths[i]))
+        return f"  {D}│{X}" + f"{D}│{X}".join(parts) + f"{D}│{X}"
+
+    print(top)
+    print(fmt_row([f" {B}{h}{X}" for h in headers]))
+    print(mid)
+    for r, row in enumerate(rows):
+        print(fmt_row([f" {cell}" for cell in row]))
+        if r < len(rows) - 1:
+            print(mid)
+    print(bottom)
 
 
 # ── Main ──────────────────────────────────────────────────────────────
@@ -282,33 +338,43 @@ def main():
     brain = os.getenv("ELYX_ACTIVE_BRAIN", "claude").capitalize()
     port = os.getenv("PORT", "8000")
 
-    # ── Status Table ──────────────────────────────────────────────
-    print(f"  {B}ELYX Startup{X}  {D}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{X}  {D}Brain: {brain}{X}")
-    print(f"  {D}{'─'*58}{X}")
-
+    # ── Launch Services ─────────────────────────────────────────────
     r1 = start_vault_api()
-    print_row("Vault API", "8080", r1)
-
     r2 = start_settings_api()
-    print_row("Settings API", "8081", r2)
-
     r3 = start_main_api()
-    print_row("Main API (FastAPI)", port, r3)
-
     r4 = start_frontend()
-    if not r4 and not (project_root / "frontend" / "node_modules").exists():
-        print_row("Frontend (Next.js)", "3000", False, "run: cd frontend && npm install")
-    else:
-        print_row("Frontend (Next.js)", "3000", r4)
-
     r5, orch = start_orchestrator(vault_path)
-    print_row("Orchestrator", "—", r5, "watchers + task monitor")
-
     is_vault_git_repo()
-    print_row("Vault Git Sync", "—", vault_git_enabled, "hourly auto-commit" if vault_git_enabled else "no .git found")
+
+    # ── Watchdog ─────────────────────────────────────────────────
+    watchdog_ok = False
+    try:
+        from src.agents.watchdog import WatchdogAgent
+        watchdog = WatchdogAgent(str(vault_path))
+        watchdog_thread = threading.Thread(target=watchdog.run, kwargs={"check_interval": 120}, daemon=True)
+        watchdog_thread.start()
+        watchdog_ok = True
+    except Exception:
+        pass
 
     total = sum([r1, r2, r3, r4, r5])
-    print(f"  {D}{'─'*58}{X}")
+
+    # ── Services Table ───────────────────────────────────────────
+    print(f"  {B}ELYX Startup{X}  {D}{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{X}  {D}Brain: {brain}{X}\n")
+
+    print_table(
+        ["Service", "Port", "Status"],
+        [
+            ["Vault API",          f"{D}8080{X}",  ok_text(r1)],
+            ["Settings API",       f"{D}8081{X}",  ok_text(r2)],
+            ["Main API (FastAPI)", f"{D}{port}{X}", ok_text(r3)],
+            ["Frontend (Next.js)", f"{D}3000{X}",  ok_text(r4) if r4 else f"{Y}npm install needed{X}"],
+            ["Orchestrator",       f"{D}—{X}",     ok_text(r5)],
+            ["Vault Git Sync",    f"{D}—{X}",     ok_text(vault_git_enabled, "enabled", "no .git")],
+            ["Watchdog",           f"{D}—{X}",     ok_text(watchdog_ok)],
+        ],
+        col_widths=[22, 8, 22],
+    )
 
     if total == 5:
         print(f"\n  {G}{B}ALL SYSTEMS OPERATIONAL{X}  {D}({total}/5 services){X}\n")
@@ -317,47 +383,52 @@ def main():
     else:
         print(f"\n  {R}{B}STARTUP FAILED{X}  {D}({total}/5 services){X}\n")
 
-    # ── Watchers Table ────────────────────────────────────────────
+    # ── Watchers Table ───────────────────────────────────────────
     config = orch.config if orch else {}
     watchers = probe_watchers(config)
     w_ok = sum(1 for _, _, s in watchers if s == "ok")
 
-    print(f"  {B}Watchers{X}  {D}({w_ok}/{len(watchers)} enabled){X}")
-    print(f"  {D}{'─'*58}{X}")
-    for wname, interval, wstatus in watchers:
-        if wstatus == "ok":
-            icon = f"{G}✓{X}"
-            label = f"{G}enabled{X}"
-        elif wstatus == "disabled":
-            icon = f"{D}—{X}"
-            label = f"{D}disabled{X}"
-        elif wstatus == "missing":
-            icon = f"{Y}!{X}"
-            label = f"{Y}import err{X}"
-        else:
-            icon = f"{R}✗{X}"
-            label = f"{R}error{X}"
-        print(f"  {icon}  {wname:<18} {D}every{X} {interval:<5}  {label}")
-    print(f"  {D}{'─'*58}{X}")
+    def watcher_status(s):
+        if s == "ok":       return f"{G}✓ enabled{X}"
+        if s == "disabled": return f"{D}— disabled{X}"
+        if s == "missing":  return f"{Y}! import err{X}"
+        return f"{R}✗ error{X}"
 
-    # ── Watchdog (health monitor) ─────────────────────────────────
-    try:
-        from src.agents.watchdog import WatchdogAgent
-        watchdog = WatchdogAgent(str(vault_path))
-        watchdog_thread = threading.Thread(target=watchdog.run, kwargs={"check_interval": 120}, daemon=True)
-        watchdog_thread.start()
-        print_row("Watchdog", "—", True, "health monitor (120s)")
-    except Exception as e:
-        print_row("Watchdog", "—", False, str(e))
+    print_table(
+        ["Watcher", "Interval", "Status"],
+        [[n, f"{D}{i}{X}", watcher_status(s)] for n, i, s in watchers],
+        col_widths=[16, 10, 18],
+    )
+    print(f"  {D}{w_ok}/{len(watchers)} watchers enabled{X}\n")
 
-    # ── Quick Links ───────────────────────────────────────────────
-    print(f"\n  {B}Access Points{X}")
-    print(f"  {D}{'─'*58}{X}")
-    print(f"  Dashboard      {C}http://localhost:3000{X}")
-    print(f"  API Docs       {C}http://localhost:{port}/docs{X}")
-    print(f"  Vault API      {C}http://localhost:8080{X}")
-    print(f"  Settings API   {C}http://localhost:8081{X}")
-    print(f"  {D}{'─'*58}{X}")
+    # ── Integration Modes Table ──────────────────────────────────
+    def mcp_cell(name):
+        return f"{G}{name} ✓{X}"
+
+    def direct_cell(name):
+        return f"{G}{name} ✓{X}"
+
+    print_table(
+        ["Mode", "Email", "WhatsApp", "Social", "Odoo"],
+        [
+            [f"{C}Claude Code{X}",   mcp_cell("email-mcp"),    mcp_cell("whatsapp-mcp"), mcp_cell("social-mcp"), mcp_cell("odoo-mcp")],
+            [f"{C}Auto Pipeline{X}", direct_cell("direct_api"), direct_cell("direct_api"), direct_cell("direct_api"), direct_cell("odoo_svc")],
+            [f"{C}Ralph Loop{X}",    mcp_cell("email-mcp"),    mcp_cell("whatsapp-mcp"), mcp_cell("social-mcp"), mcp_cell("odoo-mcp")],
+        ],
+        col_widths=[18, 18, 18, 18, 16],
+    )
+
+    # ── Access Points ────────────────────────────────────────────
+    print_table(
+        ["Endpoint", "URL"],
+        [
+            ["Dashboard",    f"{C}http://localhost:3000{X}"],
+            ["API Docs",     f"{C}http://localhost:{port}/docs{X}"],
+            ["Vault API",    f"{C}http://localhost:8080{X}"],
+            ["Settings API", f"{C}http://localhost:8081{X}"],
+        ],
+        col_widths=[18, 36],
+    )
     print(f"\n  {Y}Ctrl+C{X} to shut down  {D}│{X}  Logs → {D}obsidian_vault/Logs/*.log{X}\n")
 
     # ── Keep-alive loop (auto-commit + stream important events) ──
