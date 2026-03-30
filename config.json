@@ -23,7 +23,7 @@
     ]
   },
   "whatsapp": {
-    "session_path": "~/.whatsapp_session",
+    "session_path": "./sessions/whatsapp_session",
     "keywords": [
       "urgent",
       "asap",
