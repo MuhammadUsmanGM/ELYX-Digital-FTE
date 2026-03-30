@@ -1,12 +1,4 @@
----
-name: approval-workflow
-description: Human-in-the-loop approval system for sensitive actions. Creates approval requests, monitors for decisions, and executes approved actions. Use whenever an action requires human authorization.
----
-
-# Approval Workflow Skill
-
-## Trigger
-When any skill determines an action requires human approval.
+Human-in-the-loop approval system for sensitive actions. Creates approval requests, monitors for decisions, and executes approved actions.
 
 ## Creating an Approval Request
 
@@ -30,7 +22,7 @@ source_file: ORIGINAL_TASK_PATH
 [Clear description of what will happen if approved]
 
 ## Context
-[Why this action was flagged - rule that triggered it]
+[Why this action was flagged]
 
 ## Risk Assessment
 - **Risk Level**: low|medium|high|critical
@@ -47,14 +39,12 @@ Move this file to /Rejected/ folder.
 - Payments of any amount
 - Emails to new/unknown contacts
 - File sharing to external parties
-- Access permission changes
-- Sharing confidential information
 - All social media posts before publishing
 - Posting invoices in Odoo
 - Any action the AI is uncertain about
 
 ### 3. Monitoring for Decisions
-The orchestrator periodically checks:
+Check periodically:
 - `/Approved/` - for approved actions to execute
 - `/Rejected/` - for rejected actions to log and close
 - `/Pending_Approval/` - for stale requests (>48 hours)
@@ -62,18 +52,12 @@ The orchestrator periodically checks:
 ### 4. Executing Approved Actions
 When a file appears in `/Approved/`:
 1. Read the approval file
-2. Execute the approved action using the appropriate skill/MCP
+2. Execute the approved action using the appropriate MCP server
 3. Move the file to `/Done/`
-4. Log the execution with approval reference in `/Logs/`
+4. Log the execution in `/Logs/`
 5. Update Dashboard.md
 
-### 5. Handling Rejections
-When a file appears in `/Rejected/`:
-1. Log the rejection
-2. Move to `/Done/` with status: rejected
-3. If the original task needs alternative handling, create new action file
-
-### 6. Stale Request Handling
+### 5. Stale Request Handling
 If a request has been pending for >48 hours:
 - Flag it in Dashboard.md as needing attention
 - Include in next CEO Briefing as a bottleneck

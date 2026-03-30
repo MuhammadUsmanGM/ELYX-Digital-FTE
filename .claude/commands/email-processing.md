@@ -1,9 +1,4 @@
----
-name: email-processing
-description: Process incoming emails from Gmail watcher. Triage by priority, draft responses, flag sensitive items for approval. Use when handling EMAIL_ action files in Needs_Action folder.
----
-
-# Email Processing Skill
+Process incoming emails from Gmail watcher. Triage by priority, draft responses, flag sensitive items for approval.
 
 ## Trigger
 When a file matching `EMAIL_*.md` appears in `obsidian_vault/Needs_Action/`.
@@ -21,7 +16,6 @@ When a file matching `EMAIL_*.md` appears in `obsidian_vault/Needs_Action/`.
 - Meeting confirmations
 - Invoice requests (create draft in Odoo, flag for approval)
 - General business inquiries
-- Routine administrative tasks
 
 **Flag for Review (approval needed):**
 - "URGENT" from unknown senders
@@ -33,13 +27,12 @@ When a file matching `EMAIL_*.md` appears in `obsidian_vault/Needs_Action/`.
 **Auto-Archive:**
 - Obvious spam/promotional messages
 - Bulk marketing emails
-- Scam attempts
 
 ### 3. Process Based on Classification
 
 #### Auto-Respond
 1. Draft a professional response following Company_Handbook.md tone guidelines
-2. Use the Gmail MCP to send the response
+2. Use the Gmail MCP (`mcp__email-mcp__send_email`) to send the response
 3. Move the action file to `obsidian_vault/Done/`
 4. Log the action in `obsidian_vault/Logs/`
 
@@ -63,7 +56,7 @@ If an email claims to be from the owner but comes from a different address:
 - Do NOT auto-respond
 - Create high-priority review file
 
-## Output Format
+## Output
 After processing, update `obsidian_vault/Dashboard.md` with:
 - Number of emails processed
 - Actions taken (responded, flagged, archived)
