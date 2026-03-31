@@ -78,10 +78,15 @@ class RalphLoop:
                 cwd=str(self.vault_path.resolve().parent)
             )
             self.logger.info(f"Brain '{brain_name}' finished iteration successfully.")
-            self.logger.debug(f"Output: {process.stdout}")
+            if process.stdout:
+                # Show first 500 chars of output
+                self.logger.info(f"Brain output: {process.stdout[:500]}")
+            if process.stderr:
+                self.logger.warning(f"Brain stderr: {process.stderr[:500]}")
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Brain '{brain_name}' failed with exit code {e.returncode}")
-            self.logger.error(f"Error output: {e.stderr}")
+            self.logger.error(f"Stdout: {e.stdout[:500] if e.stdout else 'none'}")
+            self.logger.error(f"Stderr: {e.stderr[:500] if e.stderr else 'none'}")
         except FileNotFoundError:
             self.logger.error(f"Command for brain '{brain_name}' not found. Is it installed?")
         except Exception as e:

@@ -131,7 +131,8 @@
       "claude": {
         "command": "claude",
         "args": [
-          "-p"
+          "-p",
+          "--dangerously-skip-permissions"
         ],
         "description": "Anthropic Claude Code - PRIMARY BRAIN per hackathon spec. Strategic reasoning, autonomous operation via Ralph Wiggum loop."
       },
