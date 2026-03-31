@@ -46,10 +46,10 @@
     "create_tasks_for_events": true
   },
   "silver_tier_features": {
-    "enable_analytics": true,
-    "enable_learning": true,
-    "enable_advanced_monitoring": true,
-    "enable_predictive_features": true,
+    "enable_analytics": false,
+    "enable_learning": false,
+    "enable_advanced_monitoring": false,
+    "enable_predictive_features": false,
     "enable_calendar_integration": false
   },
   "api": {
@@ -106,15 +106,15 @@
     "gmail_enabled": true,
     "whatsapp_enabled": true,
     "linkedin_enabled": true,
-    "facebook_enabled": true,
-    "twitter_enabled": true,
-    "instagram_enabled": true,
+    "facebook_enabled": false,
+    "twitter_enabled": false,
+    "instagram_enabled": false,
     "calendar_enabled": false,
     "crm_enabled": false,
     "project_management_enabled": false,
     "use_claude_cli": true,
     "ralph_loop_enabled": true,
-    "odoo_enabled": true
+    "odoo_enabled": false
   },
   "audit": {
     "enable_action_signing": true,
