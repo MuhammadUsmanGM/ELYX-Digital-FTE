@@ -428,20 +428,29 @@ class TaskProcessor:
                     # fall back to default generation
                     break
 
-        # Legacy fallback behaviour
-        task_content = task.content
-        response_body = f"I have processed your request: '{task_content[:100]}{'...' if len(task_content) > 100 else ''}'\n\n"
+        # Legacy fallback behaviour — strip frontmatter from content
+        task_content = task._remove_frontmatter().strip()
+        sender_name = task.frontmatter.get("from", "").split("<")[0].strip().strip('"')
+        subject = task.frontmatter.get("subject", "your message")
+
+        response_body = f"Hi {sender_name},\n\n"
+        response_body += f"Thank you for reaching out regarding \"{subject}\".\n\n"
 
         if "analyze" in task_content.lower() or "summary" in task_content.lower():
-            response_body += "Analysis completed. The results have been documented and are available for review."
+            response_body += "I've completed the analysis and the results have been documented for your review."
         elif "create" in task_content.lower() or "generate" in task_content.lower():
-            response_body += "Creation task completed. The requested item has been generated and documented."
+            response_body += "The requested item has been generated and documented."
         elif "help" in task_content.lower():
             response_body += "I hope this information is helpful. Please let me know if you need further assistance."
+        elif "hello" in task_content.lower() or "hi" in task_content.lower() or "introduce" in task_content.lower():
+            response_body += ("I'm ELYX, an autonomous AI employee. I manage emails, social media, "
+                            "financial operations via Odoo, and generate weekly CEO briefings. "
+                            "All sensitive actions require human approval for safety.\n\n"
+                            "How can I assist you today?")
         else:
-            response_body += "Task completed successfully. Please let me know if you need any additional assistance."
+            response_body += "I've reviewed your message and taken the appropriate actions. Please let me know if you need anything else."
 
-        response_body += f"\n\nBest regards,\nAI Employee"
+        response_body += f"\n\nBest regards,\nELYX - AI Business Assistant"
         return response_body
 
     def _create_response_file(self, task, response_content: str):
