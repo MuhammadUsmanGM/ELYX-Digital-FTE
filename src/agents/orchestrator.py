@@ -433,6 +433,8 @@ class Orchestrator:
                 while True:
                     try:
                         items = watcher.check_for_updates()
+                        if items:
+                            self.logger.info(f"{name}: processing {len(items)} new item(s)")
                         for item in items:
                             try:
                                 action_file = watcher.create_action_file(item)

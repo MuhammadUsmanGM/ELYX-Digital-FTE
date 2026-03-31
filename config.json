@@ -1,7 +1,7 @@
 {
   "vault_path": "obsidian_vault",
   "check_interval": {
-    "gmail": 120,
+    "gmail": 30,
     "whatsapp": 3600,
     "filesystem": 10,
     "calendar": 300,
@@ -19,7 +19,7 @@
   "gmail": {
     "credentials_path": "gmail_credentials.json",
     "monitor_filters": [
-      "is:unread is:important"
+      "is:unread"
     ]
   },
   "whatsapp": {

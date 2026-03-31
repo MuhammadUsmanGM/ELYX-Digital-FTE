@@ -22,6 +22,8 @@ class GmailWatcher(BaseWatcher):
         super().__init__(vault_path, check_interval=check_interval)
         
         self.credentials_path = credentials_path or os.getenv('GMAIL_CREDENTIALS_PATH') or get_config('gmail.credentials_path')
+        filters = get_config('gmail.monitor_filters', ['is:unread'])
+        self.monitor_filter = filters[0] if filters else 'is:unread'
         self.creds = None
         self.service = None
         
@@ -62,7 +64,8 @@ class GmailWatcher(BaseWatcher):
             all_messages = []
             page_token = None
             while True:
-                kwargs = {'userId': 'me', 'q': 'is:unread is:important', 'maxResults': 100}
+                query = self.monitor_filter or 'is:unread'
+                kwargs = {'userId': 'me', 'q': query, 'maxResults': 100}
                 if page_token:
                     kwargs['pageToken'] = page_token
                 results = self.service.users().messages().list(**kwargs).execute()
@@ -71,7 +74,9 @@ class GmailWatcher(BaseWatcher):
                 if not page_token:
                     break
 
-            return [m for m in all_messages if m['id'] not in self.processed_ids]
+            new_messages = [m for m in all_messages if m['id'] not in self.processed_ids]
+            self.logger.info(f"Gmail: found {len(new_messages)} new emails ({len(all_messages)} total unread)")
+            return new_messages
         except Exception as e:
             self.logger.error(f"Error checking for Gmail updates: {e}")
             return []

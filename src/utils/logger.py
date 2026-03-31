@@ -15,6 +15,7 @@ def setup_logger(name, log_file=None, level=logging.INFO):
     # Create logger
     logger = logging.getLogger(name)
     logger.setLevel(level)
+    logger.propagate = False  # Prevent duplicate log lines from parent loggers
 
     # Avoid adding duplicate handlers
     if not logger.handlers:
